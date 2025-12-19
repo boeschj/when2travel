@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
-import { CalendarRange, Share, Hand, BarChart, LucideIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { CalendarRange, Share, Hand, BarChart } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 
 interface Feature {

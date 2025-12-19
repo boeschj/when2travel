@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PlaneTakeoff, Calendar, Clock, ArrowRight, Edit } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
+import type { DateRange } from 'react-day-picker'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { ROUTES } from '@/lib/routes'
 
@@ -12,7 +13,7 @@ export const Route = createFileRoute(ROUTES.CREATE)({
 function CreatePlanPage() {
   const [tripName, setTripName] = useState('')
   const [numDays, setNumDays] = useState(7)
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>(undefined)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">

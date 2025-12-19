@@ -1,4 +1,6 @@
-export const ANIMATION_CONSTANTS = {
+import type { MotionNodeAnimationOptions, Transition } from "motion/react";
+
+export const ANIMATION_CONSTANTS: Record<string, { animate: MotionNodeAnimationOptions['animate']; transition: Transition }> = {
   gradientBlob1: {
     animate: {
       scale: [1, 1.1, 1],

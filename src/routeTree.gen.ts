@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlanPlanIdIndexRouteImport } from './routes/plan/$planId.index'
+import { Route as ResponseResponseIdEditRouteImport } from './routes/response/$responseId.edit'
+import { Route as PlanPlanIdShareRouteImport } from './routes/plan/$planId.share'
+import { Route as PlanPlanIdRespondRouteImport } from './routes/plan/$planId.respond'
 
 const PlaygroundRoute = PlaygroundRouteImport.update({
   id: '/playground',
@@ -28,35 +32,93 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanPlanIdIndexRoute = PlanPlanIdIndexRouteImport.update({
+  id: '/plan/$planId/',
+  path: '/plan/$planId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResponseResponseIdEditRoute = ResponseResponseIdEditRouteImport.update({
+  id: '/response/$responseId/edit',
+  path: '/response/$responseId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanPlanIdShareRoute = PlanPlanIdShareRouteImport.update({
+  id: '/plan/$planId/share',
+  path: '/plan/$planId/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanPlanIdRespondRoute = PlanPlanIdRespondRouteImport.update({
+  id: '/plan/$planId/respond',
+  path: '/plan/$planId/respond',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
+  '/plan/$planId/share': typeof PlanPlanIdShareRoute
+  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
+  '/plan/$planId': typeof PlanPlanIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
+  '/plan/$planId/share': typeof PlanPlanIdShareRoute
+  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
+  '/plan/$planId': typeof PlanPlanIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
+  '/plan/$planId/share': typeof PlanPlanIdShareRoute
+  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
+  '/plan/$planId/': typeof PlanPlanIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/create' | '/playground'
+  fullPaths:
+    | '/'
+    | '/create'
+    | '/playground'
+    | '/plan/$planId/respond'
+    | '/plan/$planId/share'
+    | '/response/$responseId/edit'
+    | '/plan/$planId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/create' | '/playground'
-  id: '__root__' | '/' | '/create' | '/playground'
+  to:
+    | '/'
+    | '/create'
+    | '/playground'
+    | '/plan/$planId/respond'
+    | '/plan/$planId/share'
+    | '/response/$responseId/edit'
+    | '/plan/$planId'
+  id:
+    | '__root__'
+    | '/'
+    | '/create'
+    | '/playground'
+    | '/plan/$planId/respond'
+    | '/plan/$planId/share'
+    | '/response/$responseId/edit'
+    | '/plan/$planId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
   PlaygroundRoute: typeof PlaygroundRoute
+  PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
+  PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
+  ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute
+  PlanPlanIdIndexRoute: typeof PlanPlanIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan/$planId/': {
+      id: '/plan/$planId/'
+      path: '/plan/$planId'
+      fullPath: '/plan/$planId'
+      preLoaderRoute: typeof PlanPlanIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/response/$responseId/edit': {
+      id: '/response/$responseId/edit'
+      path: '/response/$responseId/edit'
+      fullPath: '/response/$responseId/edit'
+      preLoaderRoute: typeof ResponseResponseIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/$planId/share': {
+      id: '/plan/$planId/share'
+      path: '/plan/$planId/share'
+      fullPath: '/plan/$planId/share'
+      preLoaderRoute: typeof PlanPlanIdShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/$planId/respond': {
+      id: '/plan/$planId/respond'
+      path: '/plan/$planId/respond'
+      fullPath: '/plan/$planId/respond'
+      preLoaderRoute: typeof PlanPlanIdRespondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
   PlaygroundRoute: PlaygroundRoute,
+  PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
+  PlanPlanIdShareRoute: PlanPlanIdShareRoute,
+  ResponseResponseIdEditRoute: ResponseResponseIdEditRoute,
+  PlanPlanIdIndexRoute: PlanPlanIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

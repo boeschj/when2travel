@@ -1,15 +1,33 @@
 import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { CheckCircle, AlertCircle } from "lucide-react"
 
-interface InputProps extends React.ComponentProps<"input"> {
+const inputVariants = cva(
+  "file:text-foreground selection:bg-primary selection:text-primary-foreground w-full min-w-0 rounded-full px-4 py-3 text-base transition-all duration-300 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "border-input h-10 border bg-transparent shadow-xs dark:bg-input placeholder:text-muted-foreground/50 md:text-sm",
+        tertiary: "bg-foreground/5 border border-foreground/10 text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary transition-colors"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+)
+
+export interface InputProps
+  extends React.ComponentProps<"input">,
+    VariantProps<typeof inputVariants> {
   state?: "default" | "error" | "success"
   icon?: React.ReactNode
   helperText?: string
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, state = "default", icon, helperText, ...props }, ref) => {
+  ({ className, type, state = "default", variant, icon, helperText, ...props }, ref) => {
     const hasIcon = !!icon || state === "error" || state === "success"
 
     return (
@@ -21,10 +39,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             data-slot="input"
             aria-invalid={state === "error"}
             className={cn(
-              "file:text-foreground placeholder:text-muted-foreground/50 selection:bg-primary selection:text-primary-foreground dark:bg-input border-input h-10 w-full min-w-0 rounded-full border bg-transparent px-4 py-3 text-base shadow-xs transition-all duration-300 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+              inputVariants({ variant }),
               hasIcon && "pr-10",
               // Focus state
-              state === "default" &&
+              state === "default" && variant !== "tertiary" &&
                 "focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-[3px] focus-visible:shadow-[0_0_10px_rgba(70,236,19,0.1)]",
               // Error state
               state === "error" &&

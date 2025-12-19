@@ -44,6 +44,12 @@
   /* Font family - Plus Jakarta Sans only */
   --font-family-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-family-body: "Plus Jakarta Sans", system-ui, sans-serif;
+
+  /* Custom surface colors (light mode defaults) */
+  --color-surface-dark: #e8ede8;
+  --color-surface-darker: #dde4dd;
+  --color-text-secondary: #6b7c6b;
+  --color-background-dark: #152211;
 }
 
 /* Dark mode (Primary) - matching design system */
@@ -54,21 +60,27 @@
 
   /* Backgrounds & surfaces */
   --color-background: #152211;        /* Deep forest green background */
+  --color-background-dark: #152211;   /* Alias for background-dark utility */
   --color-foreground: #ffffff;
   --color-card: #1c2e18;              /* Surface dark - slightly lighter for cards */
   --color-card-foreground: #ffffff;
   --color-popover: #1c2e18;
   --color-popover-foreground: #ffffff;
 
+  /* Custom surface colors from mockup */
+  --color-surface-dark: #1f3319;      /* Card/surface background */
+  --color-surface-darker: #2c4823;    /* Darker surface for inputs/dividers */
+  --color-text-secondary: #9fc992;    /* Secondary text color */
+
   /* Muted & accent */
-  --color-muted: #1c2e18;
+  --color-muted: #1f3319;             /* Surface for cards/panels */
   --color-muted-foreground: #9fc992;  /* Text secondary from brand guide */
   --color-accent: #2e7d32;            /* Forest green secondary */
   --color-accent-foreground: #ffffff;
 
   /* Borders & inputs */
-  --color-border: #3f6732;            /* Border green from brand guide */
-  --color-input: #1a2c15;             /* Darker input background */
+  --color-border: #2c4823;            /* Surface border from mockup */
+  --color-input: #2c4823;             /* Input background from mockup */
   --color-ring: #46ec13;              /* Primary for focus states */
 
   /* Semantic colors */
@@ -80,7 +92,7 @@
   --color-info-foreground: #0a1208;
   --color-success: #46ec13;           /* Success = primary */
   --color-success-foreground: #0a1208;
-  --color-secondary: #2e7d32;
+  --color-secondary: #2c4823;
   --color-secondary-foreground: #ffffff;
 }
 

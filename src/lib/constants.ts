@@ -25,3 +25,8 @@ export const ANIMATION_CONSTANTS: Record<string, { animate: MotionNodeAnimationO
     },
   },
 }
+
+export const AVAILABILITY_THRESHOLDS = {
+  HIGH: 0.8,
+  PARTIAL: 0.5,
+}

@@ -32,7 +32,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton: "bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-medium hover:bg-secondary/80 transition-colors",
           closeButton: "bg-background text-foreground border border-border rounded-full p-1 hover:bg-accent transition-colors absolute top-2 right-2",
           success: "border-primary/50 shadow-[0_0_15px_rgba(70,236,19,0.2)]",
-          error: "border-destructive/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]",
+          error: "bg-destructive text-destructive-foreground border-destructive shadow-[0_0_15px_rgba(239,68,68,0.2)]",
           warning: "border-warning/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]",
           info: "border-primary/30 shadow-[0_0_10px_rgba(70,236,19,0.1)]",
         },

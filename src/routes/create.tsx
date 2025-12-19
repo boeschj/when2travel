@@ -1,14 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
-import { hc } from 'hono/client'
+import { client } from '@/lib/api'
 import type { InferRequestType, InferResponseType } from 'hono/client'
-import { format } from 'date-fns'
+import { format, differenceInDays } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 import { ROUTES } from '@/lib/routes'
 import { toast } from 'sonner'
-import { z } from 'zod'
-import type { AppType } from '../../worker'
 import {
   BackgroundEffects,
   CreatePlanHeader,
@@ -19,7 +17,6 @@ import {
 } from '@/components/create-plan'
 import { PageLayout, FormContainer, FormSection } from '@/components/create-plan/form-layout'
 
-const client = hc<AppType>('/api')
 const $createPlan = client.plans.$post
 
 type CreatePlanInput = InferRequestType<typeof $createPlan>['json']
@@ -38,39 +35,13 @@ function isErrorResponse(value: unknown): value is ErrorResponse {
 	)
 }
 
-const createPlanSchema = z.object({
-  tripName: z
-    .string()
-    .min(1, 'Trip name is required')
-    .min(3, 'Trip name must be at least 3 characters')
-    .max(100, 'Trip name must be less than 100 characters'),
-  numDays: z
-    .number()
-    .min(1, 'Trip must be at least 1 day')
-    .max(60, 'Trip cannot exceed 60 days'),
-  dateRange: z
-    .custom<DateRange | undefined>()
-    .refine(
-      (range) => {
-        if (!range) return false
-        return range.from && range.to
-      },
-      { message: 'Please select both start and end dates' }
-    )
-    .refine(
-      (range) => {
-        if (!range?.from || !range?.to) return true
-        return range.to >= range.from
-      },
-      { message: 'End date must be after start date' }
-    ),
-})
-
 export const Route = createFileRoute(ROUTES.CREATE)({
   component: CreatePlanPage,
 })
 
 function CreatePlanPage() {
+  const navigate = useNavigate()
+  
   const createPlanMutation = useMutation({
     mutationFn: async (data: CreatePlanInput): Promise<CreatePlanResponse> => {
       const res = await $createPlan({ json: data })
@@ -86,8 +57,10 @@ function CreatePlanPage() {
     onSuccess: (data) => {
       localStorage.setItem(`editToken:${data.id}`, data.editToken)
       toast.success('Plan created successfully!')
-      console.log('Created plan:', data.id)
-      form.reset()
+      navigate({
+        to: ROUTES.PLAN_SHARE,
+        params: { planId: data.id },
+      })
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create plan. Please try again.')
@@ -100,36 +73,69 @@ function CreatePlanPage() {
       numDays: 7,
       dateRange: undefined as DateRange | undefined,
     },
-    validators: {
-      onChange: createPlanSchema,
-    },
-    onSubmit: async ({ value }) => {
-      if (!value.dateRange?.from || !value.dateRange?.to) {
-        return
-      }
-
-      const startRange = format(value.dateRange.from, 'yyyy-MM-dd')
-      const endRange = format(value.dateRange.to, 'yyyy-MM-dd')
-
-      createPlanMutation.mutate({
-        name: value.tripName.trim(),
-        numDays: value.numDays,
-        startRange,
-        endRange,
-      })
-    },
   })
 
   const isCreating = createPlanMutation.isPending
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const values = form.state.values
+    
+    // Validate trip name
+    if (!values.tripName || values.tripName.trim().length === 0) {
+      toast.error('Trip name is required')
+      return
+    }
+    
+    if (values.tripName.trim().length < 3) {
+      toast.error('Trip name must be at least 3 characters')
+      return
+    }
+    
+    if (values.tripName.trim().length > 100) {
+      toast.error('Trip name must be less than 100 characters')
+      return
+    }
+    
+    // Validate num days
+    if (values.numDays < 1) {
+      toast.error('Trip must be at least 1 day')
+      return
+    }
+    
+    if (values.numDays > 60) {
+      toast.error('Trip cannot exceed 60 days')
+      return
+    }
+    
+    // Validate date range
+    if (!values.dateRange?.from || !values.dateRange?.to) {
+      toast.error('Please select both start and end dates')
+      return
+    }
+    
+    // Validate trip length vs date range
+    const daysInRange = differenceInDays(values.dateRange.to, values.dateRange.from) + 1
+    if (daysInRange < values.numDays) {
+      toast.error(`Trip length (${values.numDays} days) cannot be longer than the selected date range (${daysInRange} days)`)
+      return
+    }
+
+    const startRange = format(values.dateRange.from, 'yyyy-MM-dd')
+    const endRange = format(values.dateRange.to, 'yyyy-MM-dd')
+
+    createPlanMutation.mutate({
+      name: values.tripName.trim(),
+      numDays: values.numDays,
+      startRange,
+      endRange,
+    })
+  }
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        form.handleSubmit()
-      }}
-    >
+    <form onSubmit={handleSubmit}>
       <PageLayout>
         <BackgroundEffects />
         <CreatePlanHeader />
@@ -160,15 +166,11 @@ function CreatePlanPage() {
                   selector={(state) => ({
                     numDays: state.values.numDays,
                     dateRange: state.values.dateRange,
-                    canSubmit: state.canSubmit,
-                    isSubmitting: state.isSubmitting,
                   })}
-                  children={({ numDays, dateRange, canSubmit, isSubmitting }) => (
+                  children={({ numDays, dateRange }) => (
                     <PlanSummaryCard
                       numDays={numDays}
                       dateRange={dateRange}
-                      canSubmit={canSubmit}
-                      isSubmitting={isSubmitting}
                       isCreating={isCreating}
                     />
                   )}

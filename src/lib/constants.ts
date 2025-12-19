@@ -1,0 +1,25 @@
+export const ANIMATION_CONSTANTS = {
+  gradientBlob1: {
+    animate: {
+      scale: [1, 1.1, 1],
+      opacity: [0.05, 0.08, 0.05],
+    },
+    transition: {
+      duration: 8,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+  gradientBlob2: {
+    animate: {
+      scale: [1, 1.15, 1],
+      opacity: [0.1, 0.15, 0.1],
+    },
+    transition: {
+      duration: 10,
+      repeat: Infinity,
+      ease: 'easeInOut',
+      delay: 1,
+    },
+  },
+}

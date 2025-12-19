@@ -1,68 +1,114 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@custom-variant dark (&:is(.dark *));
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* Define custom colors for Tailwind v4 */
+@theme {
+  /* When2Travel Brand Colors - Light Mode (Future) */
+  --color-primary: #22c55e;
+  --color-primary-foreground: #0a0a0a;
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  /* Light mode colors */
+  --color-background: #f6f8f6;
+  --color-foreground: #0a0a0a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0a0a0a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0a0a0a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0a0a0a;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #22c55e;
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  /* Semantic colors */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #0a0a0a;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+  --color-success: #22c55e;
+  --color-success-foreground: #0a0a0a;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0a0a0a;
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  /* Border radius - matching design system */
+  --radius: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  /* Font family - Plus Jakarta Sans only */
+  --font-family-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-family-body: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Dark mode (Primary) - matching design system */
+@theme dark {
+  /* Brand colors - neon green on dark forest */
+  --color-primary: #46ec13;
+  --color-primary-foreground: #0a1208;
+
+  /* Backgrounds & surfaces */
+  --color-background: #152211;        /* Deep forest green background */
+  --color-foreground: #ffffff;
+  --color-card: #1c2e18;              /* Surface dark - slightly lighter for cards */
+  --color-card-foreground: #ffffff;
+  --color-popover: #1c2e18;
+  --color-popover-foreground: #ffffff;
+
+  /* Muted & accent */
+  --color-muted: #1c2e18;
+  --color-muted-foreground: #9fc992;  /* Text secondary from brand guide */
+  --color-accent: #2e7d32;            /* Forest green secondary */
+  --color-accent-foreground: #ffffff;
+
+  /* Borders & inputs */
+  --color-border: #3f6732;            /* Border green from brand guide */
+  --color-input: #1a2c15;             /* Darker input background */
+  --color-ring: #46ec13;              /* Primary for focus states */
+
+  /* Semantic colors */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #0a0a0a;
+  --color-info: #46ec13;              /* Use primary for info in MVP */
+  --color-info-foreground: #0a1208;
+  --color-success: #46ec13;           /* Success = primary */
+  --color-success-foreground: #0a1208;
+  --color-secondary: #2e7d32;
+  --color-secondary-foreground: #ffffff;
+}
+
+/* Grid pattern for background */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  a:hover {
-    color: #747bff;
+  body {
+    @apply bg-background text-foreground;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

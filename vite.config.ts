@@ -1,9 +1,26 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
 
 import { cloudflare } from "@cloudflare/vite-plugin";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import tailwindcss from '@tailwindcss/vite'
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), cloudflare()],
-})
+  plugins: [
+    // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
+    tanstackRouter({
+      target: "react",
+      autoCodeSplitting: true,
+    }),
+    react(),
+    cloudflare(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});

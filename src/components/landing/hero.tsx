@@ -17,7 +17,7 @@ export function Hero() {
           >
             <h1 className="text-foreground text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tighter">
               Get plans{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-200">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-green-200">
                 out of the group chat
               </span>
             </h1>

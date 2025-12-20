@@ -9,8 +9,9 @@ import {
   BackgroundEffects,
   CreatePlanHeader,
 } from '@/components/create-plan'
-import { PageLayout, FormContainer, FormSection } from '@/components/create-plan/form-layout'
-import { PlaneTakeoff } from 'lucide-react'
+import { PageLayout, FormSection } from '@/components/create-plan/form-layout'
+import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
+import { format, parseISO } from 'date-fns'
 
 const $createResponse = client.responses.$post
 
@@ -21,6 +22,7 @@ export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
 function MarkAvailabilityPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
+  const { saveResponseEditToken } = useResponseEditTokens()
 
   const { data: plan, isLoading: isPlanLoading } = useQuery({
     queryKey: ['plan', planId],
@@ -71,8 +73,7 @@ function MarkAvailabilityPage() {
       return res.json()
     },
     onSuccess: (data) => {
-      localStorage.setItem(`responseEditToken:${data.id}`, data.editToken)
-      localStorage.setItem(`responsePlanId:${data.id}`, planId)
+      saveResponseEditToken(data.id, data.editToken, planId)
       toast.success('Your availability has been submitted!')
 
       navigate({
@@ -115,11 +116,13 @@ function MarkAvailabilityPage() {
       <PageLayout>
         <BackgroundEffects />
         <CreatePlanHeader />
-        <FormContainer>
-          <div className="flex items-center justify-center py-20">
-            <div className="text-foreground">Loading...</div>
+        <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
+          <div className="w-full max-w-6xl flex flex-col gap-12">
+            <div className="flex items-center justify-center py-20">
+              <div className="text-foreground">Loading...</div>
+            </div>
           </div>
-        </FormContainer>
+        </main>
       </PageLayout>
     )
   }
@@ -129,26 +132,30 @@ function MarkAvailabilityPage() {
       <BackgroundEffects />
       <CreatePlanHeader />
 
-      <FormContainer>
-        <FormSection className="space-y-2">
-          <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
-            When can you go?
-          </h1>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <PlaneTakeoff className="size-5" />
-            <p className="text-lg font-normal leading-normal">{plan.name}</p>
-          </div>
-        </FormSection>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
+        <div className="w-full max-w-6xl flex flex-col gap-12">
+          <FormSection className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
+              When can you go?
+            </h1>
+            <p className="text-lg font-normal leading-normal text-muted-foreground">
+              Sharing availability for: <span className="text-foreground font-medium">{plan.name}</span> for{' '}
+              <span className="text-foreground font-medium">{plan.numDays} {plan.numDays === 1 ? 'day' : 'days'}</span>{' '}
+              between {format(parseISO(plan.startRange), 'MMM d')} - {format(parseISO(plan.endRange), 'MMM d, yyyy')}
+            </p>
+          </FormSection>
 
-        <FormSection delay={0.1}>
-          <ResponseForm
-            startRange={plan.startRange}
-            endRange={plan.endRange}
-            onSubmit={handleSubmit}
-            isSubmitting={createResponseMutation.isPending}
-          />
-        </FormSection>
-      </FormContainer>
+          <FormSection delay={0.1}>
+            <ResponseForm
+              startRange={plan.startRange}
+              endRange={plan.endRange}
+              numDays={plan.numDays}
+              onSubmit={handleSubmit}
+              isSubmitting={createResponseMutation.isPending}
+            />
+          </FormSection>
+        </div>
+      </main>
     </PageLayout>
   )
 }

@@ -3,10 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { client } from '@/lib/api'
 import { SharePanel } from '@/components/plan/organisms/share-panel'
-import { Wordmark } from '@/components/ui/wordmark'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'
+import { AppHeader } from '@/components/shared/app-header'
 
 export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
   component: ShareTripPage,
@@ -60,11 +60,7 @@ function ShareTripPage() {
 
   return (
     <div className="min-h-screen bg-background-dark">
-      <header className="w-full border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
-        <div className="px-4 md:px-10 py-3 max-w-7xl mx-auto flex items-center justify-between">
-          <Wordmark />
-        </div>
-      </header>
+      <AppHeader planId={planId} variant="transparent" />
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 lg:p-16 w-full">
         <motion.div

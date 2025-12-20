@@ -7,6 +7,9 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import type { ResponseFormData } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
+import { CalendarDays, Trash2 } from 'lucide-react'
+import { SimpleHeader } from '@/components/shared/app-header'
+import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
 
 export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
   component: EditResponsePage,
@@ -16,9 +19,10 @@ function EditResponsePage() {
   const { responseId } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { getResponseEditToken, getResponsePlanId, removeResponseToken } = useResponseEditTokens()
 
-  const editToken = localStorage.getItem(`responseEditToken:${responseId}`)
-  const storedPlanId = localStorage.getItem(`responsePlanId:${responseId}`)
+  const editToken = getResponseEditToken(responseId)
+  const storedPlanId = getResponsePlanId(responseId)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['response-with-plan', responseId],
@@ -105,8 +109,7 @@ function EditResponsePage() {
       return res.json()
     },
     onSuccess: () => {
-      localStorage.removeItem(`responseEditToken:${responseId}`)
-      localStorage.removeItem(`responsePlanId:${responseId}`)
+      removeResponseToken(responseId)
       toast.success('Your response has been deleted')
       queryClient.invalidateQueries({ queryKey: ['plan'] })
       if (data?.plan.id) {
@@ -169,16 +172,7 @@ function EditResponsePage() {
 
   return (
     <div className="min-h-screen bg-background-dark">
-      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background-dark/80 border-b border-border px-4 sm:px-10 py-3">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between">
-          <div className="flex items-center gap-3 text-white cursor-pointer select-none hover:opacity-80 transition-opacity">
-            <div className="size-6 text-primary">
-              <span className="material-symbols-outlined text-2xl">travel_explore</span>
-            </div>
-            <h2 className="text-white text-lg font-bold leading-tight tracking-tight">when2travel</h2>
-          </div>
-        </div>
-      </header>
+      <SimpleHeader />
 
       <main className="grow flex flex-col items-center w-full px-4 py-8 sm:px-6 lg:px-8">
         <div className="w-full max-w-[960px] flex flex-col gap-8 pb-24">
@@ -193,7 +187,7 @@ function EditResponsePage() {
             </h1>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-text-secondary">
-                <span className="material-symbols-outlined text-[20px]">edit_calendar</span>
+                <CalendarDays className="w-5 h-5" />
                 <p className="text-lg font-normal leading-normal">{plan.name}</p>
               </div>
               <Button
@@ -202,7 +196,7 @@ function EditResponsePage() {
                 className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                 disabled={deleteResponseMutation.isPending}
               >
-                <span className="material-symbols-outlined mr-2 text-[20px]">delete</span>
+                <Trash2 className="mr-2 w-5 h-5" />
                 Delete Response
               </Button>
             </div>
@@ -216,6 +210,7 @@ function EditResponsePage() {
             <ResponseForm
               startRange={plan.startRange}
               endRange={plan.endRange}
+              numDays={plan.numDays}
               initialName={response.name}
               initialDates={response.availableDates}
               onSubmit={handleSubmit}

@@ -8,8 +8,11 @@ import { AvailabilityLegend } from '@/components/plan/molecules/availability-leg
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useCompatibleRanges } from '@/hooks/use-compatible-ranges'
+import { useCurrentUserResponse, useResponseEditTokens } from '@/hooks/use-auth-tokens'
 import type { PlanResponse } from '@/lib/types'
 import { ROUTES, ROUTE_IDS } from '@/lib/routes'
+import { AppHeader } from '@/components/shared/app-header'
+import { CalendarDays } from 'lucide-react'
 
 export const Route = createFileRoute(ROUTE_IDS.PLAN)({
   component: PlanResultsPage,
@@ -19,6 +22,7 @@ export const Route = createFileRoute(ROUTE_IDS.PLAN)({
 function PlanResultsPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
+  const { hasResponseToken } = useResponseEditTokens()
 
   const { data: plan, isLoading } = useQuery({
     queryKey: ['plan', planId],
@@ -35,16 +39,14 @@ function PlanResultsPage() {
 
   const compatibleRanges = useCompatibleRanges(plan)
 
-  const handleEditAvailability = () => {
-    const currentUserResponseId = plan?.responses?.find((r: PlanResponse) => {
-      const hasEditToken = localStorage.getItem(`responseEditToken:${r.id}`) !== null
-      return hasEditToken
-    })?.id
+  // Get current user's response using hook
+  const currentUserResponse = useCurrentUserResponse(plan?.responses)
 
-    if (currentUserResponseId) {
+  const handleEditAvailability = () => {
+    if (currentUserResponse) {
       navigate({
         to: ROUTES.RESPONSE_EDIT,
-        params: { responseId: currentUserResponseId }
+        params: { responseId: currentUserResponse.id }
       })
     } else {
       navigate({
@@ -69,8 +71,7 @@ function PlanResultsPage() {
   }
 
   const handleEditResponse = (responseId: string) => {
-    const token = localStorage.getItem(`responseEditToken:${responseId}`)
-    if (token) {
+    if (hasResponseToken(responseId)) {
       navigate({
         to: ROUTES.RESPONSE_EDIT,
         params: { responseId }
@@ -92,26 +93,12 @@ function PlanResultsPage() {
     id: r.id,
     name: r.name,
     availableDates: r.availableDates,
-    isCurrentUser: localStorage.getItem(`responseEditToken:${r.id}`) !== null
+    isCurrentUser: hasResponseToken(r.id)
   })) || []
 
   return (
     <div className="min-h-screen bg-background-dark text-white">
-      <div className="w-full border-b border-solid border-b-border bg-surface-dark px-4 py-3 md:px-10">
-        <header className="flex items-center justify-between whitespace-nowrap mx-auto max-w-[1440px]">
-          <div className="flex items-center gap-4 text-white">
-            <div className="size-8 text-primary">
-              <span className="material-symbols-outlined text-3xl">flight_takeoff</span>
-            </div>
-            <h2 className="text-white text-xl font-bold leading-tight tracking-[-0.015em]">when2travel</h2>
-          </div>
-          <div className="flex items-center justify-end gap-8">
-            <div className="hidden md:flex items-center gap-9">
-              <a className="text-primary text-sm font-medium leading-normal" href="#">Results</a>
-            </div>
-          </div>
-        </header>
-      </div>
+      <AppHeader planId={planId} responses={plan.responses} />
 
       <div className="layout-container flex h-full grow flex-col mx-auto w-full max-w-[1440px]">
         <div className="px-4 md:px-10 py-8 flex flex-1 justify-center">
@@ -123,7 +110,7 @@ function PlanResultsPage() {
               endRange={plan.endRange}
               action={{
                 label: 'Edit My Availability',
-                icon: 'edit_calendar',
+                icon: <CalendarDays className="w-5 h-5" />,
                 onClick: handleEditAvailability
               }}
               className="border-b border-border"

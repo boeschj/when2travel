@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { RespondentCard } from '../molecules/respondent-card'
 import { format, parseISO } from 'date-fns'
 import type { CompatibleDateRange, Respondent } from '@/lib/types'
+import { Star, Users, Share2, PlusCircle } from 'lucide-react'
 
 interface ResultsSidebarProps {
   compatibleRanges?: CompatibleDateRange[]
@@ -41,7 +42,7 @@ export function ResultsSidebar({
         <Card className="bg-surface-dark border border-primary/30 shadow-[0_0_20px_rgba(70,236,19,0.1)]">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">recommend</span>
+              <Star className="w-5 h-5 text-primary" />
               <CardTitle className="text-lg">Compatible Date Ranges</CardTitle>
             </div>
           </CardHeader>
@@ -73,7 +74,7 @@ export function ResultsSidebar({
                   <div className="flex justify-between items-center text-xs text-text-secondary">
                     <span>{days} Days</span>
                     <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">group</span>
+                      <Users className="w-3.5 h-3.5" />
                       {range.availableCount}/{range.totalCount}
                     </span>
                   </div>
@@ -98,7 +99,7 @@ export function ResultsSidebar({
                 onClick={onShareResults}
                 className="w-full bg-primary hover:bg-primary/90 text-background-dark shadow-[0_0_15px_rgba(70,236,19,0.3)]"
               >
-                <span className="material-symbols-outlined mr-2">ios_share</span>
+                <Share2 className="mr-2 w-4 h-4" />
                 Share Results Link
               </Button>
             )}
@@ -108,7 +109,7 @@ export function ResultsSidebar({
                 variant="outline"
                 className="w-full border-border hover:border-white hover:text-white"
               >
-                <span className="material-symbols-outlined mr-2">add_circle</span>
+                <PlusCircle className="mr-2 w-4 h-4" />
                 Create New Event
               </Button>
             )}

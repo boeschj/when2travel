@@ -30,8 +30,9 @@ export const dateCellVariants = cva(
 )
 
 export type DateCellState = NonNullable<VariantProps<typeof dateCellVariants>['state']>
+export type DateCellVariant = 'square' | 'circle'
 
-interface DateCellProps 
+interface DateCellProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof dateCellVariants> {
   date: number
@@ -40,6 +41,7 @@ interface DateCellProps
   isOutsideRange?: boolean
   showTooltip?: boolean
   tooltipContent?: React.ReactNode
+  variant?: DateCellVariant
 }
 
 export function DateCell({
@@ -53,10 +55,44 @@ export function DateCell({
   tooltipContent,
   className,
   disabled,
+  variant = 'square',
   ...props
 }: DateCellProps) {
   const isDisabled = disabled || isOutsideRange || state === 'disabled'
 
+  // Circle variant for respond page calendar
+  if (variant === 'circle') {
+    return (
+      <button
+        type="button"
+        disabled={isDisabled}
+        className={cn(
+          'group relative h-10 w-full flex items-center justify-center',
+          isDisabled && 'cursor-not-allowed',
+          className
+        )}
+        aria-label={`${date} - ${state}`}
+        {...props}
+      >
+        {isDisabled ? (
+          <span className="text-muted-foreground/50">{date}</span>
+        ) : (
+          <div
+            className={cn(
+              'size-9 rounded-full flex items-center justify-center transition-all text-sm',
+              state === 'selected' && 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]',
+              state === 'available' && 'bg-border text-foreground group-hover:ring-2 group-hover:ring-primary/50',
+              isToday && 'ring-2 ring-offset-2 ring-offset-background ring-foreground'
+            )}
+          >
+            {date}
+          </div>
+        )}
+      </button>
+    )
+  }
+
+  // Default square variant (original implementation)
   return (
     <button
       type="button"

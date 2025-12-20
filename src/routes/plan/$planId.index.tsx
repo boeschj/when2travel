@@ -9,9 +9,9 @@ import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useCompatibleRanges } from '@/hooks/use-compatible-ranges'
 import type { PlanResponse } from '@/lib/types'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES, ROUTE_IDS } from '@/lib/routes'
 
-export const Route = createFileRoute(ROUTES.PLAN)({
+export const Route = createFileRoute(ROUTE_IDS.PLAN)({
   component: PlanResultsPage,
 })
 

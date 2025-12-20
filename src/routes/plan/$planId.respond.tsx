@@ -2,10 +2,15 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { ResponseForm } from '@/components/plan/organisms/response-form'
-import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
+import {
+  BackgroundEffects,
+  CreatePlanHeader,
+} from '@/components/create-plan'
+import { PageLayout, FormContainer, FormSection } from '@/components/create-plan/form-layout'
+import { PlaneTakeoff } from 'lucide-react'
 
 const $createResponse = client.responses.$post
 
@@ -32,6 +37,24 @@ function MarkAvailabilityPage() {
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
+      // Validate name
+      if (!data.name || data.name.trim().length === 0) {
+        throw new Error('Name is required')
+      }
+
+      if (data.name.trim().length < 2) {
+        throw new Error('Name must be at least 2 characters')
+      }
+
+      if (data.name.trim().length > 50) {
+        throw new Error('Name must be less than 50 characters')
+      }
+
+      // Validate dates
+      if (!data.availableDates || data.availableDates.length === 0) {
+        throw new Error('Please select at least one available date')
+      }
+
       const res = await $createResponse({
         json: {
           planId,
@@ -63,69 +86,69 @@ function MarkAvailabilityPage() {
   })
 
   const handleSubmit = (data: ResponseFormData) => {
+    // Additional client-side validation with toast feedback
+    if (!data.name || data.name.trim().length === 0) {
+      toast.error('Name is required')
+      return
+    }
+
+    if (data.name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters')
+      return
+    }
+
+    if (data.name.trim().length > 50) {
+      toast.error('Name must be less than 50 characters')
+      return
+    }
+
+    if (!data.availableDates || data.availableDates.length === 0) {
+      toast.error('Please select at least one available date')
+      return
+    }
+
     createResponseMutation.mutate(data)
   }
 
   if (isPlanLoading || !plan) {
     return (
-      <div className="min-h-screen bg-background-dark flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
+      <PageLayout>
+        <BackgroundEffects />
+        <CreatePlanHeader />
+        <FormContainer>
+          <div className="flex items-center justify-center py-20">
+            <div className="text-foreground">Loading...</div>
+          </div>
+        </FormContainer>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background-dark">
-      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background-dark/80 border-b border-border px-4 sm:px-10 py-3">
-        <div className="mx-auto max-w-[1200px] flex items-center justify-between">
-          <div className="flex items-center gap-3 text-white cursor-pointer select-none hover:opacity-80 transition-opacity">
-            <div className="size-6 text-primary">
-              <span className="material-symbols-outlined text-2xl">travel_explore</span>
-            </div>
-            <h2 className="text-white text-lg font-bold leading-tight tracking-tight">when2travel</h2>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="hidden sm:flex text-white text-sm font-medium hover:text-primary transition-colors">
-              How it works
-            </button>
-            <button className="flex items-center justify-center overflow-hidden rounded-full h-9 px-5 bg-white/10 hover:bg-white/20 text-white text-sm font-bold transition-all">
-              <span className="truncate">Log In</span>
-            </button>
-          </div>
-        </div>
-      </header>
+    <PageLayout>
+      <BackgroundEffects />
+      <CreatePlanHeader />
 
-      <main className="grow flex flex-col items-center w-full px-4 py-8 sm:px-6 lg:px-8">
-        <div className="w-full max-w-[960px] flex flex-col gap-8 pb-24">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col gap-2 p-2"
-          >
-            <h1 className="text-white text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em]">
-              When can you go?
-            </h1>
-            <div className="flex items-center gap-2 text-text-secondary">
-              <span className="material-symbols-outlined text-[20px]">flight_takeoff</span>
-              <p className="text-lg font-normal leading-normal">{plan.name}</p>
-            </div>
-          </motion.div>
+      <FormContainer>
+        <FormSection className="space-y-2">
+          <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
+            When can you go?
+          </h1>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <PlaneTakeoff className="size-5" />
+            <p className="text-lg font-normal leading-normal">{plan.name}</p>
+          </div>
+        </FormSection>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <ResponseForm
-              startRange={plan.startRange}
-              endRange={plan.endRange}
-              onSubmit={handleSubmit}
-              isSubmitting={createResponseMutation.isPending}
-            />
-          </motion.div>
-        </div>
-      </main>
-    </div>
+        <FormSection delay={0.1}>
+          <ResponseForm
+            startRange={plan.startRange}
+            endRange={plan.endRange}
+            onSubmit={handleSubmit}
+            isSubmitting={createResponseMutation.isPending}
+          />
+        </FormSection>
+      </FormContainer>
+    </PageLayout>
   )
 }

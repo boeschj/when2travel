@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
+import { User, CheckCircle, Ban } from 'lucide-react'
 import { format, eachDayOfInterval, parseISO } from 'date-fns'
 import { AvailabilityCalendar } from './availability-calendar'
 import type { ResponseFormData, PlanWithResponses } from '@/lib/types'
@@ -45,38 +43,24 @@ export function ResponseForm({
     setSelectedDates(newDates)
   }
 
-  const handleDateRangeSelect = (start: Date, end: Date) => {
+  const handleDateRangeSelect = (start: Date, end: Date, action: 'select' | 'deselect') => {
     const dates = eachDayOfInterval({ start, end })
     const newDates = new Set(selectedDates)
 
     dates.forEach(date => {
       const dateStr = format(date, 'yyyy-MM-dd')
-      newDates.add(dateStr)
+      if (action === 'select') {
+        newDates.add(dateStr)
+      } else {
+        newDates.delete(dateStr)
+      }
     })
 
     setSelectedDates(newDates)
-  }
-
-  const handleSelectAll = () => {
-    const allDates = eachDayOfInterval({
-      start: parseISO(startRange),
-      end: parseISO(endRange)
-    })
-
-    const newDates = new Set(
-      allDates.map(date => format(date, 'yyyy-MM-dd'))
-    )
-
-    setSelectedDates(newDates)
-  }
-
-  const handleClearAll = () => {
-    setSelectedDates(new Set())
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || selectedDates.size === 0) return
 
     onSubmit({
       name: name.trim(),
@@ -95,104 +79,85 @@ export function ResponseForm({
     const firstDate = sortedDates[0]
     const lastDate = sortedDates[sortedDates.length - 1]
 
-    return `${format(parseISO(firstDate), 'MMM d')} - ${format(parseISO(lastDate), 'MMM d, yyyy')}`
+    return `${format(parseISO(firstDate), 'MMM d')} - ${format(parseISO(lastDate), 'd')}`
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-8', className)}>
-      <Card className="bg-surface-dark/40 border-border backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Your Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-white text-lg font-bold">
+    <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
+      {/* Your Information Card */}
+      <div className="bg-card/40 border border-border rounded-xl p-5 sm:p-6 backdrop-blur-sm">
+        <div className="flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
+          <label className="flex flex-col gap-3 flex-grow max-w-[480px]">
+            <span className="text-foreground text-lg font-bold leading-normal">
               What should we call you?
-            </Label>
+            </span>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-text-secondary group-focus-within:text-primary transition-colors">
-                  person
-                </span>
+                <User className="size-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               </div>
-              <Input
-                id="name"
+              <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name"
-                className="h-14 sm:h-16 pl-12 pr-4 text-lg font-medium bg-surface-dark border-2 border-border focus:border-primary focus:bg-background-dark"
-                required
+                className="flex w-full min-w-0 rounded-full text-foreground placeholder:text-muted-foreground/50 bg-muted border-2 border-border focus:border-primary focus:ring-0 focus:bg-background h-12 sm:h-14 pl-12 pr-4 text-base font-medium leading-normal transition-all duration-200 outline-none"
               />
             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-white font-bold text-sm">
+          </label>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex flex-col lg:items-end px-2">
+              <span className="text-foreground font-bold text-sm">
                 {selectedDates.size} {selectedDates.size === 1 ? 'day' : 'days'} selected
               </span>
-              <span className="text-text-secondary text-xs">
+              <span className="text-muted-foreground text-xs">
                 {getSelectedDateRange()}
               </span>
             </div>
             <Button
               type="submit"
-              disabled={isSubmitting || !name.trim() || selectedDates.size === 0}
-              className="w-full sm:w-auto h-14 sm:h-16 px-8 bg-primary hover:bg-primary/90 text-background-dark shadow-[0_0_20px_rgba(70,236,19,0.3)] hover:shadow-[0_0_30px_rgba(70,236,19,0.5)]"
+              disabled={isSubmitting}
+              size="lg"
+              className="w-full sm:w-auto h-12 sm:h-14 px-6"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Availability'}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card className="bg-surface-dark/40 border-border backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <CardTitle>Select your dates</CardTitle>
-              <CardDescription className="text-text-secondary mt-1">
-                Click individual days or drag to select a range
-              </CardDescription>
+      {/* Select Dates Card */}
+      <div className="bg-card/40 border border-border rounded-xl p-5 sm:p-6 backdrop-blur-sm flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+          <div>
+            <h3 className="text-foreground text-lg font-bold mb-1">Select your dates</h3>
+            <p className="text-muted-foreground text-sm">
+              Click and drag to select range, or tap individual days.
+            </p>
+          </div>
+          <div className="flex gap-3 flex-wrap">
+            <div className="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-border pl-3 pr-4">
+              <CheckCircle className="size-4 text-primary" />
+              <p className="text-foreground text-sm font-medium">Available</p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSelectAll}
-                className="text-xs"
-              >
-                Select All
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleClearAll}
-                className="text-xs"
-              >
-                Clear All
-              </Button>
+            <div className="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-background pl-3 pr-4 border border-border">
+              <Ban className="size-4 text-muted-foreground" />
+              <p className="text-muted-foreground text-sm font-medium">Unavailable</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap justify-center gap-x-12 gap-y-10">
-            <AvailabilityCalendar
-              startRange={startRange}
-              endRange={endRange}
-              selectedDates={Array.from(selectedDates)}
-              onDateClick={handleDateClick}
-              onDateRangeSelect={handleDateRangeSelect}
-              mode="select"
-              showNavigation={true}
-              className="min-w-[300px] flex-1 max-w-[400px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <AvailabilityCalendar
+          startRange={startRange}
+          endRange={endRange}
+          selectedDates={Array.from(selectedDates)}
+          onDateClick={handleDateClick}
+          onDateRangeSelect={handleDateRangeSelect}
+          mode="select"
+          showNavigation={true}
+          cellVariant="circle"
+          numberOfMonths={2}
+        />
+      </div>
     </form>
   )
 }

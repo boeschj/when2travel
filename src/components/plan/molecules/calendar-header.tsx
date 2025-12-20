@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface CalendarHeaderProps {
@@ -7,6 +8,8 @@ interface CalendarHeaderProps {
   onPreviousMonth?: () => void
   onNextMonth?: () => void
   showNavigation?: boolean
+  showPrevious?: boolean
+  showNext?: boolean
   className?: string
 }
 
@@ -15,40 +18,42 @@ export function CalendarHeader({
   onPreviousMonth,
   onNextMonth,
   showNavigation = true,
+  showPrevious = true,
+  showNext = true,
   className
 }: CalendarHeaderProps) {
   return (
     <div className={cn('flex items-center justify-between px-2', className)}>
-      {showNavigation ? (
+      {showNavigation && showPrevious ? (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={onPreviousMonth}
-          className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
           aria-label="Previous month"
         >
-          <span className="material-symbols-outlined">chevron_left</span>
+          <ChevronLeft className="size-5" />
         </Button>
       ) : (
-        <div className="w-10" />
+        <div className="w-9" />
       )}
 
-      <p className="text-white text-lg font-bold">
+      <p className="text-foreground text-lg font-bold">
         {format(date, 'MMMM yyyy')}
       </p>
 
-      {showNavigation ? (
+      {showNavigation && showNext ? (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={onNextMonth}
-          className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
           aria-label="Next month"
         >
-          <span className="material-symbols-outlined">chevron_right</span>
+          <ChevronRight className="size-5" />
         </Button>
       ) : (
-        <div className="w-10" />
+        <div className="w-9" />
       )}
     </div>
   )

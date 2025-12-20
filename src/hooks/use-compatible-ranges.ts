@@ -1,85 +1,89 @@
 import { useMemo } from 'react'
-import { eachDayOfInterval, parseISO, format } from 'date-fns'
+import { eachDayOfInterval, parseISO, format, differenceInDays } from 'date-fns'
 import type { PlanWithResponses, PlanResponse, CompatibleDateRange } from '@/lib/types'
-import { AVAILABILITY_THRESHOLDS } from '@/lib/constants'
 
-interface RangeAccumulator {
-  start: string
-  end: string
-  minAvailable: number
-}
-
-export function useCompatibleRanges(plan: PlanWithResponses | undefined | null) {
+export function useCompatibleRanges(plan: PlanWithResponses | undefined | null): CompatibleDateRange[] {
   return useMemo(() => {
     if (!plan?.responses || plan.responses.length === 0) return []
 
-    const dateToRespondentNames = new Map<string, Set<string>>()
+    const totalRespondents = plan.responses.length
+    const minimumTripLength = plan.numDays
 
-    plan.responses.forEach((response: PlanResponse) => {
-      response.availableDates.forEach((date: string) => {
-        if (!dateToRespondentNames.has(date)) {
-          dateToRespondentNames.set(date, new Set())
-        }
-        dateToRespondentNames.get(date)?.add(response.name)
-      })
-    })
+    const dateToAvailableCount = new Map<string, number>()
 
     const allDatesInRange = eachDayOfInterval({
       start: parseISO(plan.startRange),
       end: parseISO(plan.endRange)
     })
 
-    const highAvailabilityRanges: CompatibleDateRange[] = []
+    for (const date of allDatesInRange) {
+      dateToAvailableCount.set(format(date, 'yyyy-MM-dd'), 0)
+    }
 
-    const minimumAvailabilityThreshold = AVAILABILITY_THRESHOLDS.HIGH
-    let currentRange: RangeAccumulator | null = null
+    plan.responses.forEach((response: PlanResponse) => {
+      response.availableDates.forEach((dateStr: string) => {
+        const current = dateToAvailableCount.get(dateStr)
+        if (current !== undefined) {
+          dateToAvailableCount.set(dateStr, current + 1)
+        }
+      })
+    })
+
+    const validRanges: CompatibleDateRange[] = []
+    let rangeStart: string | null = null
+    let rangeEnd: string | null = null
 
     for (const date of allDatesInRange) {
       const dateStr = format(date, 'yyyy-MM-dd')
-      const availableRespondentCount = dateToRespondentNames.get(dateStr)?.size || 0
-      const meetsAvailabilityThreshold = availableRespondentCount >= plan.responses.length * minimumAvailabilityThreshold
+      const availableCount = dateToAvailableCount.get(dateStr) || 0
+      const allRespondentsAvailable = availableCount === totalRespondents
 
-      if (meetsAvailabilityThreshold) {
-        if (!currentRange) {
-          currentRange = {
-            start: dateStr,
-            end: dateStr,
-            minAvailable: availableRespondentCount
-          }
-        } else {
-          currentRange.end = dateStr
-          currentRange.minAvailable = Math.min(currentRange.minAvailable, availableRespondentCount)
+      if (allRespondentsAvailable) {
+        if (!rangeStart) {
+          rangeStart = dateStr
         }
+        rangeEnd = dateStr
       } else {
-        if (currentRange) {
-          highAvailabilityRanges.push({
-            start: currentRange.start,
-            end: currentRange.end,
-            availableCount: currentRange.minAvailable,
-            totalCount: plan.responses.length
-          })
-          currentRange = null
+        if (rangeStart && rangeEnd) {
+          const rangeLengthDays = differenceInDays(parseISO(rangeEnd), parseISO(rangeStart)) + 1
+
+          if (rangeLengthDays >= minimumTripLength) {
+            validRanges.push({
+              start: rangeStart,
+              end: rangeEnd,
+              availableCount: totalRespondents,
+              totalCount: totalRespondents
+            })
+          }
         }
+        rangeStart = null
+        rangeEnd = null
       }
     }
 
-    if (currentRange) {
-      highAvailabilityRanges.push({
-        start: currentRange.start,
-        end: currentRange.end,
-        availableCount: currentRange.minAvailable,
-        totalCount: plan.responses.length
-      })
+    if (rangeStart && rangeEnd) {
+      const rangeLengthDays = differenceInDays(parseISO(rangeEnd), parseISO(rangeStart)) + 1
+
+      if (rangeLengthDays >= minimumTripLength) {
+        validRanges.push({
+          start: rangeStart,
+          end: rangeEnd,
+          availableCount: totalRespondents,
+          totalCount: totalRespondents
+        })
+      }
     }
 
-    const sortedByAvailabilityPercentage = highAvailabilityRanges.sort((a, b) => {
-      const aPercentage = (a.availableCount / a.totalCount) * 100
-      const bPercentage = (b.availableCount / b.totalCount) * 100
-      return bPercentage - aPercentage
-    })
+    return validRanges.sort((a, b) => {
+      const aLength = differenceInDays(parseISO(a.end), parseISO(a.start)) + 1
+      const bLength = differenceInDays(parseISO(b.end), parseISO(b.start)) + 1
 
-    const topThreeRanges = sortedByAvailabilityPercentage.slice(0, 3)
-    return topThreeRanges
+      if (bLength !== aLength) {
+        return bLength - aLength
+      }
+
+      return a.start.localeCompare(b.start)
+    })
   }, [plan])
 }
 

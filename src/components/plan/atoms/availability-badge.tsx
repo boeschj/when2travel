@@ -1,19 +1,21 @@
 import { cn } from '@/lib/utils'
 
 interface AvailabilityBadgeProps {
-  status: 'available' | 'partial' | 'unavailable'
+  status: 'available' | 'high' | 'partial' | 'unavailable'
   label?: string
   className?: string
 }
 
 const statusStyles = {
   available: 'bg-primary shadow-[0_0_8px_rgba(70,236,19,0.5)]',
-  partial: 'bg-yellow-500 shadow-[0_0_4px_rgba(234,179,8,0.5)]',
-  unavailable: 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]',
+  high: 'bg-calendar-high shadow-[0_0_4px_rgba(45,140,62,0.5)]',
+  partial: 'bg-calendar-partial shadow-[0_0_4px_rgba(90,122,61,0.3)]',
+  unavailable: 'bg-calendar-unavailable shadow-[0_0_2px_rgba(74,90,53,0.2)]',
 }
 
 const defaultLabels = {
   available: 'All Available',
+  high: 'High',
   partial: 'Partial',
   unavailable: 'Unavailable',
 }

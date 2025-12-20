@@ -76,10 +76,10 @@ function EditResponsePage() {
 
       return res.json()
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Your availability has been updated!')
-      queryClient.invalidateQueries({ queryKey: ['plan'] })
       if (data?.plan.id) {
+        await queryClient.refetchQueries({ queryKey: ['plan', data.plan.id] })
         navigate({
           to: ROUTES.PLAN,
           params: { planId: data.plan.id },
@@ -108,11 +108,11 @@ function EditResponsePage() {
 
       return res.json()
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       removeResponseToken(responseId)
       toast.success('Your response has been deleted')
-      queryClient.invalidateQueries({ queryKey: ['plan'] })
       if (data?.plan.id) {
+        await queryClient.refetchQueries({ queryKey: ['plan', data.plan.id] })
         navigate({
           to: ROUTES.PLAN,
           params: { planId: data.plan.id },

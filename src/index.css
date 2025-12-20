@@ -5,7 +5,7 @@
 
 /* Define custom colors for Tailwind v4 */
 @theme {
-  /* When2Travel Brand Colors - Light Mode (Future) */
+  /* planthetrip Brand Colors - Light Mode (Future) */
   --color-primary: #22c55e;
   --color-primary-foreground: #0a0a0a;
 
@@ -35,6 +35,11 @@
   --color-success-foreground: #0a0a0a;
   --color-secondary: #f1f5f9;
   --color-secondary-foreground: #0a0a0a;
+
+  /* Availability status colors */
+  --color-status-green: #22c55e;
+  --color-status-yellow: #eab308;
+  --color-status-red: #ef4444;
 
   /* Border radius - matching design system */
   --radius: 1rem;
@@ -94,6 +99,17 @@
   --color-success-foreground: #0a1208;
   --color-secondary: #2c4823;
   --color-secondary-foreground: #ffffff;
+
+  /* Availability status colors */
+  --color-status-green: #22c55e;
+  --color-status-yellow: #eab308;
+  --color-status-red: #ef4444;
+
+  /* Calendar cell availability gradient colors */
+  --color-calendar-high: #2d8c3e;
+  --color-calendar-partial: #5a7a3d;
+  --color-calendar-unavailable: #4a5a35;
+  --color-calendar-disabled: #1a2c16;
 }
 
 /* Grid pattern for background */
@@ -123,4 +139,13 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

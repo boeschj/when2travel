@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import { Wordmark } from '@/components/ui/wordmark'
+import { Wordmark } from '@/components/shared/wordmark'
 import { ROUTES } from '@/lib/routes'
 
 export function Header() {

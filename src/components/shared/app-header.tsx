@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Wordmark } from '@/components/ui/wordmark'
+import { Wordmark } from '@/components/shared/wordmark'
 import { Button } from '@/components/ui/button'
 import { Pencil, CalendarDays } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
@@ -50,7 +50,7 @@ export function AppHeader({
   }
 
   const outerStyles = variant === 'default'
-    ? 'w-full border-b border-border bg-surface-dark'
+    ? 'w-full border-b border-border bg-background-dark'
     : 'w-full border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50'
 
   return (

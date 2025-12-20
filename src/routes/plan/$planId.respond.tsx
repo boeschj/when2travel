@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { ResponseForm } from '@/components/plan/organisms/response-form'
 import { toast } from 'sonner'
@@ -22,6 +22,7 @@ export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
 function MarkAvailabilityPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
 
   const { data: plan, isLoading: isPlanLoading } = useQuery({
@@ -72,8 +73,9 @@ function MarkAvailabilityPage() {
 
       return res.json()
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       saveResponseEditToken(data.id, data.editToken, planId)
+      await queryClient.refetchQueries({ queryKey: ['plan', planId] })
       toast.success('Your availability has been submitted!')
 
       navigate({

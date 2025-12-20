@@ -1,4 +1,4 @@
-import { Wordmark } from '@/components/ui/wordmark'
+import { Wordmark } from '@/components/shared/wordmark'
 
 export function CreatePlanHeader() {
   return (

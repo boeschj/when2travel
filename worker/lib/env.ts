@@ -2,6 +2,6 @@
 /// <reference path="../../worker-configuration.d.ts" />
 
 export type Bindings = {
-  when2travel_d1: D1Database
+  planthetrip_d1: D1Database
 }
 

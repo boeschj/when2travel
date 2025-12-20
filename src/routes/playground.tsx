@@ -89,7 +89,7 @@ function PlaygroundPage() {
           <div className="container mx-auto flex h-16 items-center justify-between px-4">
             <Link to="/" className="flex items-center gap-2">
               <Calendar className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">when2travel</span>
+              <span className="text-xl font-bold">PlanTheTrip</span>
             </Link>
             <Badge variant="outline">Complete Component Library</Badge>
           </div>
@@ -1144,9 +1144,9 @@ function PlaygroundPage() {
                 <h3 className="text-lg font-semibold mb-4">Single Item Open</h3>
                 <Accordion type="single" collapsible className="w-full max-w-2xl">
                   <AccordionItem value="item-1">
-                    <AccordionTrigger>Is when2travel free to use?</AccordionTrigger>
+                    <AccordionTrigger>Is PlanTheTrip free to use?</AccordionTrigger>
                     <AccordionContent>
-                      Yes, when2travel is completely free to use. No account needed, no hidden fees.
+                      Yes, PlanTheTrip is completely free to use. No account needed, no hidden fees.
                       Simply create a trip, share the link, and start coordinating!
                     </AccordionContent>
                   </AccordionItem>
@@ -1154,7 +1154,7 @@ function PlaygroundPage() {
                     <AccordionTrigger>How many people can participate?</AccordionTrigger>
                     <AccordionContent>
                       There's no limit on the number of participants. Whether you're planning with 5
-                      friends or 50, when2travel can handle it. The more people, the better the
+                      friends or 50, PlanTheTrip can handle it. The more people, the better the
                       coordination!
                     </AccordionContent>
                   </AccordionItem>
@@ -1350,7 +1350,7 @@ function PlaygroundPage() {
           <div className="container mx-auto px-4">
             <div className="text-center space-y-4">
               <p className="text-sm text-muted-foreground">
-                Complete Component Library • when2travel Design System
+                Complete Component Library • PlanTheTrip Design System
               </p>
               <div className="flex justify-center gap-6">
                 <Link to="/" className="text-primary hover:underline text-sm">

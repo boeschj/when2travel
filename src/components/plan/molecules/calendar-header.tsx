@@ -23,37 +23,40 @@ export function CalendarHeader({
   className
 }: CalendarHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between px-2', className)}>
-      {showNavigation && showPrevious ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onPreviousMonth}
-          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="size-5" />
-        </Button>
-      ) : (
-        <div className="w-9" />
-      )}
-
-      <p className="text-foreground text-lg font-bold">
+    <div className={cn('flex items-center gap-2', className)}>
+      <h2 className="text-foreground text-2xl font-bold">
         {format(date, 'MMMM yyyy')}
-      </p>
+      </h2>
 
-      {showNavigation && showNext ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onNextMonth}
-          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-          aria-label="Next month"
-        >
-          <ChevronRight className="size-5" />
-        </Button>
-      ) : (
-        <div className="w-9" />
+      {showNavigation && (
+        <div className="flex gap-1">
+          {showPrevious ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onPreviousMonth}
+              className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="size-5" />
+            </Button>
+          ) : (
+            <div className="w-8" />
+          )}
+          {showNext ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onNextMonth}
+              className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+              aria-label="Next month"
+            >
+              <ChevronRight className="size-5" />
+            </Button>
+          ) : (
+            <div className="w-8" />
+          )}
+        </div>
       )}
     </div>
   )

@@ -9,7 +9,7 @@ declare module 'hono' {
 }
 
 export const dbMiddleware = createMiddleware<{ Bindings: Bindings }>(async (c, next) => {
-  const db = drizzle(c.env.when2travel_d1)
+  const db = drizzle(c.env.planthetrip_d1)
   c.set('db', db)
   await next()
 })

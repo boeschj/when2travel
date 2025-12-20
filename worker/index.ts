@@ -10,7 +10,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 app.use('*', logger())
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:8787', 'http://localhost:8788', 'https://when2travel.huskers15.workers.dev'],
+  origin: ['http://localhost:5173', 'http://localhost:8787', 'http://localhost:8788', 'https://planthetrip.huskers15.workers.dev', 'https://justplanthetrip.com', 'https://www.justplanthetrip.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }))

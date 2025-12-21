@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { User, CheckCircle, Ban, Trash2, Info } from 'lucide-react'
 import { format, eachDayOfInterval, parseISO, differenceInDays } from 'date-fns'
 import { AvailabilityCalendar } from './availability-calendar'
@@ -220,22 +222,23 @@ export function ResponseForm({
   return (
     <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
       {/* Your Information Card */}
-      <div className="bg-card/40 border border-border rounded-xl p-5 sm:p-6 backdrop-blur-sm">
+      <Card className="p-5 sm:p-6">
         <div className="flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
           <label className="flex flex-col gap-3 flex-grow max-w-[480px]">
             <span className="text-foreground text-lg font-bold leading-normal">
               What should we call you?
             </span>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                 <User className="size-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               </div>
-              <input
+              <Input
                 type="text"
+                variant="pill"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name"
-                className="flex w-full min-w-0 rounded-full text-foreground placeholder:text-muted-foreground/50 bg-muted border-2 border-border focus:border-primary focus:ring-0 focus:bg-background h-12 sm:h-14 pl-12 pr-4 text-base font-medium leading-normal transition-all duration-200 outline-none"
+                className="h-12 sm:h-14 pl-12 pr-4 text-base font-medium"
               />
             </div>
           </label>
@@ -248,12 +251,12 @@ export function ResponseForm({
             {isSubmitting ? 'Submitting...' : 'Submit Availability'}
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Calendar and Manage Dates Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Select Dates Card */}
-        <div className="bg-card/40 border border-border rounded-xl p-5 sm:p-6 backdrop-blur-sm flex flex-col gap-6 flex-1">
+        <Card className="p-5 sm:p-6 flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
             <div className="flex items-center gap-3">
               <h3 className="text-foreground text-lg font-bold">Select your dates</h3>
@@ -290,10 +293,10 @@ export function ResponseForm({
             cellVariant="circle"
             numberOfMonths={2}
           />
-        </div>
+        </Card>
 
         {/* Manage Dates Card */}
-        <div className="bg-card/40 border border-border rounded-xl p-5 sm:p-6 backdrop-blur-sm w-full lg:w-80 flex flex-col h-[500px]">
+        <Card className="p-5 sm:p-6 w-full lg:w-80 h-[500px]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h3 className="text-foreground text-lg font-bold">Manage Dates</h3>
@@ -335,7 +338,7 @@ export function ResponseForm({
                   {availableRanges.map(range => (
                     <div
                       key={range.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-surface-darker/50 hover:bg-surface-darker transition-colors"
                     >
                       <Checkbox
                         checked={selectedRangeIds.has(range.id)}
@@ -369,7 +372,7 @@ export function ResponseForm({
                   {unavailableRanges.map(range => (
                     <div
                       key={range.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-surface-darker/50 hover:bg-surface-darker transition-colors"
                     >
                       <Checkbox
                         checked={selectedRangeIds.has(range.id)}
@@ -417,7 +420,7 @@ export function ResponseForm({
               </Button>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </form>
   )

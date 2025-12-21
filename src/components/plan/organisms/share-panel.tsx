@@ -45,9 +45,9 @@ export function SharePanel({
   return (
     <div className="flex flex-col gap-6 h-full w-full">
       <Card
-        variant="secondary"
+        variant="action"
         className={cn(
-          'rounded-[2rem] p-6 md:p-8 flex flex-col justify-between',
+          'p-6 md:p-8 flex flex-col justify-between',
           className
         )}
       >
@@ -91,17 +91,16 @@ export function SharePanel({
                   <div>
                     <p className="text-foreground font-bold text-sm">Action Required</p>
                     <p className="text-muted-foreground text-xs mt-1">
-                      Don't forget to enter your own dates to get the ball rolling.
+                      Don't forget to enter your own dates to get the ball rolling!
                     </p>
                   </div>
                 </div>
 
                 <Button
                   onClick={onAddAvailability}
-                  variant="outline"
-                  className="w-full py-3.5 rounded-xl"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
                 >
-                  <CalendarPlus className="size-5" />
+                  <CalendarPlus className="size-5 mr-2" />
                   Add My Availability
                 </Button>
               </div>

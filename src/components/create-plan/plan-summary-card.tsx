@@ -22,7 +22,7 @@ export function PlanSummaryCard({
   planId
 }: PlanSummaryCardProps) {
   return (
-    <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-none">
+    <Card variant="action" className="p-6">
       <CardContent className="p-0 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div>

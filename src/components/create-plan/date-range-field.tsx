@@ -4,6 +4,7 @@ import { format, parse, isValid, startOfMonth, endOfMonth, startOfWeek, endOfWee
 import type { DateRange } from 'react-day-picker'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -165,7 +166,7 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
     : format(currentDate, 'MMMM yyyy')
 
   return (
-    <div className="bg-card border border-border/5 shadow-2xl shadow-black/20 rounded-3xl p-6 md:p-8">
+    <Card className="p-6 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-6 h-6 text-primary" />
@@ -256,7 +257,7 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
           />
         )}
       </div>
-    </div>
+    </Card>
   )
 }
 

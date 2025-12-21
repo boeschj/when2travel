@@ -1,6 +1,7 @@
 import { Clock, Minus, Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import type { NumDaysField } from './types'
 
 const MIN_TRIP_LENGTH_DAYS = 1
@@ -25,7 +26,7 @@ export function DurationPicker({ field }: DurationPickerProps) {
   const daysLabel = field.state.value === 1 ? 'Day' : 'Days'
 
   return (
-    <div className="bg-card border border-border/5 shadow-2xl shadow-black/20 rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-center h-full">
+    <Card className="p-6 md:p-8 items-center justify-center text-center h-full">
       <div className="flex items-center gap-2 mb-6">
         <Clock className="w-6 h-6 text-primary" />
         <h3 className="text-lg font-bold text-foreground">Trip Length</h3>
@@ -67,6 +68,6 @@ export function DurationPicker({ field }: DurationPickerProps) {
       <p className="text-sm text-foreground/40 mt-8 max-w-[200px]">
         This is the duration everyone needs to be available for.
       </p>
-    </div>
+    </Card>
   )
 }

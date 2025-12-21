@@ -54,7 +54,7 @@
   --color-surface-dark: #e8ede8;
   --color-surface-darker: #dde4dd;
   --color-text-secondary: #6b7c6b;
-  --color-background-dark: #152211;
+  --color-background-dark: #142210;
 }
 
 /* Dark mode (Primary) - matching design system */
@@ -65,7 +65,7 @@
 
   /* Backgrounds & surfaces */
   --color-background: #152211;        /* Deep forest green background */
-  --color-background-dark: #152211;   /* Alias for background-dark utility */
+  --color-background-dark: #142210;   /* Alias for background-dark utility */
   --color-foreground: #ffffff;
   --color-card: #1c2e18;              /* Surface dark - slightly lighter for cards */
   --color-card-foreground: #ffffff;

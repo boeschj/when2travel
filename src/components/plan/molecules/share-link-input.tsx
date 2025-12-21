@@ -50,12 +50,11 @@ export function ShareLinkInput({
     <div
       className={cn(
         'relative flex w-full items-center rounded-2xl bg-input shadow-inner h-14 group',
-        'focus-within:ring-2 focus-within:ring-primary/50 transition-all',
         className
       )}
     >
       <Input
-        className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 placeholder:text-muted-foreground/50 truncate"
+        className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-text"
         value={link}
         readOnly
         onClick={(e) => e.currentTarget.select()}

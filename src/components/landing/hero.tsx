@@ -39,7 +39,7 @@ export function Hero() {
       )}
 
       {/* Gradient overlays - darkens toward bottom and center for text readability */}
-      <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-black/40 z-0" aria-hidden="true" />
+      <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/60 z-0" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
 
       <div className="flex flex-col max-w-[1120px] w-full gap-12 relative z-20 px-5 md:px-10">

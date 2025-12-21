@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const logoVariants = cva(
-  'shrink-0',
+  'shrink-0 h-auto',
   {
     variants: {
       color: {
@@ -12,9 +12,9 @@ const logoVariants = cva(
         destructive: 'text-destructive',
       },
       size: {
-        small: 'w-6 h-auto',
-        medium: 'w-10 h-auto',
-        large: 'w-16 h-auto',
+        small: 'w-6',
+        medium: 'w-6 md:w-10',
+        large: 'w-10 md:w-16',
       },
     },
     defaultVariants: {

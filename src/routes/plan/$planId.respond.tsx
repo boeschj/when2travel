@@ -1,14 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
+import { planKeys } from '@/lib/queries'
 import { ResponseForm } from '@/components/plan/organisms/response-form'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
-import {
-  BackgroundEffects,
-  CreatePlanHeader,
-} from '@/components/create-plan'
+import { BackgroundEffects } from '@/components/create-plan'
+import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormSection } from '@/components/create-plan/form-layout'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
 import { format, parseISO } from 'date-fns'
@@ -25,18 +24,7 @@ function MarkAvailabilityPage() {
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
 
-  const { data: plan, isLoading: isPlanLoading } = useQuery({
-    queryKey: ['plan', planId],
-    queryFn: async () => {
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new Error('Failed to fetch plan')
-      }
-      return res.json()
-    },
-  })
+  const { data: plan, isLoading: isPlanLoading } = useQuery(planKeys.detail(planId))
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
@@ -57,7 +45,7 @@ function MarkAvailabilityPage() {
     },
     onSuccess: async (data) => {
       saveResponseEditToken(data.id, data.editToken, planId)
-      await queryClient.refetchQueries({ queryKey: ['plan', planId] })
+      await queryClient.refetchQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
       navigate({
@@ -78,7 +66,7 @@ function MarkAvailabilityPage() {
     return (
       <PageLayout>
         <BackgroundEffects />
-        <CreatePlanHeader />
+        <AppHeader />
         <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
           <div className="w-full max-w-6xl flex flex-col gap-12">
             <div className="flex items-center justify-center py-20">
@@ -93,7 +81,7 @@ function MarkAvailabilityPage() {
   return (
     <PageLayout>
       <BackgroundEffects />
-      <CreatePlanHeader />
+      <AppHeader planId={planId} responses={plan.responses} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
         <div className="w-fit mx-auto flex flex-col gap-12">

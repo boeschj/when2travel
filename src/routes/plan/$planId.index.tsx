@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { CalendarDays } from 'lucide-react'
-import { client } from '@/lib/api'
+import { planKeys } from '@/lib/queries'
 import { PlanHeader } from '@/components/plan/organisms/plan-header'
 import { ResultsCalendar } from '@/components/plan/organisms/results-calendar'
 import { BestWindowHero } from '@/components/plan/organisms/best-window-hero'
@@ -70,18 +70,7 @@ function PlanResultsPage() {
   const [popoverDate, setPopoverDate] = useState<Date | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 
-  const { data: plan, isLoading } = useQuery({
-    queryKey: ['plan', planId],
-    queryFn: async () => {
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new Error('Failed to fetch plan')
-      }
-      return res.json()
-    },
-  })
+  const { data: plan, isLoading } = useQuery(planKeys.detail(planId))
 
   const compatibleRanges = useCompatibleRanges(plan)
   const bestWindow = compatibleRanges[0] ?? null

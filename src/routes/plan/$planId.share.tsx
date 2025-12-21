@@ -1,12 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { client } from '@/lib/api'
+import { planKeys } from '@/lib/queries'
 import { SharePanel } from '@/components/plan/organisms/share-panel'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
+import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 
 export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
   component: ShareTripPage,
@@ -16,24 +17,23 @@ function ShareTripPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
 
-  const { data: plan, isLoading, error } = useQuery({
-    queryKey: ['plan', planId],
-    queryFn: async () => {
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new Error('Failed to fetch plan')
-      }
-      return res.json()
-    },
-  })
+  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
+  const userResponse = useCurrentUserResponse(plan?.responses)
 
   const handleAddAvailability = () => {
     navigate({
       to: ROUTES.PLAN_RESPOND,
       params: { planId },
     })
+  }
+
+  const handleViewAvailability = () => {
+    if (userResponse) {
+      navigate({
+        to: ROUTES.RESPONSE_EDIT,
+        params: { responseId: userResponse.id },
+      })
+    }
   }
 
   if (isLoading) {
@@ -60,7 +60,7 @@ function ShareTripPage() {
 
   return (
     <div className="min-h-screen bg-background-dark">
-      <AppHeader planId={planId} variant="transparent" />
+      <AppHeader planId={planId} responses={plan.responses} variant="transparent" />
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 lg:p-16 w-full">
         <motion.div
@@ -82,6 +82,8 @@ function ShareTripPage() {
             planId={planId}
             planName={plan.name}
             onAddAvailability={handleAddAvailability}
+            onViewAvailability={handleViewAvailability}
+            hasUserResponse={!!userResponse}
           />
         </motion.div>
       </main>

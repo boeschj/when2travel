@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useResponseFormState } from '@/hooks/use-response-form-state'
 import { NameInputCard } from '../molecules/name-input-card'
@@ -26,6 +26,11 @@ interface ResponseFormProps {
   initialDates?: string[]
   onSubmit: (data: ResponseFormData) => void
   isSubmitting?: boolean
+  isEditMode?: boolean
+  onDirtyChange?: (isDirty: boolean) => void
+  onResetRef?: (reset: () => void) => void
+  onDelete?: () => void
+  isDeleting?: boolean
   className?: string
 }
 
@@ -37,6 +42,11 @@ export function ResponseForm({
   initialDates = [],
   onSubmit,
   isSubmitting,
+  isEditMode = false,
+  onDirtyChange,
+  onResetRef,
+  onDelete,
+  isDeleting,
   className
 }: ResponseFormProps) {
   const {
@@ -49,11 +59,13 @@ export function ResponseForm({
     unavailableRanges,
     compatibleWindowsCount,
     hasSelectedRanges,
+    isDirty,
     handleDateClick,
     toggleRangeSelection,
     deleteSelectedRanges,
     markAllAs,
-    getFormData
+    getFormData,
+    reset
   } = useResponseFormState({
     startRange,
     endRange,
@@ -65,6 +77,16 @@ export function ResponseForm({
   const [nameError, setNameError] = useState<string | null>(null)
   const [warningType, setWarningType] = useState<WarningType>(null)
   const [pendingFormData, setPendingFormData] = useState<ResponseFormData | null>(null)
+
+  // Expose isDirty state to parent
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
+
+  // Expose reset function to parent
+  useEffect(() => {
+    onResetRef?.(reset)
+  }, [reset, onResetRef])
 
   const validateName = (value: string): string | null => {
     const trimmed = value.trim()
@@ -152,7 +174,11 @@ export function ResponseForm({
         name={name}
         onNameChange={handleNameChange}
         isSubmitting={isSubmitting}
+        isEditMode={isEditMode}
+        hasChanges={isDirty}
         error={nameError ?? undefined}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
       />
 
       <AlertDialog open={warningType !== null} onOpenChange={(open) => !open && handleCancelSubmit()}>

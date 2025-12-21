@@ -1,5 +1,4 @@
 export { BackgroundEffects } from './background-effects'
-export { CreatePlanHeader } from './header'
 export { DateRangeField } from './date-range-field'
 export { DurationPicker } from './duration-picker'
 export { PlanSummaryCard } from './plan-summary-card'

@@ -25,10 +25,11 @@ export interface InputProps
   state?: "default" | "error" | "success"
   icon?: React.ReactNode
   helperText?: string
+  hideHelperText?: boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, state = "default", variant, icon, helperText, ...props }, ref) => {
+  ({ className, type, state = "default", variant, icon, helperText, hideHelperText, ...props }, ref) => {
     const hasIcon = !!icon || state === "error" || state === "success"
 
     return (
@@ -58,16 +59,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {helperText && (
+        {!hideHelperText && (
           <p
             className={cn(
-              "mt-1.5 text-sm font-medium",
+              "mt-1.5 text-sm font-medium min-h-[1.25rem]",
               state === "error" && "text-destructive",
               state === "success" && "text-primary",
-              state === "default" && "text-muted-foreground"
+              state === "default" && "text-muted-foreground",
+              !helperText && "invisible"
             )}
           >
-            {helperText}
+            {helperText || "\u00A0"}
           </p>
         )}
       </div>

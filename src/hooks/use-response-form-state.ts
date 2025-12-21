@@ -25,6 +25,7 @@ interface UseResponseFormStateReturn {
   unavailableRanges: DateRange[]
   compatibleWindowsCount: number
   hasSelectedRanges: boolean
+  isDirty: boolean
 
   // Actions
   handleDateClick: (date: Date) => void
@@ -32,6 +33,7 @@ interface UseResponseFormStateReturn {
   deleteSelectedRanges: () => void
   markAllAs: (status: 'available' | 'unavailable') => void
   getFormData: () => ResponseFormData
+  reset: () => void
 }
 
 export function useResponseFormState({
@@ -78,6 +80,20 @@ export function useResponseFormState({
   const totalRanges = availableRanges.length + unavailableRanges.length
   const isSingleFullRange = totalRanges === 1 && selectedRangeIds.size === 1
   const hasSelectedRanges = selectedRangeIds.size > 0 && !isSingleFullRange
+
+  // Track if form has changed from initial values
+  const isDirty = useMemo(() => {
+    if (name !== initialName) return true
+
+    const initialSet = new Set(initialDates)
+    if (selectedDates.size !== initialSet.size) return true
+
+    for (const date of selectedDates) {
+      if (!initialSet.has(date)) return true
+    }
+
+    return false
+  }, [name, selectedDates, initialName, initialDates])
 
   const dateRange = useMemo(() => ({
     start: parseISO(startRange),
@@ -202,6 +218,13 @@ export function useResponseFormState({
     availableDates: Array.from(selectedDates).sort()
   }), [name, selectedDates])
 
+  const reset = useCallback(() => {
+    setName(initialName)
+    setSelectedDates(new Set(initialDates))
+    setSelectedRangeIds(new Set())
+    setRangeStart(null)
+  }, [initialName, initialDates])
+
   return {
     name,
     setName,
@@ -213,10 +236,12 @@ export function useResponseFormState({
     unavailableRanges,
     compatibleWindowsCount,
     hasSelectedRanges,
+    isDirty,
     handleDateClick,
     toggleRangeSelection,
     deleteSelectedRanges,
     markAllAs,
-    getFormData
+    getFormData,
+    reset
   }
 }

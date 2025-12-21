@@ -17,8 +17,8 @@ interface DateRangeFieldProps {
 }
 
 const WEEK_STARTS_ON = 0
-const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
-const WEEKS_TO_SHOW = 5
+const WEEKDAY_LABELS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const
+const WEEKS_TO_SHOW = 6
 const DAYS_PER_WEEK = 7
 
 interface RangeState {
@@ -70,11 +70,11 @@ function generateWeeks(startDate: Date, count: number): Date[][] {
 
 function WeekdayHeaders() {
   return (
-    <div className="grid grid-cols-7 gap-x-1 text-center mb-1">
+    <div className="grid grid-cols-7 gap-0.5">
       {WEEKDAY_LABELS.map((day) => (
-        <span key={day} className="text-xs font-bold text-foreground/40 uppercase py-1">
+        <div key={day} className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center min-h-11 flex items-center justify-center">
           {day}
-        </span>
+        </div>
       ))}
     </div>
   )
@@ -155,19 +155,13 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
     }
   }, [dateRange, field])
 
-  const clearDates = useCallback(() => {
-    field.handleChange(undefined)
-    setStartDateInput('')
-    setEndDateInput('')
-  }, [field])
-
   const navigationLabel = viewMode === 'month'
     ? format(currentDate, 'yyyy')
     : format(currentDate, 'MMMM yyyy')
 
   return (
     <Card className="p-6 md:p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-6 h-6 text-primary" />
           <h3 className="text-lg font-bold text-foreground">Possible Dates</h3>
@@ -195,24 +189,9 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
           value={displayEndDate}
           onChange={(value) => handleDateInputChange(value, false)}
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={!dateRange?.from}
-          onClick={clearDates}
-          className={cn(
-            "px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap h-auto",
-            dateRange?.from
-              ? "text-foreground/60 hover:text-foreground hover:bg-transparent"
-              : "text-foreground/20 cursor-not-allowed"
-          )}
-        >
-          Clear Dates
-        </Button>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center w-full max-w-[308px] mx-auto mb-4">
         <Button
           type="button"
           variant="ghost"
@@ -220,9 +199,9 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
           className="size-8 rounded-full hover:bg-foreground/10 text-foreground/60 hover:text-foreground"
           onClick={() => handleNavigation('prev')}
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
         </Button>
-        <span className="text-foreground font-medium">{navigationLabel}</span>
+        <h2 className="text-foreground text-lg font-bold flex-1 text-center">{navigationLabel}</h2>
         <Button
           type="button"
           variant="ghost"
@@ -230,11 +209,11 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
           className="size-8 rounded-full hover:bg-foreground/10 text-foreground/60 hover:text-foreground"
           onClick={() => handleNavigation('next')}
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-5 h-5" />
         </Button>
       </div>
 
-      <div className="h-[300px] overflow-hidden">
+      <div className="flex justify-center">
         {viewMode === 'day' && (
           <DayView
             currentDate={currentDate}
@@ -281,7 +260,7 @@ function DateInput({ label, value, onChange }: DateInputProps) {
         readOnly
         variant="tertiary"
         icon={<CalendarIcon className="w-4 h-4 text-foreground/40" />}
-        className="cursor-default"
+        className="cursor-default focus:border-white/10 focus:ring-0"
       />
     </div>
   )
@@ -306,9 +285,9 @@ function DayView({ currentDate, dateRange, onDayClick }: DayViewProps) {
   }, [currentDate, dateRange])
 
   return (
-    <div>
+    <div className="w-[308px]">
       <WeekdayHeaders />
-      <div className="grid grid-cols-7 grid-rows-5 gap-2">
+      <div className="grid grid-cols-7 gap-0.5">
         {weeks.map((week, weekIndex) => (
           week.map((date, dayIndex) => {
             const { isCurrentMonth, isRangeStart, isRangeEnd, isInRange } = getDayState(date)
@@ -319,14 +298,24 @@ function DayView({ currentDate, dateRange, onDayClick }: DayViewProps) {
                 type="button"
                 onClick={() => onDayClick(date)}
                 className={cn(
-                  "h-12 flex items-center justify-center rounded-full text-base font-medium transition-all",
-                  !isCurrentMonth && "text-foreground/30",
-                  isCurrentMonth && !isInRange && !isRangeStart && "text-foreground/60 hover:bg-foreground/10",
-                  isInRange && !isRangeStart && !isRangeEnd && "bg-primary/20 text-foreground",
-                  (isRangeStart || isRangeEnd) && "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(70,236,19,0.4)]"
+                  "group relative size-11 flex items-center justify-center",
+                  !isCurrentMonth && "cursor-not-allowed"
                 )}
               >
-                {format(date, 'd')}
+                {!isCurrentMonth ? (
+                  <span className="text-muted-foreground/50 text-sm">{format(date, 'd')}</span>
+                ) : (
+                  <div
+                    className={cn(
+                      "size-10 rounded-full flex items-center justify-center transition-all text-sm",
+                      !isInRange && !isRangeStart && !isRangeEnd && "bg-border text-foreground group-hover:ring-2 group-hover:ring-primary/50",
+                      isInRange && !isRangeStart && !isRangeEnd && "bg-primary text-primary-foreground",
+                      (isRangeStart || isRangeEnd) && "bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]"
+                    )}
+                  >
+                    {format(date, 'd')}
+                  </div>
+                )}
               </button>
             )
           })
@@ -377,9 +366,9 @@ function WeekView({ currentDate, dateRange, onWeekClick }: WeekViewProps) {
   }, [getWeekState])
 
   return (
-    <div>
+    <div className="w-[308px]">
       <WeekdayHeaders />
-      <div className="grid grid-cols-7 grid-rows-5 gap-2">
+      <div className="grid grid-cols-7 gap-0.5">
         {allDays.map((date, index) => {
           const weekStart = startOfWeek(date, { weekStartsOn: WEEK_STARTS_ON })
           const { isWeekSelected, isRangeStart, isRangeEnd, isInRange } = getDayInWeekState(date)
@@ -392,14 +381,24 @@ function WeekView({ currentDate, dateRange, onWeekClick }: WeekViewProps) {
               type="button"
               onClick={() => onWeekClick(weekStart)}
               className={cn(
-                "h-12 flex items-center justify-center rounded-full text-base font-medium transition-all",
-                !isCurrentMonth && "text-foreground/30",
-                isCurrentMonth && !isWeekSelected && "text-foreground/60 hover:bg-foreground/10",
-                isWeekSelected && isInRange && "bg-primary/20 text-foreground",
-                isWeekSelected && isEndpoint && "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(70,236,19,0.4)]"
+                "group relative size-11 flex items-center justify-center",
+                !isCurrentMonth && "cursor-not-allowed"
               )}
             >
-              {format(date, 'd')}
+              {!isCurrentMonth ? (
+                <span className="text-muted-foreground/50 text-sm">{format(date, 'd')}</span>
+              ) : (
+                <div
+                  className={cn(
+                    "size-10 rounded-full flex items-center justify-center transition-all text-sm",
+                    !isWeekSelected && "bg-border text-foreground group-hover:ring-2 group-hover:ring-primary/50",
+                    isWeekSelected && isInRange && "bg-primary text-primary-foreground",
+                    isWeekSelected && isEndpoint && "bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]"
+                  )}
+                >
+                  {format(date, 'd')}
+                </div>
+              )}
             </button>
           )
         })}
@@ -427,7 +426,7 @@ function MonthView({ currentDate, dateRange, onMonthClick }: MonthViewProps) {
   }, [dateRange])
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="w-[308px] grid grid-cols-3 gap-2">
       {months.map((monthDate, index) => {
         const { isRangeStart, isRangeEnd, isInRange } = getMonthState(monthDate)
         const isEndpoint = isRangeStart || isRangeEnd
@@ -439,9 +438,9 @@ function MonthView({ currentDate, dateRange, onMonthClick }: MonthViewProps) {
             onClick={() => onMonthClick(monthDate)}
             className={cn(
               "py-4 px-3 rounded-2xl text-sm font-medium transition-all",
-              !isEndpoint && !isInRange && "text-foreground/60 hover:bg-foreground/10",
-              isInRange && !isEndpoint && "bg-primary/20 text-foreground",
-              isEndpoint && "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(70,236,19,0.4)]"
+              !isEndpoint && !isInRange && "bg-border text-foreground hover:ring-2 hover:ring-primary/50",
+              isInRange && !isEndpoint && "bg-primary text-primary-foreground",
+              isEndpoint && "bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]"
             )}
           >
             {format(monthDate, 'MMM')}

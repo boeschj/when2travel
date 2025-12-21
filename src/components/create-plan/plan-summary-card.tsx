@@ -1,10 +1,14 @@
-import { ArrowRight, Save, Share2 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
+import { ArrowRight, Save } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { DateRange } from 'react-day-picker'
-import { ROUTES } from '@/lib/routes'
 
 interface PlanSummaryCardProps {
   numDays: number
@@ -12,6 +16,7 @@ interface PlanSummaryCardProps {
   isPending: boolean
   isEditMode?: boolean
   planId?: string
+  hasChanges?: boolean
 }
 
 export function PlanSummaryCard({
@@ -19,7 +24,8 @@ export function PlanSummaryCard({
   dateRange,
   isPending,
   isEditMode = false,
-  planId
+  planId,
+  hasChanges = false,
 }: PlanSummaryCardProps) {
   return (
     <Card variant="action" className="p-6">
@@ -51,36 +57,29 @@ export function PlanSummaryCard({
       </CardContent>
       <CardFooter className="p-0 mt-4">
         {isEditMode && planId ? (
-          <div className="w-full flex gap-3">
-            <motion.div className="flex-1" whileHover={!isPending ? { scale: 1.02 } : {}} whileTap={!isPending ? { scale: 0.98 } : {}}>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-              >
-                {isPending ? (
-                  <>Saving Changes...</>
-                ) : (
-                  <>
-                    <Save className="mr-2 w-5 h-5" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to={ROUTES.PLAN_SHARE} params={{ planId }}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.div className="w-full" whileHover={!isPending && hasChanges ? { scale: 1.02 } : {}} whileTap={!isPending && hasChanges ? { scale: 0.98 } : {}}>
                 <Button
-                  type="button"
-                  variant="outline"
-                  className="h-full px-6 border-border hover:border-primary hover:text-primary font-extrabold text-lg rounded-full"
+                  type="submit"
+                  disabled={isPending || !hasChanges}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
                 >
-                  <Share2 className="mr-2 w-5 h-5" />
-                  Share
+                  {isPending ? (
+                    <Spinner className="mr-2 w-5 h-5" />
+                  ) : (
+                    <Save className="mr-2 w-5 h-5" />
+                  )}
+                  Save Changes
                 </Button>
-              </Link>
-            </motion.div>
-          </div>
+              </motion.div>
+            </TooltipTrigger>
+            {!hasChanges && !isPending && (
+              <TooltipContent>
+                <p>No new changes to save</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
         ) : (
           <motion.div className="w-full" whileHover={!isPending ? { scale: 1.02 } : {}} whileTap={!isPending ? { scale: 0.98 } : {}}>
             <Button

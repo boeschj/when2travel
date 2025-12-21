@@ -88,9 +88,3 @@ export function useCurrentUserResponse(responses: PlanResponse[] | undefined) {
     return responses.find((r) => r.id in responseTokens) ?? null
   }, [responses, responseTokens])
 }
-
-// Hook to check if a response belongs to current user
-export function useIsCurrentUserResponse(responseId: string) {
-  const tokens = useAtomValue(responseEditTokensAtom)
-  return responseId in tokens
-}

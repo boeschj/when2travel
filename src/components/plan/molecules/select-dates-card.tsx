@@ -54,7 +54,7 @@ export function SelectDatesCard({
     <Card className="p-4 w-fit">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-3">
-          <h3 className="text-foreground text-lg font-bold">Select your dates</h3>
+          <h3 className="text-foreground text-lg font-bold">Set your availability</h3>
           {hasSelectedDates && (
             <Badge className={compatibleWindowsCount === 0 ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'}>
               {compatibleWindowsCount} compatible {compatibleWindowsCount === 1 ? 'window' : 'windows'}

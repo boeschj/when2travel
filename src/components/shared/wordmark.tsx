@@ -10,8 +10,8 @@ const wordmarkVariants = cva(
     variants: {
       size: {
         small: 'gap-2',
-        medium: 'gap-3',
-        large: 'gap-4',
+        medium: 'gap-2 md:gap-3',
+        large: 'gap-3 md:gap-4',
       },
       color: {
         primary: 'text-foreground',
@@ -33,8 +33,8 @@ const textVariants = cva(
     variants: {
       size: {
         small: 'text-lg',
-        medium: 'text-2xl',
-        large: 'text-3xl',
+        medium: 'text-lg md:text-2xl',
+        large: 'text-2xl md:text-3xl',
       },
     },
     defaultVariants: {

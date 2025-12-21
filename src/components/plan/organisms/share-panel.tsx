@@ -3,12 +3,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ShareLinkInput } from '../molecules/share-link-input'
 import { ShareButton } from '../atoms/share-button'
-import { Share2, CalendarPlus } from 'lucide-react'
+import { Share2, CalendarPlus, Eye } from 'lucide-react'
 
 interface SharePanelProps {
   planId: string
   planName: string
   onAddAvailability?: () => void
+  onViewAvailability?: () => void
+  hasUserResponse?: boolean
   className?: string
 }
 
@@ -16,6 +18,8 @@ export function SharePanel({
   planId,
   planName,
   onAddAvailability,
+  onViewAvailability,
+  hasUserResponse,
   className
 }: SharePanelProps) {
   const shareLink = `${window.location.origin}/plan/${planId}/respond`
@@ -81,28 +85,53 @@ export function SharePanel({
             </div>
           </div>
 
-          {onAddAvailability && (
+          {(onAddAvailability || onViewAvailability) && (
             <>
               <div className="w-full h-px bg-border" />
 
               <div className="flex flex-col gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 size-2 rounded-full bg-primary shrink-0 animate-pulse" />
-                  <div>
-                    <p className="text-foreground font-bold text-sm">Action Required</p>
-                    <p className="text-muted-foreground text-xs mt-1">
-                      Don't forget to enter your own dates to get the ball rolling!
-                    </p>
-                  </div>
-                </div>
+                {hasUserResponse ? (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 size-2 rounded-full bg-primary shrink-0" />
+                      <div>
+                        <p className="text-foreground font-bold text-sm">You've added your availability</p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          View or edit your submitted dates anytime.
+                        </p>
+                      </div>
+                    </div>
 
-                <Button
-                  onClick={onAddAvailability}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  <CalendarPlus className="size-5 mr-2" />
-                  Add My Availability
-                </Button>
+                    <Button
+                      onClick={onViewAvailability}
+                      variant="secondary"
+                      className="w-full font-extrabold text-lg py-4 rounded-full transition-all h-auto"
+                    >
+                      <Eye className="size-5 mr-2" />
+                      View My Availability
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 size-2 rounded-full bg-primary shrink-0 animate-pulse" />
+                      <div>
+                        <p className="text-foreground font-bold text-sm">Action Required</p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          Don't forget to enter your own dates to get the ball rolling!
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={onAddAvailability}
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+                    >
+                      <CalendarPlus className="size-5 mr-2" />
+                      Add My Availability
+                    </Button>
+                  </>
+                )}
               </div>
             </>
           )}

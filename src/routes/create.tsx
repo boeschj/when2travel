@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { client } from '@/lib/api'
+import { planKeys } from '@/lib/queries'
 import type { InferRequestType, InferResponseType } from 'hono/client'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
@@ -9,14 +10,23 @@ import { ROUTES } from '@/lib/routes'
 import { toast } from 'sonner'
 import {
   BackgroundEffects,
-  CreatePlanHeader,
   DateRangeField,
   DurationPicker,
   PlanSummaryCard,
   TripNameField,
 } from '@/components/create-plan'
+import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormContainer, FormSection } from '@/components/create-plan/form-layout'
-import { useEffect } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { z } from 'zod'
 import { usePlanEditTokens } from '@/hooks/use-auth-tokens'
 
@@ -50,6 +60,32 @@ export const Route = createFileRoute(ROUTES.CREATE)({
   validateSearch: searchSchema,
 })
 
+function NavigationBlocker({ shouldBlock, onDiscard }: { shouldBlock: boolean; onDiscard: () => void }) {
+  const { proceed, reset, status } = useBlocker({ condition: shouldBlock })
+
+  const handleDiscard = () => {
+    onDiscard()
+    proceed?.()
+  }
+
+  return (
+    <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes. If you leave now, your edits will be discarded.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => reset?.()}>Go Back</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDiscard}>Discard Changes</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 function CreatePlanPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -61,17 +97,7 @@ function CreatePlanPage() {
 
   // Fetch existing plan data when in edit mode
   const { data: existingPlan, isLoading: isLoadingPlan } = useQuery({
-    queryKey: ['plan', planId],
-    queryFn: async () => {
-      if (!planId) return null
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new Error('Failed to fetch plan')
-      }
-      return res.json()
-    },
+    ...planKeys.detail(planId ?? ''),
     enabled: isEditMode,
   })
 
@@ -117,35 +143,59 @@ function CreatePlanPage() {
 
       return res.json()
     },
+    onMutate: async (newData) => {
+      if (!planId) return
+
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: planKeys.detail(planId).queryKey })
+
+      // Snapshot the previous value
+      const previousPlan = queryClient.getQueryData(planKeys.detail(planId).queryKey)
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(planKeys.detail(planId).queryKey, (old: typeof previousPlan) =>
+        old ? {
+          ...old,
+          name: newData.name,
+          numDays: newData.numDays,
+          startRange: newData.startRange,
+          endRange: newData.endRange,
+        } : old
+      )
+
+      return { previousPlan }
+    },
     onSuccess: () => {
-      // Invalidate the plan query to ensure fresh data on other pages
-      queryClient.invalidateQueries({ queryKey: ['plan', planId] })
+      // Reset form baseline to current values so isDirty becomes false
+      form.reset(form.state.values)
       toast.success('Plan updated successfully!')
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _newData, context) => {
+      // Rollback to the previous value on error
+      if (planId && context?.previousPlan) {
+        queryClient.setQueryData(planKeys.detail(planId).queryKey, context.previousPlan)
+      }
       toast.error(error.message || 'Failed to update plan. Please try again.')
     },
-  })
-
-  const form = useForm({
-    defaultValues: {
-      tripName: '',
-      numDays: 7,
-      dateRange: undefined as DateRange | undefined,
+    onSettled: () => {
+      // Refetch after error or success to ensure we have the latest data
+      if (planId) {
+        queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
+      }
     },
   })
 
-  // Pre-populate form when in edit mode and plan data is loaded
-  useEffect(() => {
-    if (existingPlan && isEditMode) {
-      form.setFieldValue('tripName', existingPlan.name)
-      form.setFieldValue('numDays', existingPlan.numDays)
-      form.setFieldValue('dateRange', {
-        from: parseISO(existingPlan.startRange),
-        to: parseISO(existingPlan.endRange),
-      })
-    }
-  }, [existingPlan, isEditMode, form])
+  // Pass async data directly to defaultValues - this is the idiomatic TanStack Form pattern
+  // for async initial values. The form initializes with these as the baseline, so isDirty starts false.
+  const form = useForm({
+    defaultValues: {
+      tripName: existingPlan?.name ?? '',
+      numDays: existingPlan?.numDays ?? 7,
+      dateRange: existingPlan
+        ? { from: parseISO(existingPlan.startRange), to: parseISO(existingPlan.endRange) }
+        : undefined as DateRange | undefined,
+    },
+  })
 
   const isPending = createPlanMutation.isPending || updatePlanMutation.isPending
 
@@ -244,7 +294,7 @@ function CreatePlanPage() {
     <form onSubmit={handleSubmit}>
       <PageLayout>
         <BackgroundEffects />
-        <CreatePlanHeader />
+        <AppHeader planId={planId} responses={existingPlan?.responses} />
 
         <FormContainer>
           <FormSection className="space-y-6 text-center md:text-left">
@@ -283,14 +333,16 @@ function CreatePlanPage() {
                   selector={(state) => ({
                     numDays: state.values.numDays,
                     dateRange: state.values.dateRange,
+                    isDirty: state.isDirty,
                   })}
-                  children={({ numDays, dateRange }) => (
+                  children={({ numDays, dateRange, isDirty }) => (
                     <PlanSummaryCard
                       numDays={numDays}
                       dateRange={dateRange}
                       isPending={isPending}
                       isEditMode={isEditMode}
                       planId={planId}
+                      hasChanges={isDirty}
                     />
                   )}
                 />
@@ -298,6 +350,18 @@ function CreatePlanPage() {
             </div>
           </div>
         </FormContainer>
+
+        {isEditMode && (
+          <form.Subscribe
+            selector={(state) => state.isDirty}
+            children={(isDirty) => (
+              <NavigationBlocker
+                shouldBlock={isDirty}
+                onDiscard={() => form.reset()}
+              />
+            )}
+          />
+        )}
       </PageLayout>
     </form>
   )

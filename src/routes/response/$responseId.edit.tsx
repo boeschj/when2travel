@@ -1,19 +1,56 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState, useCallback } from 'react'
+import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
+import { planKeys, responseKeys } from '@/lib/queries'
 import { ResponseForm } from '@/components/plan/organisms/response-form'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import type { ResponseFormData } from '@/lib/types'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import type { ResponseFormData, PlanWithResponses } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
-import { CalendarDays, Trash2 } from 'lucide-react'
-import { SimpleHeader } from '@/components/shared/app-header'
+import { CalendarDays } from 'lucide-react'
+import { AppHeader } from '@/components/shared/app-header'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
 
 export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
   component: EditResponsePage,
 })
+
+function NavigationBlocker({ shouldBlock, onDiscard }: { shouldBlock: boolean; onDiscard: () => void }) {
+  const { proceed, reset, status } = useBlocker({ condition: shouldBlock })
+
+  const handleDiscard = () => {
+    onDiscard()
+    proceed?.()
+  }
+
+  return (
+    <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes. If you leave now, your edits will be discarded.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => reset?.()}>Go Back</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDiscard}>Discard Changes</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 function EditResponsePage() {
   const { responseId } = Route.useParams()
@@ -21,38 +58,23 @@ function EditResponsePage() {
   const queryClient = useQueryClient()
   const { getResponseEditToken, getResponsePlanId, removeResponseToken } = useResponseEditTokens()
 
+  const [isDirty, setIsDirty] = useState(false)
+  const [resetFormFn, setResetFormFn] = useState<(() => void) | null>(null)
+
+  const handleDirtyChange = useCallback((dirty: boolean) => {
+    setIsDirty(dirty)
+  }, [])
+
+  const handleResetRef = useCallback((reset: () => void) => {
+    setResetFormFn(() => reset)
+  }, [])
+
   const editToken = getResponseEditToken(responseId)
   const storedPlanId = getResponsePlanId(responseId)
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['response-with-plan', responseId],
-    queryFn: async () => {
-      if (!editToken) {
-        throw new Error('No edit permission for this response')
-      }
-
-      if (!storedPlanId) {
-        throw new Error('Could not find the plan for this response. Please navigate from the plan page.')
-      }
-
-      const res = await client.plans[':id'].$get({
-        param: { id: storedPlanId },
-      })
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch plan')
-      }
-
-      const plan = await res.json()
-      const matchingResponse = plan.responses?.find(r => r.id === responseId)
-
-      if (!matchingResponse) {
-        throw new Error('Response not found in plan')
-      }
-
-      return { plan, response: matchingResponse }
-    },
-    enabled: !!editToken,
+    ...responseKeys.withPlan(responseId, storedPlanId ?? ''),
+    enabled: !!editToken && !!storedPlanId,
   })
 
   const updateResponseMutation = useMutation({
@@ -76,18 +98,53 @@ function EditResponsePage() {
 
       return res.json()
     },
+    onMutate: async (newData) => {
+      if (!data?.plan.id) return
+
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
+
+      // Snapshot the previous value
+      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey)
+
+      // Optimistically update the plan's responses
+      queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          responses: old.responses?.map((r) =>
+            r.id === responseId
+              ? { ...r, name: newData.name, availableDates: newData.availableDates }
+              : r
+          ),
+        }
+      })
+
+      return { previousPlan }
+    },
     onSuccess: async () => {
+      // Reset form to clear dirty state before navigating
+      resetFormFn?.()
       toast.success('Your availability has been updated!')
       if (data?.plan.id) {
-        await queryClient.refetchQueries({ queryKey: ['plan', data.plan.id] })
         navigate({
           to: ROUTES.PLAN,
           params: { planId: data.plan.id },
         })
       }
     },
-    onError: (err: Error) => {
+    onError: (err: Error, _newData, context) => {
+      // Rollback on error
+      if (data?.plan.id && context?.previousPlan) {
+        queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, context.previousPlan)
+      }
       toast.error(err.message || 'Failed to update availability')
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      if (data?.plan.id) {
+        queryClient.invalidateQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
+      }
     },
   })
 
@@ -112,7 +169,7 @@ function EditResponsePage() {
       removeResponseToken(responseId)
       toast.success('Your response has been deleted')
       if (data?.plan.id) {
-        await queryClient.refetchQueries({ queryKey: ['plan', data.plan.id] })
+        await queryClient.refetchQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
         navigate({
           to: ROUTES.PLAN,
           params: { planId: data.plan.id },
@@ -172,7 +229,7 @@ function EditResponsePage() {
 
   return (
     <div className="min-h-screen bg-background-dark">
-      <SimpleHeader />
+      <AppHeader planId={plan.id} responses={plan.responses} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
         <div className="w-fit mx-auto flex flex-col gap-12">
@@ -185,20 +242,9 @@ function EditResponsePage() {
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
               Edit Your Availability
             </h1>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarDays className="size-5" />
-                <p className="text-lg font-normal leading-normal">{plan.name}</p>
-              </div>
-              <Button
-                onClick={handleDelete}
-                variant="ghost"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                disabled={deleteResponseMutation.isPending}
-              >
-                <Trash2 className="mr-2 size-5" />
-                Delete Response
-              </Button>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CalendarDays className="size-5" />
+              <p className="text-lg font-normal leading-normal">{plan.name}</p>
             </div>
           </motion.div>
 
@@ -215,10 +261,20 @@ function EditResponsePage() {
               initialDates={response.availableDates}
               onSubmit={handleSubmit}
               isSubmitting={updateResponseMutation.isPending}
+              isEditMode
+              onDirtyChange={handleDirtyChange}
+              onResetRef={handleResetRef}
+              onDelete={handleDelete}
+              isDeleting={deleteResponseMutation.isPending}
             />
           </motion.div>
         </div>
       </main>
+
+      <NavigationBlocker
+        shouldBlock={isDirty}
+        onDiscard={() => resetFormFn?.()}
+      />
     </div>
   )
 }

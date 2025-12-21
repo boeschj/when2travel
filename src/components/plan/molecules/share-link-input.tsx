@@ -58,6 +58,7 @@ export function ShareLinkInput({
           value={link}
           readOnly
           tabIndex={-1}
+          hideHelperText
         />
         <div className="pr-2">
           <Button

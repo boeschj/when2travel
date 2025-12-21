@@ -40,24 +40,6 @@ function MarkAvailabilityPage() {
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
-      // Validate name
-      if (!data.name || data.name.trim().length === 0) {
-        throw new Error('Name is required')
-      }
-
-      if (data.name.trim().length < 2) {
-        throw new Error('Name must be at least 2 characters')
-      }
-
-      if (data.name.trim().length > 50) {
-        throw new Error('Name must be less than 50 characters')
-      }
-
-      // Validate dates
-      if (!data.availableDates || data.availableDates.length === 0) {
-        throw new Error('Please select at least one available date')
-      }
-
       const res = await $createResponse({
         json: {
           planId,
@@ -89,27 +71,6 @@ function MarkAvailabilityPage() {
   })
 
   const handleSubmit = (data: ResponseFormData) => {
-    // Additional client-side validation with toast feedback
-    if (!data.name || data.name.trim().length === 0) {
-      toast.error('Name is required')
-      return
-    }
-
-    if (data.name.trim().length < 2) {
-      toast.error('Name must be at least 2 characters')
-      return
-    }
-
-    if (data.name.trim().length > 50) {
-      toast.error('Name must be less than 50 characters')
-      return
-    }
-
-    if (!data.availableDates || data.availableDates.length === 0) {
-      toast.error('Please select at least one available date')
-      return
-    }
-
     createResponseMutation.mutate(data)
   }
 
@@ -135,7 +96,7 @@ function MarkAvailabilityPage() {
       <CreatePlanHeader />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
-        <div className="w-full max-w-6xl flex flex-col gap-12">
+        <div className="w-fit mx-auto flex flex-col gap-12">
           <FormSection className="space-y-2">
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
               When can you go?

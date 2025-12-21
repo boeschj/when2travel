@@ -27,13 +27,13 @@ export const deletePlanSchema = z.object({
 export const createResponseSchema = z.object({
   planId: z.string().min(1, 'Plan ID is required'),
   name: z.string().min(1, 'Name is required').max(64, 'Name must be 64 characters or less'),
-  availableDates: z.array(isoDateString).min(1, 'At least one date must be selected'),
+  availableDates: z.array(isoDateString),
 })
 
 export const updateResponseSchema = z.object({
   editToken: z.string().min(1, 'Edit token is required'),
   name: z.string().min(1).max(64).optional(),
-  availableDates: z.array(isoDateString).min(1).optional(),
+  availableDates: z.array(isoDateString).optional(),
 })
 
 export const deleteResponseSchema = z.object({

@@ -10,8 +10,7 @@ import {
   addMonths,
   subMonths,
   isWithinInterval,
-  parseISO,
-  isSameDay
+  parseISO
 } from 'date-fns'
 import { CalendarHeader } from '../molecules/calendar-header'
 import type { PlanResponse } from '@/lib/types'
@@ -152,7 +151,6 @@ export function ResultsCalendar({
     }
 
     const { state } = getDateInfo(date)
-    const isToday = isSameDay(date, new Date())
     const isDisabled = state === 'disabled' || !isSameMonth(date, month)
     const dateStr = format(date, 'yyyy-MM-dd')
 
@@ -181,8 +179,7 @@ export function ResultsCalendar({
                 ? isRespondentAvailable
                   ? 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]'
                   : 'bg-border text-foreground opacity-50'
-                : getHeatmapStyles(state),
-              isToday && 'ring-2 ring-offset-2 ring-offset-background ring-foreground'
+                : getHeatmapStyles(state)
             )}
           >
             {date.getDate()}

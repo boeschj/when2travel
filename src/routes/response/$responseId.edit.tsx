@@ -174,29 +174,29 @@ function EditResponsePage() {
     <div className="min-h-screen bg-background-dark">
       <SimpleHeader />
 
-      <main className="grow flex flex-col items-center w-full px-4 py-8 sm:px-6 lg:px-8">
-        <div className="w-full max-w-[960px] flex flex-col gap-8 pb-24">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
+        <div className="w-fit mx-auto flex flex-col gap-12">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col gap-2 p-2"
+            className="space-y-2"
           >
-            <h1 className="text-white text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em]">
+            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
               Edit Your Availability
             </h1>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-text-secondary">
-                <CalendarDays className="w-5 h-5" />
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CalendarDays className="size-5" />
                 <p className="text-lg font-normal leading-normal">{plan.name}</p>
               </div>
               <Button
                 onClick={handleDelete}
                 variant="ghost"
-                className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 disabled={deleteResponseMutation.isPending}
               >
-                <Trash2 className="mr-2 w-5 h-5" />
+                <Trash2 className="mr-2 size-5" />
                 Delete Response
               </Button>
             </div>

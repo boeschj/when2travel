@@ -28,3 +28,11 @@ export interface ResponseFormData {
   name: string
   availableDates: string[]
 }
+
+export interface DateRange {
+  id: string
+  start: string
+  end: string
+  days: number
+  status: 'available' | 'unavailable'
+}

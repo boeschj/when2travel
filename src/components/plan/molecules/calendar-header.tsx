@@ -24,39 +24,32 @@ export function CalendarHeader({
 }: CalendarHeaderProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
+      {showNavigation && showPrevious && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onPreviousMonth}
+          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+      )}
+
       <h2 className="text-foreground text-2xl font-bold">
         {format(date, 'MMMM yyyy')}
       </h2>
 
-      {showNavigation && (
-        <div className="flex gap-1">
-          {showPrevious ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onPreviousMonth}
-              className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="size-5" />
-            </Button>
-          ) : (
-            <div className="w-8" />
-          )}
-          {showNext ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onNextMonth}
-              className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-              aria-label="Next month"
-            >
-              <ChevronRight className="size-5" />
-            </Button>
-          ) : (
-            <div className="w-8" />
-          )}
-        </div>
+      {showNavigation && showNext && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onNextMonth}
+          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+          aria-label="Next month"
+        >
+          <ChevronRight className="size-5" />
+        </Button>
       )}
     </div>
   )

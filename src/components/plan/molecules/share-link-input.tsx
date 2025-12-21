@@ -20,22 +20,6 @@ export function ShareLinkInput({
   const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!planName
 
   const handleCopy = async () => {
-    // Try native share API first if available
-    if (navigator.share && planName) {
-      try {
-        await navigator.share({
-          title: `Join our trip: ${planName}`,
-          text: `I'm organizing a trip and would love to know when you're available!`,
-          url: link,
-        })
-        return
-      } catch (err) {
-        // User cancelled or share failed, fall back to clipboard
-        if ((err as Error).name === 'AbortError') return
-      }
-    }
-
-    // Fall back to clipboard copy
     try {
       await navigator.clipboard.writeText(link)
       setCopied(true)
@@ -46,35 +30,65 @@ export function ShareLinkInput({
     }
   }
 
+  const handleShare = async () => {
+    if (!navigator.share || !planName) return
+
+    try {
+      await navigator.share({
+        title: `Join our trip: ${planName}`,
+        text: `I'm organizing a trip and would love to know when you're available!`,
+        url: link,
+      })
+    } catch (err) {
+      // User cancelled share - silently ignore
+      if ((err as Error).name !== 'AbortError') {
+        toast.error('Failed to share')
+      }
+    }
+  }
+
   return (
-    <div
-      className={cn(
-        'relative flex w-full items-center rounded-2xl bg-input shadow-inner h-14 group',
-        className
-      )}
-    >
-      <Input
-        className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-text"
-        value={link}
-        readOnly
-        onClick={(e) => e.currentTarget.select()}
-      />
-      <div className="pr-2">
-        <Button
-          onClick={handleCopy}
-          size="sm"
-          className="h-10 px-5 rounded-xl"
-        >
-          {copied ? (
-            <Check className={cn('size-4 transition-transform', copied && 'scale-110')} />
-          ) : canShare ? (
-            <Share2 className="size-4" />
-          ) : (
-            <Copy className="size-4" />
-          )}
-          {copied ? 'Copied!' : canShare ? 'Share' : 'Copy'}
-        </Button>
+    <div className={cn('flex w-full items-center gap-2', className)}>
+      <div
+        className="relative flex flex-1 items-center rounded-2xl bg-input shadow-inner h-14 group cursor-pointer"
+        onClick={handleCopy}
+      >
+        <Input
+          className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-pointer pointer-events-none"
+          value={link}
+          readOnly
+          tabIndex={-1}
+        />
+        <div className="pr-2">
+          <Button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleCopy()
+            }}
+            size="sm"
+            variant={canShare ? 'secondary' : 'default'}
+            className="h-10 px-5 rounded-xl"
+          >
+            {copied ? (
+              <Check className="size-4 scale-110" />
+            ) : (
+              <Copy className="size-4" />
+            )}
+            {copied ? 'Copied!' : 'Copy'}
+          </Button>
+        </div>
       </div>
+
+      {canShare && (
+        <Button
+          onClick={handleShare}
+          size="sm"
+          className="h-14 px-5 rounded-2xl shrink-0"
+        >
+          <Share2 className="size-4" />
+          Share
+        </Button>
+      )}
     </div>
   )
 }

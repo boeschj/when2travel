@@ -1,26 +1,32 @@
-import { Calendar } from 'lucide-react'
+import { Wordmark } from '@/components/shared/wordmark'
 
 export function Footer() {
   return (
-    <footer className="relative z-10 w-full bg-background border-t border-border py-12">
+    <footer className="relative z-10 w-full bg-black border-t border-white/5 py-16">
       <div className="max-w-[1120px] mx-auto px-5">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2 text-foreground opacity-80">
-            <Calendar className="text-primary" />
-            <span className="font-bold tracking-tight">PlanTheTrip</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-8">
-            <a className="text-muted-foreground hover:text-primary transition-colors text-sm" href="#">
+          <Wordmark asLink={false} className="opacity-80 hover:opacity-100 transition-opacity" />
+          <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-8">
+            <a
+              className="text-gray-400 hover:text-primary transition-colors text-sm font-medium"
+              href="/privacy"
+            >
               Privacy Policy
             </a>
-            <a className="text-muted-foreground hover:text-primary transition-colors text-sm" href="#">
+            <a
+              className="text-gray-400 hover:text-primary transition-colors text-sm font-medium"
+              href="/terms"
+            >
               Terms of Service
             </a>
-            <a className="text-muted-foreground hover:text-primary transition-colors text-sm" href="#">
+            <a
+              className="text-gray-400 hover:text-primary transition-colors text-sm font-medium"
+              href="mailto:support@planthetrip.com"
+            >
               Contact Support
             </a>
-          </div>
-          <p className="text-muted-foreground text-sm">© 2025 PlanTheTrip</p>
+          </nav>
+          <p className="text-gray-400 text-sm">© 2025 Orion Labs</p>
         </div>
       </div>
     </footer>

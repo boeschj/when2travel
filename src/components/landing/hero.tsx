@@ -1,44 +1,105 @@
 import { Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { ArrowRight, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
-import { HeatmapCalendar } from './heatmap-calendar'
+import { useMostRecentPlanId } from '@/hooks/use-auth-tokens'
+
+const HERO_IMAGES: string[] = [
+  '/images/hero-1.jpg',
+  '/images/hero-2.jpg',
+  '/images/hero-3.jpg',
+]
 
 export function Hero() {
+  const mostRecentPlanId = useMostRecentPlanId()
+
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center pt-10 pb-20 px-5 md:px-10">
-      <div className="flex flex-col max-w-[1120px] w-full gap-16 lg:gap-24">
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-          <motion.div
-            className="flex flex-col gap-6 flex-1 text-center lg:text-left z-20"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+    <section aria-labelledby="hero-heading" className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] w-full overflow-hidden pt-20">
+      {/* Background image panes */}
+      {HERO_IMAGES.length > 0 && (
+        <div
+          className="absolute inset-0 z-0 grid grid-cols-1 md:grid-cols-3 gap-1 select-none pointer-events-none"
+          aria-hidden="true"
+        >
+          {HERO_IMAGES.map((src, i) => (
+            <div
+              key={i}
+              className={`relative h-full w-full overflow-hidden ${i === 0 ? '' : 'hidden md:block'}`}
+            >
+              <img
+                alt=""
+                src={src}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Gradient overlays - darkens toward bottom and center for text readability */}
+      <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-black/40 z-0" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
+
+      <div className="flex flex-col max-w-[1120px] w-full gap-12 relative z-20 px-5 md:px-10">
+        <motion.div
+          className="flex flex-col items-center justify-center gap-8 text-center max-w-[900px] mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Headline */}
+          <h1
+            id="hero-heading"
+            className="text-white text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter"
           >
-            <h1 className="text-foreground text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tighter">
-              Get plans{' '}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-green-200">
-                out of the group chat
-              </span>
-            </h1>
-            <h2 className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-[600px] mx-auto lg:mx-0">
-              Set a timeframe, send a link. Everyone picks when they're free. Instantly see dates that work for everyone ✈️
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-              <Link to={ROUTES.CREATE}>
-                <Button size="lg" className="min-w-[160px]">
-                  Make a plan
+            Get the trip out of{' '}
+            <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-green-200">
+              the group chat.
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-gray-300 text-lg md:text-2xl font-medium leading-relaxed max-w-[680px] mx-auto">
+            The fastest way to find dates that work for everyone. Create a plan,
+            share the link, see when everyone's free.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-5 pt-6 w-full justify-center">
+            {mostRecentPlanId ? (
+              <Link to={ROUTES.PLAN} params={{ planId: mostRecentPlanId }} className="w-full sm:w-auto">
+                <Button
+                  size="xl"
+                  className="w-full sm:w-auto shadow-[0_0_40px_rgba(70,236,19,0.3)] hover:shadow-[0_0_60px_rgba(70,236,19,0.5)] hover:-translate-y-1"
+                >
+                  <span>View Plan</span>
+                  <ArrowRight className="size-5" aria-hidden="true" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                See example
-              </Button>
-            </div>
-          </motion.div>
-
-          <HeatmapCalendar />
-        </div>
+            ) : (
+              <Link to={ROUTES.CREATE} className="w-full sm:w-auto">
+                <Button
+                  size="xl"
+                  className="w-full sm:w-auto shadow-[0_0_40px_rgba(70,236,19,0.3)] hover:shadow-[0_0_60px_rgba(70,236,19,0.5)] hover:-translate-y-1"
+                >
+                  <span>Start Planning</span>
+                  <ArrowRight className="size-5" aria-hidden="true" />
+                </Button>
+              </Link>
+            )}
+            <Button
+              variant="outline"
+              size="xl"
+              className="w-full sm:w-auto bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/30 backdrop-blur-sm text-white hover:-translate-y-1"
+            >
+              <PlayCircle className="size-5 text-primary" aria-hidden="true" />
+              <span>See Demo</span>
+            </Button>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </section>
   )
 }

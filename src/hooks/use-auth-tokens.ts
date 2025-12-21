@@ -88,3 +88,23 @@ export function useCurrentUserResponse(responses: PlanResponse[] | undefined) {
     return responses.find((r) => r.id in responseTokens) ?? null
   }, [responses, responseTokens])
 }
+
+// Hook to get the most recent plan ID the user has interacted with
+export function useMostRecentPlanId(): string | null {
+  const planTokens = useAtomValue(planEditTokensAtom)
+  const responsePlanIds = useAtomValue(responsePlanIdsAtom)
+
+  return useMemo(() => {
+    // Get plan IDs from created plans
+    const createdPlanIds = Object.keys(planTokens)
+
+    // Get plan IDs from responses
+    const respondedPlanIds = Object.values(responsePlanIds)
+
+    // Combine and dedupe - prefer created plans first, then responded
+    const allPlanIds = [...new Set([...createdPlanIds, ...respondedPlanIds])]
+
+    // Return the first one (most recently added to the object)
+    return allPlanIds[0] ?? null
+  }, [planTokens, responsePlanIds])
+}

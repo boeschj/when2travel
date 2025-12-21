@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router'
-import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
 
@@ -7,13 +6,7 @@ export function CtaSection() {
   return (
     <section aria-labelledby="cta-heading" className="relative z-10 w-full py-20 px-5 bg-black">
       <div className="max-w-[1120px] mx-auto">
-        <motion.div
-          className="bg-gradient-to-b from-[#152211] to-black rounded-[3rem] p-10 md:p-24 text-center border border-white/5 relative overflow-hidden group"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="bg-gradient-to-b from-[#152211] to-black rounded-[3rem] p-10 md:p-24 text-center border border-white/5 relative overflow-hidden group">
           {/* Glow effects */}
           <div
             className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/20 transition-colors duration-700"
@@ -32,7 +25,7 @@ export function CtaSection() {
               >
                 Don't let the trip die in the group chat.
               </h2>
-              <p className="text-gray-400 text-xl font-medium max-w-[600px] text-center">
+              <p className="text-white/80 text-xl font-medium max-w-[600px] text-center">
                 25% of group trips never happen because no one can agree on dates.
                 Be the one who makes it happen.
               </p>
@@ -46,7 +39,7 @@ export function CtaSection() {
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

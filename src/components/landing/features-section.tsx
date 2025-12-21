@@ -1,4 +1,3 @@
-import { motion } from 'motion/react'
 import type { LucideIcon } from 'lucide-react'
 import { PenLine, Share2, CalendarSearch, Rocket } from 'lucide-react'
 
@@ -54,38 +53,28 @@ export function FeaturesSection() {
       <div className="max-w-[1200px] mx-auto px-5 md:px-10">
         <div className="flex flex-col gap-20">
           {/* Section header */}
-          <motion.div
-            className="flex flex-col gap-6 text-center items-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="flex flex-col gap-6 text-center items-center">
             <h2
               id="features-heading"
               className="text-4xl md:text-6xl font-black tracking-tight max-w-[800px] leading-tight text-white"
             >
               Plan your trip in five minutes.
             </h2>
-            <p className="text-gray-400 text-xl max-w-[640px] font-medium">
+            <p className="text-white/80 text-xl max-w-[640px] font-medium">
               We help you nail down the dates so you can actually book the thing.
             </p>
-          </motion.div>
+          </div>
 
           {/* Feature cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
             {FEATURES.map((feature, i) => {
               const Icon = feature.icon
               return (
-                <motion.article
+                <article
                   key={i}
                   className={`flex flex-col gap-6 rounded-[2rem] border border-white/5 bg-[#0f1a0b] p-8 hover:bg-[#14210f] hover:border-primary/20 transition-all duration-300 group hover:-translate-y-2 relative overflow-hidden h-full ${
                     feature.staggered ? 'lg:mt-8' : ''
                   }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.1 }}
                 >
                   {/* Step number watermark */}
                   <div
@@ -110,11 +99,11 @@ export function FeaturesSection() {
                     <h3 className="text-white text-xl font-bold">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-white/70 text-sm leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
-                </motion.article>
+                </article>
               )
             })}
           </div>

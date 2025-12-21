@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router'
-import { motion } from 'motion/react'
 import { ArrowRight, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
@@ -19,19 +18,18 @@ export function Hero() {
       {/* Background image panes */}
       {HERO_IMAGES.length > 0 && (
         <div
-          className="absolute inset-0 z-0 grid grid-cols-1 md:grid-cols-3 gap-1 select-none pointer-events-none"
+          className="absolute inset-0 z-0 hidden md:grid grid-cols-3 gap-1 select-none pointer-events-none"
           aria-hidden="true"
         >
           {HERO_IMAGES.map((src, i) => (
             <div
               key={i}
-              className={`relative h-full w-full overflow-hidden bg-gray-900 ${i === 0 ? '' : 'hidden md:block'}`}
+              className="relative h-full w-full overflow-hidden bg-gray-900"
             >
               <img
                 alt=""
                 src={src}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                className="w-full h-full object-cover"
+                className="h-full w-auto max-w-none object-cover object-center"
               />
             </div>
           ))}
@@ -39,16 +37,12 @@ export function Hero() {
       )}
 
       {/* Gradient overlays - darkens toward bottom and center for text readability */}
-      <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/60 z-0" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
+      <div className="absolute inset-0 bg-black md:hidden z-0" aria-hidden="true" />
+      <div className="absolute inset-0 hidden md:block bg-linear-to-t from-black via-black/70 to-black/60 z-0" aria-hidden="true" />
+      <div className="absolute inset-0 hidden md:block bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
 
       <div className="flex flex-col max-w-[1120px] w-full gap-12 relative z-20 px-5 md:px-10">
-        <motion.div
-          className="flex flex-col items-center justify-center gap-8 text-center max-w-[900px] mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="flex flex-col items-center justify-center gap-8 text-center max-w-[900px] mx-auto">
           {/* Headline */}
           <h1
             id="hero-heading"
@@ -62,7 +56,7 @@ export function Hero() {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-gray-300 text-lg md:text-2xl font-medium leading-relaxed max-w-[680px] mx-auto">
+          <p className="text-white/90 text-lg md:text-2xl font-medium leading-relaxed max-w-[680px] mx-auto">
             The fastest way to find dates that work for everyone. Create a plan,
             share the link, see when everyone's free.
           </p>
@@ -99,7 +93,7 @@ export function Hero() {
               <span>See Demo</span>
             </Button>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

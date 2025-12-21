@@ -20,6 +20,7 @@ interface ResultsCalendarProps {
   endRange: string
   responses: Pick<PlanResponse, 'id' | 'name' | 'availableDates'>[]
   selectedRespondentId?: string | null
+  selectedRespondentColor?: string | null
   onDateClick?: (date: Date) => void
   showNavigation?: boolean
   className?: string
@@ -74,6 +75,7 @@ export function ResultsCalendar({
   endRange,
   responses,
   selectedRespondentId,
+  selectedRespondentColor,
   onDateClick,
   showNavigation = true,
   className,
@@ -147,7 +149,7 @@ export function ResultsCalendar({
 
   const renderDateCell = (date: Date | null, month: Date, index: number) => {
     if (!date) {
-      return <div key={`empty-${format(month, 'yyyy-MM')}-${index}`} className="w-full aspect-square" />
+      return <div key={`empty-${format(month, 'yyyy-MM')}-${index}`} className="min-h-11" />
     }
 
     const { state } = getDateInfo(date)
@@ -157,6 +159,15 @@ export function ResultsCalendar({
     const isRespondentAvailable = selectedRespondentDates?.has(dateStr) ?? false
     const hasRespondentFilter = selectedRespondentDates !== null
 
+    // Custom style for selected respondent's available dates
+    const respondentAvailableStyle = hasRespondentFilter && isRespondentAvailable && selectedRespondentColor
+      ? {
+          backgroundColor: selectedRespondentColor,
+          color: '#1a1a1a',
+          boxShadow: `0 0 10px ${selectedRespondentColor}66`
+        }
+      : undefined
+
     return (
       <button
         key={dateStr}
@@ -164,7 +175,7 @@ export function ResultsCalendar({
         disabled={isDisabled}
         onClick={() => handleDateClick(date)}
         className={cn(
-          'group relative h-10 w-full flex items-center justify-center',
+          'group relative min-h-11 flex items-center justify-center',
           isDisabled && 'cursor-not-allowed'
         )}
         aria-label={`${date.getDate()} - ${state}`}
@@ -177,10 +188,12 @@ export function ResultsCalendar({
               'size-9 rounded-full flex items-center justify-center transition-all text-sm',
               hasRespondentFilter
                 ? isRespondentAvailable
-                  ? 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]'
+                  ? !selectedRespondentColor && 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]'
                   : 'bg-border text-foreground opacity-50'
-                : getHeatmapStyles(state)
+                : getHeatmapStyles(state),
+              hasRespondentFilter && isRespondentAvailable && selectedRespondentColor && 'font-bold'
             )}
+            style={respondentAvailableStyle}
           >
             {date.getDate()}
           </div>
@@ -195,8 +208,8 @@ export function ResultsCalendar({
     const isLastMonth = monthIndex === months.length - 1
 
     return (
-      <div key={format(month, 'yyyy-MM')} className={cn('flex flex-col gap-4', numberOfMonths === 1 ? 'w-full' : 'min-w-[280px] flex-1')}>
-        <div className="flex items-center justify-between mb-4">
+      <div key={format(month, 'yyyy-MM')} className="flex flex-col gap-4">
+        <div className="flex items-center w-[308px]">
           <CalendarHeader
             date={month}
             onPreviousMonth={goToPreviousMonth}
@@ -207,18 +220,16 @@ export function ResultsCalendar({
           />
         </div>
 
-        <div className="grid grid-cols-7 gap-1 md:gap-2 w-full max-w-[700px] mx-auto">
+        <div className="grid grid-cols-7 gap-0.5">
           {WEEKDAYS.map(day => (
             <div
               key={day}
-              className="text-text-secondary text-xs md:text-sm font-semibold uppercase tracking-widest text-center py-1"
+              className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center min-h-11 flex items-center justify-center"
             >
               {day}
             </div>
           ))}
-        </div>
 
-        <div className="grid grid-cols-7 gap-1 md:gap-2 w-full max-w-[700px] mx-auto">
           {monthDays.map((date, index) => renderDateCell(date, month, index))}
         </div>
       </div>
@@ -226,13 +237,7 @@ export function ResultsCalendar({
   }
 
   return (
-    <div
-      className={cn(
-        'w-full gap-8',
-        numberOfMonths === 1 ? 'flex flex-col' : 'flex flex-wrap justify-center',
-        className
-      )}
-    >
+    <div className={cn('flex flex-wrap justify-center gap-8', className)}>
       {months.map((month, index) => renderMonth(month, index))}
     </div>
   )

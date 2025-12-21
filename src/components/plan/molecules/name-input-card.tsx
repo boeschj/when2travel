@@ -58,9 +58,14 @@ export function NameInputCard({
     <Card className="p-5 sm:p-6">
       <div className="flex flex-col xl:flex-row gap-4 xl:items-end justify-between">
         <label className="flex flex-col gap-3 flex-grow xl:max-w-[480px]">
-          <span className="text-foreground text-lg font-bold leading-normal">
-            What should we call you?
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-foreground text-lg font-bold leading-normal">
+              What should we call you?
+            </span>
+            {error && (
+              <span className="text-sm font-medium text-destructive">{error}</span>
+            )}
+          </div>
           <div className="relative">
             <div className="absolute left-4 top-0 h-12 sm:h-14 flex items-center pointer-events-none z-10">
               <User className={`size-5 transition-colors ${error ? 'text-destructive' : 'text-muted-foreground'}`} />
@@ -72,12 +77,12 @@ export function NameInputCard({
               onChange={(e) => onNameChange(e.target.value)}
               placeholder="Enter your name"
               state={error ? 'error' : 'default'}
-              helperText={error}
+              hideHelperText
               className="h-12 sm:h-14 pl-12 text-base font-medium"
             />
           </div>
         </label>
-        <div className="flex gap-3 w-full xl:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
           {isEditMode && !hasChanges && !isSubmitting ? (
             <Tooltip>
               <TooltipTrigger asChild>

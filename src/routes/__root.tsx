@@ -2,6 +2,7 @@ import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
+import { QueryBoundary } from '@/components/shared/query-boundary'
 
 const STALE_TIME_MS = 1000 * 60 * 5
 
@@ -23,7 +24,9 @@ export const Route = createRootRoute({
         enableSystem={false}
         disableTransitionOnChange
       >
-        <Outlet />
+        <QueryBoundary>
+          <Outlet />
+        </QueryBoundary>
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>

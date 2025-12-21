@@ -6,9 +6,9 @@ import { ROUTES } from '@/lib/routes'
 import { useMostRecentPlanId } from '@/hooks/use-auth-tokens'
 
 const HERO_IMAGES: string[] = [
-  '/images/hero-1.jpg',
-  '/images/hero-2.jpg',
-  '/images/hero-3.jpg',
+  '/images/hero-1.webp',
+  '/images/hero-2.webp',
+  '/images/hero-3.webp',
 ]
 
 export function Hero() {
@@ -25,11 +25,12 @@ export function Hero() {
           {HERO_IMAGES.map((src, i) => (
             <div
               key={i}
-              className={`relative h-full w-full overflow-hidden ${i === 0 ? '' : 'hidden md:block'}`}
+              className={`relative h-full w-full overflow-hidden bg-gray-900 ${i === 0 ? '' : 'hidden md:block'}`}
             >
               <img
                 alt=""
                 src={src}
+                loading={i === 0 ? 'eager' : 'lazy'}
                 className="w-full h-full object-cover"
               />
             </div>

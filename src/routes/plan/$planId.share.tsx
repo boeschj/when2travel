@@ -7,6 +7,8 @@ import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
+import { LoadingScreen } from '@/components/shared/loading-screen'
+import { ErrorScreen } from '@/components/shared/error-screen'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 
 export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
@@ -17,7 +19,7 @@ function ShareTripPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
 
-  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading, error, refetch } = useQuery(planKeys.detail(planId))
   const userResponse = useCurrentUserResponse(plan?.responses)
 
   const handleAddAvailability = () => {
@@ -37,18 +39,16 @@ function ShareTripPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background-dark flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (error || !plan) {
     return (
-      <div className="min-h-screen bg-background-dark flex items-center justify-center">
-        <div className="text-red-500">Failed to load plan</div>
-      </div>
+      <ErrorScreen
+        title="Failed to load plan"
+        message="We couldn't find this plan. It may have been deleted or the link is incorrect."
+        onRetry={() => refetch()}
+      />
     )
   }
 
@@ -59,21 +59,21 @@ function ShareTripPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background-dark">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
       <AppHeader planId={planId} responses={plan.responses} variant="transparent" />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 lg:p-16 w-full">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-2xl mx-auto flex flex-col gap-10"
+          className="w-fit mx-auto flex flex-col gap-10"
         >
           <div className="flex flex-col gap-2 w-full text-center">
-            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
+            <h1 className="text-foreground text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
               Your plan: {plan.name} is ready to share!
             </h1>
-            <p className="text-text-secondary text-lg md:text-xl font-bold">
+            <p className="text-muted-foreground text-lg md:text-xl font-bold">
               for {plan.numDays} days {formatDateRange()}
             </p>
           </div>

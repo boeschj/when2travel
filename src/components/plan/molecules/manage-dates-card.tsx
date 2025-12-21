@@ -29,9 +29,9 @@ export function ManageDatesCard({
           <h3 className="text-foreground text-lg font-bold">Manage Dates</h3>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground">
                 <Info className="size-4" />
-              </button>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-[200px]">
               All dates are unavailable by default. Select dates on the calendar to mark them as available.

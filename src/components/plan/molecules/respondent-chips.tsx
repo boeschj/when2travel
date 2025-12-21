@@ -19,30 +19,61 @@ interface RespondentChipsProps {
   bestWindow: CompatibleDateRange | null
   selectedRespondentId: string | null
   onRespondentClick: (respondentId: string | null) => void
+  startRange: string
+  endRange: string
+  numDays: number
   className?: string
 }
 
 function getRespondentStatus(
   respondent: Respondent,
-  bestWindow: CompatibleDateRange | null
+  bestWindow: CompatibleDateRange | null,
+  startRange: string,
+  endRange: string,
+  numDays: number
 ): RespondentStatus {
-  if (!bestWindow) return 'unavailable'
+  // When there's a best window, check availability within that window
+  if (bestWindow) {
+    const windowStart = parseISO(bestWindow.start)
+    const windowEnd = parseISO(bestWindow.end)
+    const windowDates = eachDayOfInterval({ start: windowStart, end: windowEnd })
 
-  const windowStart = parseISO(bestWindow.start)
-  const windowEnd = parseISO(bestWindow.end)
-  const windowDates = eachDayOfInterval({ start: windowStart, end: windowEnd })
+    const availableDatesSet = new Set(respondent.availableDates)
+    let availableDaysInWindow = 0
+
+    for (const date of windowDates) {
+      if (availableDatesSet.has(format(date, 'yyyy-MM-dd'))) {
+        availableDaysInWindow++
+      }
+    }
+
+    if (availableDaysInWindow === windowDates.length) return 'available'
+    if (availableDaysInWindow > 0) return 'partial'
+    return 'unavailable'
+  }
+
+  // When there's no best window, check if this respondent has enough consecutive days
+  // to potentially support the trip length - helps identify who's blocking
+  const allDates = eachDayOfInterval({
+    start: parseISO(startRange),
+    end: parseISO(endRange)
+  })
 
   const availableDatesSet = new Set(respondent.availableDates)
-  let availableDaysInWindow = 0
+  let maxConsecutive = 0
+  let currentConsecutive = 0
 
-  for (const date of windowDates) {
+  for (const date of allDates) {
     if (availableDatesSet.has(format(date, 'yyyy-MM-dd'))) {
-      availableDaysInWindow++
+      currentConsecutive++
+      maxConsecutive = Math.max(maxConsecutive, currentConsecutive)
+    } else {
+      currentConsecutive = 0
     }
   }
 
-  if (availableDaysInWindow === windowDates.length) return 'available'
-  if (availableDaysInWindow > 0) return 'partial'
+  if (maxConsecutive >= numDays) return 'available'
+  if (maxConsecutive > 0) return 'partial'
   return 'unavailable'
 }
 
@@ -66,6 +97,9 @@ export function RespondentChips({
   bestWindow,
   selectedRespondentId,
   onRespondentClick,
+  startRange,
+  endRange,
+  numDays,
   className
 }: RespondentChipsProps) {
   const handleChipClick = (respondentId: string) => {
@@ -115,10 +149,9 @@ export function RespondentChips({
 
       <div className="flex gap-2 overflow-x-auto p-1 -m-1 scrollbar-hide">
         {respondents.map(respondent => {
-          const status = getRespondentStatus(respondent, bestWindow)
+          const status = getRespondentStatus(respondent, bestWindow, startRange, endRange, numDays)
           const config = statusConfig[status]
           const isSelected = selectedRespondentId === respondent.id
-          const StatusIcon = config.Icon
 
           return (
             <Button
@@ -138,12 +171,13 @@ export function RespondentChips({
               <UserAvatar
                 name={respondent.name}
                 isCurrentUser={respondent.isCurrentUser}
+                colorSeed={respondent.id}
                 className="size-6"
               />
               <span className="text-sm font-medium text-white whitespace-nowrap">
                 {respondent.isCurrentUser ? 'You' : respondent.name}
               </span>
-              <StatusIcon className={cn('w-4 h-4', config.iconClass)} />
+              <config.Icon className={cn('w-4 h-4', config.iconClass)} />
             </Button>
           )
         })}

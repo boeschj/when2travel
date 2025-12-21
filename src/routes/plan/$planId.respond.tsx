@@ -6,25 +6,34 @@ import { ResponseForm } from '@/components/plan/organisms/response-form'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
+import { z } from 'zod'
 import { BackgroundEffects } from '@/components/create-plan'
 import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormSection } from '@/components/create-plan/form-layout'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
+import { LoadingScreen } from '@/components/shared/loading-screen'
+import { ErrorScreen } from '@/components/shared/error-screen'
 import { format, parseISO } from 'date-fns'
 
 const $createResponse = client.responses.$post
 
+const searchSchema = z.object({
+  returnUrl: z.string().optional(),
+})
+
 export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
   component: MarkAvailabilityPage,
+  validateSearch: searchSchema,
 })
 
 function MarkAvailabilityPage() {
   const { planId } = Route.useParams()
+  const { returnUrl } = Route.useSearch()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
 
-  const { data: plan, isLoading: isPlanLoading } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading: isPlanLoading, error, refetch } = useQuery(planKeys.detail(planId))
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
@@ -48,10 +57,14 @@ function MarkAvailabilityPage() {
       await queryClient.refetchQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
-      navigate({
-        to: ROUTES.PLAN,
-        params: { planId },
-      })
+      if (returnUrl) {
+        navigate({ to: returnUrl })
+      } else {
+        navigate({
+          to: ROUTES.PLAN,
+          params: { planId },
+        })
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to submit availability. Please try again.')
@@ -62,19 +75,17 @@ function MarkAvailabilityPage() {
     createResponseMutation.mutate(data)
   }
 
-  if (isPlanLoading || !plan) {
+  if (isPlanLoading) {
+    return <LoadingScreen />
+  }
+
+  if (error || !plan) {
     return (
-      <PageLayout>
-        <BackgroundEffects />
-        <AppHeader />
-        <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
-          <div className="w-full max-w-6xl flex flex-col gap-12">
-            <div className="flex items-center justify-center py-20">
-              <div className="text-foreground">Loading...</div>
-            </div>
-          </div>
-        </main>
-      </PageLayout>
+      <ErrorScreen
+        title="Failed to load plan"
+        message="We couldn't find this plan. It may have been deleted or the link is incorrect."
+        onRetry={() => refetch()}
+      />
     )
   }
 
@@ -84,7 +95,7 @@ function MarkAvailabilityPage() {
       <AppHeader planId={planId} responses={plan.responses} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
-        <div className="w-fit mx-auto flex flex-col gap-12">
+        <div className="w-full md:w-fit mx-auto flex flex-col gap-12">
           <FormSection className="space-y-2">
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
               When can you go?

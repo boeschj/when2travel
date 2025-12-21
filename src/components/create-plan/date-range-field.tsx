@@ -160,8 +160,8 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
     : format(currentDate, 'MMMM yyyy')
 
   return (
-    <Card className="p-6 md:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <Card className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-6 h-6 text-primary" />
           <h3 className="text-lg font-bold text-foreground">Possible Dates</h3>
@@ -178,7 +178,7 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
         </Tabs>
       </div>
 
-      <div className="flex gap-4 mb-6 items-end">
+      <div className="flex gap-4 mb-4 items-end">
         <DateInput
           label="Start Date"
           value={displayStartDate}
@@ -191,7 +191,7 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
         />
       </div>
 
-      <div className="flex items-center w-full max-w-[308px] mx-auto mb-4">
+      <div className="flex items-center w-full max-w-[308px] mx-auto mb-2">
         <Button
           type="button"
           variant="ghost"
@@ -213,7 +213,7 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
         </Button>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center min-h-[318px]">
         {viewMode === 'day' && (
           <DayView
             currentDate={currentDate}

@@ -53,6 +53,7 @@ function isErrorResponse(value: unknown): value is ErrorResponse {
 
 const searchSchema = z.object({
   planId: z.string().optional(),
+  returnUrl: z.string().optional(),
 })
 
 export const Route = createFileRoute(ROUTES.CREATE)({
@@ -61,7 +62,7 @@ export const Route = createFileRoute(ROUTES.CREATE)({
 })
 
 function NavigationBlocker({ shouldBlock, onDiscard }: { shouldBlock: boolean; onDiscard: () => void }) {
-  const { proceed, reset, status } = useBlocker({ condition: shouldBlock })
+  const { proceed, reset, status } = useBlocker({ shouldBlockFn: () => shouldBlock, withResolver: true })
 
   const handleDiscard = () => {
     onDiscard()
@@ -89,9 +90,9 @@ function NavigationBlocker({ shouldBlock, onDiscard }: { shouldBlock: boolean; o
 function CreatePlanPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { planId } = Route.useSearch()
   const { savePlanEditToken, getPlanEditToken } = usePlanEditTokens()
 
+  const { planId, returnUrl } = Route.useSearch()
   const isEditMode = Boolean(planId)
   const editToken = planId ? getPlanEditToken(planId) : null
 
@@ -169,6 +170,10 @@ function CreatePlanPage() {
       // Reset form baseline to current values so isDirty becomes false
       form.reset(form.state.values)
       toast.success('Plan updated successfully!')
+      // Defer navigation to next tick so form state updates first
+      if (returnUrl) {
+        setTimeout(() => navigate({ to: returnUrl }), 0)
+      }
     },
     onError: (error: Error, _newData, context) => {
       // Rollback to the previous value on error

@@ -4,7 +4,21 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
-const router = createRouter({ routeTree, scrollRestoration: true })
+// Disable browser's native scroll restoration
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual'
+}
+
+const router = createRouter({
+  routeTree,
+  // Disable TanStack Router's scroll restoration - we always want to scroll to top
+  scrollRestoration: false,
+})
+
+// Always scroll to top on any navigation
+router.subscribe('onResolved', () => {
+  window.scrollTo(0, 0)
+})
 
 declare module '@tanstack/react-router' {
   interface Register {

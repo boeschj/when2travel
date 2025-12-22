@@ -6,14 +6,14 @@ interface UserAvatarProps {
   isCurrentUser?: boolean
   className?: string
   /** Unique identifier for consistent color generation (e.g., response ID) */
-  colorSeed?: string
+  colorId?: string
 }
 
 export function UserAvatar({
   name,
   isCurrentUser: _isCurrentUser,
   className,
-  colorSeed
+  colorId
 }: UserAvatarProps) {
   const initials = name
     .split(' ')
@@ -22,8 +22,8 @@ export function UserAvatar({
     .toUpperCase()
     .slice(0, 2)
 
-  // Generate color from seed (or fall back to name)
-  const generatedColor = colorSeed ? generateColorFromString(colorSeed) : null
+  // Generate color from ID when provided
+  const generatedColor = colorId ? generateColorFromString(colorId) : null
 
   return (
     <Avatar className={cn('size-8', className)}>

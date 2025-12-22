@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
+// import { Progress } from '@/components/ui/progress'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -160,15 +160,15 @@ export function TripCard({ plan, role }: TripCardProps) {
           <span className="text-sm">{formatDateRange()}</span>
         </div>
 
-        {/* Response Progress */}
-        <div className="space-y-2">
+        {/* Response Progress - temporarily disabled */}
+        {/* <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
               {responseCount} Responded
             </span>
           </div>
           <Progress value={responseCount > 0 ? 100 : 0} />
-        </div>
+        </div> */}
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-2">

@@ -31,19 +31,19 @@ export function CompatibleDatesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background-dark border-primary/40 max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
+        <DialogHeader className="shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <ThumbsUp className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-full bg-surface-darker flex items-center justify-center">
+              <ThumbsUp className="w-5 h-5 text-text-secondary" />
             </div>
-            <DialogTitle className="text-2xl font-bold text-white">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               Compatible Date Ranges
             </DialogTitle>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2 -mr-2">
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2 -mr-2">
           {compatibleRanges.map((range, index) => {
             const startDate = parseISO(range.start)
             const endDate = parseISO(range.end)
@@ -57,10 +57,10 @@ export function CompatibleDatesModal({
                 variant="outline"
                 onClick={() => handleRangeClick(range)}
                 className={cn(
-                  'w-full h-auto p-5 rounded-3xl border-2 transition-all text-left flex flex-col items-stretch hover:scale-100',
+                  'w-full h-auto p-4 rounded-lg border transition-all text-left flex flex-col items-stretch hover:scale-100',
                   isBestMatch
                     ? 'bg-primary/10 border-primary hover:bg-primary/15 hover:border-primary'
-                    : 'bg-surface-darker border-primary/40 hover:bg-surface-darker hover:border-primary/60'
+                    : 'bg-surface-darker border-border hover:bg-surface-darker hover:border-text-secondary'
                 )}
               >
                 <div className="flex items-center justify-between w-full">

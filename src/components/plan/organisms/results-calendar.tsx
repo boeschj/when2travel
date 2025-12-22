@@ -13,6 +13,7 @@ import {
   parseISO
 } from 'date-fns'
 import { CalendarHeader } from '../molecules/calendar-header'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import type { PlanResponse } from '@/lib/types'
 
 interface ResultsCalendarProps {
@@ -29,29 +30,39 @@ interface ResultsCalendarProps {
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
 
-type HeatmapState = 'full' | 'high' | 'partial' | 'none' | 'disabled'
+// Discrete heatmap color stops for maximum visual distinction
+// Each stop represents a percentage threshold and its color
+const HEATMAP_STOPS = [
+  { threshold: 1.0,  color: '#46ec13', textColor: '#0a1208', glow: true },  // 100% - Bright lime green
+  { threshold: 0.8,  color: '#a3e635', textColor: '#0a1208', glow: false }, // 80%+ - Lime/yellow
+  { threshold: 0.6,  color: '#facc15', textColor: '#0a1208', glow: false }, // 60%+ - Yellow
+  { threshold: 0.4,  color: '#f97316', textColor: '#0a1208', glow: false }, // 40%+ - Orange
+  { threshold: 0.2,  color: '#ea580c', textColor: '#ffffff', glow: false }, // 20%+ - Dark orange
+  { threshold: 0.0,  color: '#ef4444', textColor: '#ffffff', glow: false }, // 0%+ - Red
+] as const
 
-function getHeatmapState(availableCount: number, totalCount: number): HeatmapState {
-  if (totalCount === 0) return 'none'
-  const percentage = (availableCount / totalCount) * 100
-  if (percentage === 100) return 'full'
-  if (percentage >= 50) return 'high'
-  if (percentage > 0) return 'partial'
-  return 'none'
-}
+/**
+ * Gets the heatmap color based on availability percentage.
+ * Uses discrete color stops for clear visual distinction.
+ */
+function getHeatmapColor(availableCount: number, totalCount: number): {
+  backgroundColor: string
+  color: string
+  glow: string | null
+} {
+  if (totalCount === 0) {
+    return { backgroundColor: 'var(--color-border)', color: 'var(--color-foreground)', glow: null }
+  }
 
-function getHeatmapStyles(state: HeatmapState): string {
-  switch (state) {
-    case 'full':
-      return 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]'
-    case 'high':
-      return 'bg-status-yellow text-black font-bold'
-    case 'partial':
-      return 'bg-status-red text-white font-bold'
-    case 'none':
-      return 'bg-border text-foreground'
-    case 'disabled':
-      return ''
+  const percentage = availableCount / totalCount
+
+  // Find the appropriate color stop
+  const stop = HEATMAP_STOPS.find(s => percentage >= s.threshold) ?? HEATMAP_STOPS[HEATMAP_STOPS.length - 1]
+
+  return {
+    backgroundColor: stop.color,
+    color: stop.textColor,
+    glow: stop.glow ? 'rgba(70, 236, 19, 0.4)' : null
   }
 }
 
@@ -127,15 +138,15 @@ export function ResultsCalendar({
   const getDateInfo = useCallback((date: Date) => {
     const isOutsideRange = !isWithinInterval(date, dateRange)
     if (isOutsideRange) {
-      return { availableCount: 0, totalCount: responses.length, state: 'disabled' as HeatmapState }
+      return { availableCount: 0, totalCount: responses.length, isDisabled: true, heatmapColor: null }
     }
 
     const dateStr = format(date, 'yyyy-MM-dd')
     const availableCount = dateAvailabilityMap.get(dateStr) ?? 0
     const totalCount = responses.length
-    const state = getHeatmapState(availableCount, totalCount)
+    const heatmapColor = getHeatmapColor(availableCount, totalCount)
 
-    return { availableCount, totalCount, state }
+    return { availableCount, totalCount, isDisabled: false, heatmapColor }
   }, [dateRange, dateAvailabilityMap, responses.length])
 
   const handleDateClick = (date: Date) => {
@@ -152,53 +163,75 @@ export function ResultsCalendar({
       return <div key={`empty-${format(month, 'yyyy-MM')}-${index}`} className="min-h-11" />
     }
 
-    const { state } = getDateInfo(date)
-    const isDisabled = state === 'disabled' || !isSameMonth(date, month)
+    const { isDisabled, heatmapColor, availableCount, totalCount } = getDateInfo(date)
+    const isOutOfMonth = !isSameMonth(date, month)
     const dateStr = format(date, 'yyyy-MM-dd')
 
     const isRespondentAvailable = selectedRespondentDates?.has(dateStr) ?? false
     const hasRespondentFilter = selectedRespondentDates !== null
 
-    // Custom style for selected respondent's available dates
-    const respondentAvailableStyle = hasRespondentFilter && isRespondentAvailable && selectedRespondentColor
-      ? {
+    // Determine the style to apply
+    let cellStyle: React.CSSProperties | undefined
+    let cellClassName = 'size-9 rounded-full flex items-center justify-center transition-all text-sm font-bold'
+
+    if (hasRespondentFilter) {
+      if (isRespondentAvailable && selectedRespondentColor) {
+        cellStyle = {
           backgroundColor: selectedRespondentColor,
           color: '#1a1a1a',
           boxShadow: `0 0 10px ${selectedRespondentColor}66`
         }
-      : undefined
+      } else if (isRespondentAvailable) {
+        cellClassName = cn(cellClassName, 'bg-primary text-primary-foreground shadow-[0_0_10px_rgba(70,236,19,0.4)]')
+      } else {
+        cellClassName = cn(cellClassName, 'bg-border text-foreground opacity-50')
+      }
+    } else if (heatmapColor) {
+      cellStyle = {
+        backgroundColor: heatmapColor.backgroundColor,
+        color: heatmapColor.color,
+        boxShadow: heatmapColor.glow ? `0 0 10px ${heatmapColor.glow}` : undefined
+      }
+    }
 
-    return (
+    const isClickable = !isDisabled && !isOutOfMonth
+    const tooltipText = `${availableCount}/${totalCount} people available`
+
+    const button = (
       <button
         key={dateStr}
         type="button"
-        disabled={isDisabled}
+        disabled={!isClickable}
         onClick={() => handleDateClick(date)}
         className={cn(
           'group relative min-h-11 flex items-center justify-center',
-          isDisabled && 'cursor-not-allowed'
+          isClickable ? 'cursor-pointer' : 'cursor-not-allowed'
         )}
-        aria-label={`${date.getDate()} - ${state}`}
+        aria-label={`${format(date, 'MMMM d')} - ${tooltipText}`}
       >
-        {isDisabled ? (
+        {!isClickable ? (
           <span className="text-muted-foreground/50">{date.getDate()}</span>
         ) : (
-          <div
-            className={cn(
-              'size-9 rounded-full flex items-center justify-center transition-all text-sm',
-              hasRespondentFilter
-                ? isRespondentAvailable
-                  ? !selectedRespondentColor && 'bg-primary text-primary-foreground font-bold shadow-[0_0_10px_rgba(70,236,19,0.4)]'
-                  : 'bg-border text-foreground opacity-50'
-                : getHeatmapStyles(state),
-              hasRespondentFilter && isRespondentAvailable && selectedRespondentColor && 'font-bold'
-            )}
-            style={respondentAvailableStyle}
-          >
+          <div className={cellClassName} style={cellStyle}>
             {date.getDate()}
           </div>
         )}
       </button>
+    )
+
+    if (!isClickable) {
+      return button
+    }
+
+    return (
+      <Tooltip key={dateStr}>
+        <TooltipTrigger asChild>
+          {button}
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="font-semibold">{tooltipText}</p>
+        </TooltipContent>
+      </Tooltip>
     )
   }
 

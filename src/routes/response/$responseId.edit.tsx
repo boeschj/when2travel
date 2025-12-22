@@ -232,7 +232,7 @@ function EditResponsePage() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
-      <AppHeader planId={plan.id} responses={plan.responses} />
+      <AppHeader planId={plan.id} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
         <div className="w-full md:w-fit mx-auto flex flex-col gap-12">

@@ -299,7 +299,7 @@ function CreatePlanPage() {
     <form onSubmit={handleSubmit}>
       <PageLayout>
         <BackgroundEffects />
-        <AppHeader planId={planId} responses={existingPlan?.responses} />
+        <AppHeader planId={planId} />
 
         <FormContainer>
           <FormSection className="space-y-6 text-center md:text-left">

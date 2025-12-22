@@ -92,7 +92,7 @@ function MarkAvailabilityPage() {
   return (
     <PageLayout>
       <BackgroundEffects />
-      <AppHeader planId={planId} responses={plan.responses} />
+      <AppHeader planId={planId} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
         <div className="w-full md:w-fit mx-auto flex flex-col gap-12">

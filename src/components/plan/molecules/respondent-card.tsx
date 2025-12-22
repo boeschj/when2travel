@@ -3,7 +3,7 @@ import { UserAvatar } from '../atoms/user-avatar'
 import { format, parseISO } from 'date-fns'
 import type { PlanResponse } from '@/lib/types'
 
-interface RespondentCardProps extends Pick<PlanResponse, 'name'> {
+interface RespondentCardProps extends Pick<PlanResponse, 'name' | 'id'> {
   availableDates?: PlanResponse['availableDates']
   isCurrentUser?: boolean
   onClick?: () => void
@@ -11,6 +11,7 @@ interface RespondentCardProps extends Pick<PlanResponse, 'name'> {
 }
 
 export function RespondentCard({
+  id,
   name,
   availableDates = [],
   isCurrentUser,
@@ -42,7 +43,7 @@ export function RespondentCard({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      <UserAvatar name={name} isCurrentUser={isCurrentUser} />
+      <UserAvatar name={name} isCurrentUser={isCurrentUser} colorId={id} />
       <div className="flex flex-col flex-1 min-w-0">
         <span
           className={cn(

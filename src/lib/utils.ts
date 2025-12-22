@@ -86,24 +86,35 @@ function hashString(str: string): number {
 }
 
 /**
+ * Pre-defined palette of visually distinct colors that avoid calendar heatmap colors.
+ * These are carefully selected to be distinguishable from each other.
+ * Avoids: red (0-30), orange/yellow (30-70), green (70-160)
+ */
+const AVATAR_PALETTE = [
+  { h: 195, s: 75, l: 55 }, // Cyan
+  { h: 260, s: 65, l: 60 }, // Purple
+  { h: 320, s: 70, l: 58 }, // Pink
+  { h: 210, s: 70, l: 55 }, // Blue
+  { h: 285, s: 60, l: 58 }, // Violet
+  { h: 340, s: 65, l: 60 }, // Rose
+  { h: 180, s: 60, l: 50 }, // Teal
+  { h: 235, s: 65, l: 62 }, // Indigo
+  { h: 300, s: 55, l: 60 }, // Magenta
+  { h: 170, s: 55, l: 48 }, // Dark Cyan
+  { h: 245, s: 70, l: 65 }, // Light Purple
+  { h: 330, s: 60, l: 55 }, // Deep Pink
+] as const
+
+/**
  * Generates a consistent HSL color from a string.
- * Avoids hues that conflict with calendar heatmap colors:
- * - Red (0-30): used for low availability
- * - Yellow/Orange (30-70): used for partial availability
- * - Green (70-160): used for full availability (primary brand color)
- *
- * Safe range: 170-350 (cyan, blue, purple, magenta, pink)
+ * Uses a pre-defined palette for maximum visual distinction between users.
  */
 export function generateColorFromString(str: string): { hsl: string; hex: string } {
   const hash = hashString(str)
 
-  // Use only safe hue range: 170-350 (180 degrees of options)
-  // This avoids red, orange, yellow, and green
-  const hue = 170 + (hash % 180)
-
-  // Fixed saturation and lightness for consistency
-  const saturation = 65 + (hash % 20) // 65-85%
-  const lightness = 55 + (hash % 15) // 55-70%
+  // Pick from pre-defined palette for maximum distinction
+  const paletteIndex = hash % AVATAR_PALETTE.length
+  const { h: hue, s: saturation, l: lightness } = AVATAR_PALETTE[paletteIndex]
 
   const hsl = `hsl(${hue}, ${saturation}%, ${lightness}%)`
 

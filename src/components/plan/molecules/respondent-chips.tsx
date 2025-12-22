@@ -171,7 +171,7 @@ export function RespondentChips({
               <UserAvatar
                 name={respondent.name}
                 isCurrentUser={respondent.isCurrentUser}
-                colorSeed={respondent.id}
+                colorId={respondent.id}
                 className="size-6"
               />
               <span className="text-sm font-medium text-white whitespace-nowrap">

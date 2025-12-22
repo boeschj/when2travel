@@ -38,11 +38,11 @@ export function DateAvailabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background-dark border-primary/40 max-w-sm">
+      <DialogContent className="bg-surface-dark border-border max-w-sm">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-full bg-surface-darker flex items-center justify-center">
+              <CalendarDays className="w-5 h-5 text-text-secondary" />
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-white">
@@ -72,16 +72,17 @@ export function DateAvailabilityDialog({
               <div
                 key={participant.id}
                 className={cn(
-                  'flex items-center justify-between p-3 rounded-xl',
+                  'flex items-center justify-between p-3 rounded-lg',
                   participant.isCurrentUser
                     ? 'bg-primary/10 border border-primary/40'
-                    : 'bg-surface-dark border border-border'
+                    : 'bg-surface-darker border border-border'
                 )}
               >
                 <div className="flex items-center gap-3">
                   <UserAvatar
                     name={participant.name}
                     isCurrentUser={participant.isCurrentUser}
+                    colorId={participant.id}
                   />
                   <span className={cn(
                     'font-medium',

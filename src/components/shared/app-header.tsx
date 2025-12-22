@@ -9,12 +9,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useNavigation, type NavItem } from '@/hooks/use-navigation'
-import type { PlanResponse } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 interface AppHeaderProps {
   planId?: string
-  responses?: PlanResponse[]
   variant?: 'default' | 'transparent'
   className?: string
 }
@@ -23,7 +21,6 @@ function NavLink({ item }: { item: NavItem }) {
   const linkProps = {
     to: item.to,
     ...(item.params && { params: item.params }),
-    ...(item.search && { search: item.search }),
   }
 
   return (
@@ -45,7 +42,6 @@ function NavButton({ item }: { item: NavItem }) {
   const linkProps = {
     to: item.to,
     ...(item.params && { params: item.params }),
-    ...(item.search && { search: item.search }),
   }
 
   return (
@@ -106,7 +102,6 @@ function MobileNav({ items }: { items: NavItem[] }) {
             const linkProps = {
               to: item.to,
               ...(item.params && { params: item.params }),
-              ...(item.search && { search: item.search }),
             }
 
             return (
@@ -133,11 +128,10 @@ function MobileNav({ items }: { items: NavItem[] }) {
 
 export function AppHeader({
   planId,
-  responses,
   variant = 'default',
   className,
 }: AppHeaderProps) {
-  const navItems = useNavigation({ planId, responses })
+  const navItems = useNavigation({ planId })
 
   const outerStyles =
     variant === 'default'

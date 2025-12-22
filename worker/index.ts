@@ -31,41 +31,71 @@ const api = new Hono<{ Bindings: Bindings }>()
 
 app.route('/api', api)
 
-// Dynamic OG meta tags for share pages
-app.get('/plan/:planId/share', async (c) => {
+async function injectOgMetadata(
+  c: { env: Bindings; req: { url: string } },
+  planId: string,
+  variant: 'respond' | 'results'
+) {
+  const db = drizzle(c.env.planthetrip_d1)
+  const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+
+  // Get the base HTML from assets
+  const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
+  let html = await assetResponse.text()
+
+  if (plan) {
+    const startDate = new Date(plan.startRange)
+    const endDate = new Date(plan.endRange)
+    const formatStart = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const formatEnd = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+    const title = variant === 'respond'
+      ? `Join ${plan.name} on PlanTheTrip`
+      : `${plan.name} - PlanTheTrip`
+
+    const description = variant === 'respond'
+      ? `Add your availability for the ${plan.numDays}-day trip between ${formatStart} and ${formatEnd}!`
+      : `View availability for the ${plan.numDays}-day trip between ${formatStart} and ${formatEnd}.`
+
+    const url = variant === 'respond'
+      ? `https://justplanthetrip.com/plan/${planId}/respond`
+      : `https://justplanthetrip.com/plan/${planId}`
+
+    // Replace OG meta tags
+    html = html
+      .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+      .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
+      .replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`)
+      .replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`)
+      .replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${title}" />`)
+      .replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${description}" />`)
+      .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
+  }
+
+  return html
+}
+
+app.get('/plan/:planId/respond', async (c) => {
   const planId = c.req.param('planId')
 
   try {
-    const db = drizzle(c.env.planthetrip_d1)
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
-
-    // Get the base HTML from assets
-    const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
-    let html = await assetResponse.text()
-
-    if (plan) {
-      const title = `Join ${plan.name} on PlanTheTrip`
-      const startDate = new Date(plan.startRange)
-      const endDate = new Date(plan.endRange)
-      const formatStart = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      const formatEnd = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      const description = `Add your availability for the ${plan.numDays}-day trip between ${formatStart} and ${formatEnd}!`
-      const url = `https://justplanthetrip.com/plan/${planId}/share`
-
-      // Replace OG meta tags
-      html = html
-        .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
-        .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
-        .replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`)
-        .replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`)
-        .replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${title}" />`)
-        .replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${description}" />`)
-        .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
-    }
-
+    const html = await injectOgMetadata(c, planId, 'respond')
     return c.html(html)
   } catch {
-    // On error, fall back to serving the default HTML
+    const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
+    return new Response(assetResponse.body, {
+      headers: { 'Content-Type': 'text/html' }
+    })
+  }
+})
+
+app.get('/plan/:planId', async (c) => {
+  const planId = c.req.param('planId')
+
+  try {
+    const html = await injectOgMetadata(c, planId, 'results')
+    return c.html(html)
+  } catch {
     const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
     return new Response(assetResponse.body, {
       headers: { 'Content-Type': 'text/html' }

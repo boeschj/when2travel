@@ -3,5 +3,6 @@
 
 export type Bindings = {
   planthetrip_d1: D1Database
+  ASSETS: Fetcher
 }
 

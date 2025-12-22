@@ -17,3 +17,9 @@ export const responsePlanIdsAtom = atomWithStorage<Record<string, string>>(
   'responsePlanIds',
   {}
 )
+
+// Trips page banner dismissed state
+export const tripsBannerDismissedAtom = atomWithStorage<boolean>(
+  'tripsBannerDismissed',
+  false
+)

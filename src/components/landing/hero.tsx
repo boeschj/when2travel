@@ -64,12 +64,12 @@ export function Hero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-5 pt-6 w-full justify-center">
             {mostRecentPlanId ? (
-              <Link to={ROUTES.PLAN} params={{ planId: mostRecentPlanId }} className="w-full sm:w-auto">
+              <Link to={ROUTES.TRIPS} className="w-full sm:w-auto">
                 <Button
                   size="xl"
                   className="w-full sm:w-auto shadow-[0_0_40px_rgba(70,236,19,0.3)] hover:shadow-[0_0_60px_rgba(70,236,19,0.5)] hover:-translate-y-1"
                 >
-                  <span>View Plan</span>
+                  <span>My Trips</span>
                   <ArrowRight className="size-5" aria-hidden="true" />
                 </Button>
               </Link>

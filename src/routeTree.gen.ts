@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TripsRouteImport } from './routes/trips'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as ResponseResponseIdEditRouteImport } from './routes/response/$r
 import { Route as PlanPlanIdShareRouteImport } from './routes/plan/$planId.share'
 import { Route as PlanPlanIdRespondRouteImport } from './routes/plan/$planId.respond'
 
+const TripsRoute = TripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlaygroundRoute = PlaygroundRouteImport.update({
   id: '/playground',
   path: '/playground',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/playground': typeof PlaygroundRoute
+  '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/playground'
+    | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/playground'
+    | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/playground'
+    | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
   PlaygroundRoute: typeof PlaygroundRoute
+  TripsRoute: typeof TripsRoute
   PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
   PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
   ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute
@@ -123,6 +136,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trips': {
+      id: '/trips'
+      path: '/trips'
+      fullPath: '/trips'
+      preLoaderRoute: typeof TripsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/playground': {
       id: '/playground'
       path: '/playground'
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
   PlaygroundRoute: PlaygroundRoute,
+  TripsRoute: TripsRoute,
   PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
   PlanPlanIdShareRoute: PlanPlanIdShareRoute,
   ResponseResponseIdEditRoute: ResponseResponseIdEditRoute,

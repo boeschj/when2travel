@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
 import { QueryBoundary } from '@/components/shared/query-boundary'
+import { NotFound } from '@/components/shared/not-found'
 
 const STALE_TIME_MS = 1000 * 60 * 5
 
@@ -31,4 +32,5 @@ export const Route = createRootRoute({
       </ThemeProvider>
     </QueryClientProvider>
   ),
+  notFoundComponent: NotFound,
 })

@@ -23,7 +23,14 @@ export function usePlanEditTokens() {
     return planId in tokens
   }
 
-  return { tokens, savePlanEditToken, getPlanEditToken, isCreator }
+  const removePlanEditToken = (planId: string) => {
+    setTokens((prev) => {
+      const { [planId]: _, ...rest } = prev
+      return rest
+    })
+  }
+
+  return { tokens, savePlanEditToken, getPlanEditToken, isCreator, removePlanEditToken }
 }
 
 // Hook to manage response edit tokens

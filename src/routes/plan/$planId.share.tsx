@@ -19,7 +19,7 @@ function ShareTripPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
 
-  const { data: plan, isLoading, error, refetch } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
   const userResponse = useCurrentUserResponse(plan?.responses)
 
   const handleAddAvailability = () => {
@@ -45,9 +45,9 @@ function ShareTripPage() {
   if (error || !plan) {
     return (
       <ErrorScreen
-        title="Failed to load plan"
-        message="We couldn't find this plan. It may have been deleted or the link is incorrect."
-        onRetry={() => refetch()}
+        variant="not-found"
+        title="Off the Map?"
+        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
       />
     )
   }

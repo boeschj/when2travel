@@ -24,13 +24,13 @@ export function Header() {
               How it works
             </Button>
             {mostRecentPlanId ? (
-              <Link to={ROUTES.PLAN} params={{ planId: mostRecentPlanId }}>
+              <Link to={ROUTES.TRIPS}>
                 <Button
                   size="sm"
                   variant="outline"
                   className="border-primary/50 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary"
                 >
-                  View Plan
+                  My Trips
                 </Button>
               </Link>
             ) : (

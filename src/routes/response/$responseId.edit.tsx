@@ -185,14 +185,8 @@ function EditResponsePage() {
       if (data?.plan.id) {
         await queryClient.refetchQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
       }
-      if (returnUrl) {
-        navigate({ to: returnUrl })
-      } else if (data?.plan.id) {
-        navigate({
-          to: ROUTES.PLAN,
-          params: { planId: data.plan.id },
-        })
-      }
+      // After leaving a trip, go to trips page (or returnUrl if provided)
+      navigate({ to: returnUrl ?? ROUTES.TRIPS })
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to delete response')

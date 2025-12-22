@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { useRouterState } from '@tanstack/react-router'
+import { useAtomValue } from 'jotai'
 import { usePlanAuthContext, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
+import { planEditTokensAtom, responsePlanIdsAtom } from '@/lib/atoms'
 import { ROUTES } from '@/lib/routes'
 import type { PlanResponse } from '@/lib/types'
 
@@ -27,6 +29,11 @@ export function useNavigation({ planId, responses }: NavigationContext) {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
+  // Check if user has any trips stored
+  const planTokens = useAtomValue(planEditTokensAtom)
+  const responsePlanIds = useAtomValue(responsePlanIdsAtom)
+  const hasTrips = Object.keys(planTokens).length > 0 || Object.keys(responsePlanIds).length > 0
+
   return useMemo(() => {
     const items: NavItem[] = []
 
@@ -41,7 +48,17 @@ export function useNavigation({ planId, responses }: NavigationContext) {
       return currentPath === resolvedPath || currentPath === resolvedPath + '/'
     }
 
-    // No plan context - brand new user
+    // My Trips link - show when user has trips stored
+    if (hasTrips) {
+      items.push({
+        label: 'My Trips',
+        to: ROUTES.TRIPS,
+        isActive: isActive(ROUTES.TRIPS),
+        variant: 'link',
+      })
+    }
+
+    // No plan context - show create plan option
     if (!planId) {
       items.push({
         label: 'Create Plan',
@@ -104,5 +121,5 @@ export function useNavigation({ planId, responses }: NavigationContext) {
     })
 
     return items
-  }, [planId, isCreator, currentUserResponse, currentPath])
+  }, [planId, isCreator, currentUserResponse, currentPath, hasTrips])
 }

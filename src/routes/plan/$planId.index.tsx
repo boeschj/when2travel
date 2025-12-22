@@ -70,7 +70,7 @@ function EmptyState({
 
   return (
     <>
-      <div className="rounded-2xl bg-surface-dark border border-border p-8 text-center">
+      <div className="rounded-2xl bg-surface-dark border border-border p-6 md:p-8 text-center">
         <div className="max-w-md mx-auto">
           <div className="w-16 h-16 rounded-full bg-status-yellow/20 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-status-yellow" />
@@ -226,7 +226,7 @@ function PlanResultsPage() {
   const [popoverDate, setPopoverDate] = useState<Date | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 
-  const { data: plan, isLoading, error, refetch } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
 
   const deletePlanMutation = useMutation({
     mutationFn: async () => {
@@ -243,7 +243,7 @@ function PlanResultsPage() {
     },
     onSuccess: () => {
       toast.success('Plan deleted successfully')
-      navigate({ to: ROUTES.HOME })
+      navigate({ to: ROUTES.TRIPS })
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to delete plan')
@@ -311,9 +311,9 @@ function PlanResultsPage() {
   if (error || !plan) {
     return (
       <ErrorScreen
-        title="Failed to load plan"
-        message="We couldn't find this plan. It may have been deleted or the link is incorrect."
-        onRetry={() => refetch()}
+        variant="not-found"
+        title="Off the Map?"
+        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
       />
     )
   }
@@ -333,7 +333,7 @@ function PlanResultsPage() {
       <AppHeader planId={planId} responses={plan.responses} />
 
       <main className="flex-1 flex flex-col items-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
-        <div className="w-fit mx-auto flex flex-col gap-8">
+        <div className="w-fit max-w-full mx-auto flex flex-col gap-8">
           <PlanHeader
             name={plan.name}
             numDays={plan.numDays}

@@ -33,7 +33,7 @@ function MarkAvailabilityPage() {
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
 
-  const { data: plan, isLoading: isPlanLoading, error, refetch } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading: isPlanLoading, error } = useQuery(planKeys.detail(planId))
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
@@ -82,9 +82,9 @@ function MarkAvailabilityPage() {
   if (error || !plan) {
     return (
       <ErrorScreen
-        title="Failed to load plan"
-        message="We couldn't find this plan. It may have been deleted or the link is incorrect."
-        onRetry={() => refetch()}
+        variant="not-found"
+        title="Off the Map?"
+        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
       />
     )
   }

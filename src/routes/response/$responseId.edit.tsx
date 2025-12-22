@@ -262,6 +262,7 @@ function EditResponsePage() {
               numDays={plan.numDays}
               initialName={response.name}
               initialDates={response.availableDates}
+              existingNames={plan.responses?.filter((r) => r.id !== responseId).map((r) => r.name) ?? []}
               onSubmit={handleSubmit}
               isSubmitting={updateResponseMutation.isPending}
               isEditMode

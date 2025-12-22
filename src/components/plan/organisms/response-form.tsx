@@ -24,6 +24,7 @@ interface ResponseFormProps {
   numDays: number
   initialName?: string
   initialDates?: string[]
+  existingNames?: string[]
   onSubmit: (data: ResponseFormData) => void
   isSubmitting?: boolean
   isEditMode?: boolean
@@ -40,6 +41,7 @@ export function ResponseForm({
   numDays,
   initialName = '',
   initialDates = [],
+  existingNames = [],
   onSubmit,
   isSubmitting,
   isEditMode = false,
@@ -93,6 +95,10 @@ export function ResponseForm({
     if (!trimmed) return 'Name is required'
     if (trimmed.length < 2) return 'Name must be at least 2 characters'
     if (trimmed.length > 50) return 'Name must be less than 50 characters'
+    const isDuplicate = existingNames.some(
+      (existingName) => existingName.toLowerCase() === trimmed.toLowerCase()
+    )
+    if (isDuplicate) return 'Someone with this name has already responded'
     return null
   }
 

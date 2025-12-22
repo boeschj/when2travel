@@ -229,6 +229,11 @@ function PlanResultsPage() {
             variant="results"
             showMenu={isCreator}
             onEdit={handleEditPlan}
+            onShare={() => {
+              const shareUrl = `${window.location.origin}/plan/${planId}/respond`
+              navigator.clipboard.writeText(shareUrl)
+              toast.success('Link copied to clipboard')
+            }}
             deleteConfig={isCreator ? {
               onConfirm: () => deletePlanMutation.mutate(),
               isPending: deletePlanMutation.isPending,

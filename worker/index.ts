@@ -103,6 +103,10 @@ app.get('/plan/:planId', async (c) => {
   }
 })
 
+// Catch-all: forward to static assets
+// The assets layer handles SPA fallback via not_found_handling: "single-page-application"
+app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))
+
 app.notFound((c) => {
   return c.json({ error: 'Not Found' }, 404)
 })

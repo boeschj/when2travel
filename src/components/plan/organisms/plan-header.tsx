@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Calendar, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { Calendar, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 type HeaderVariant = 'default' | 'results'
@@ -36,6 +36,7 @@ interface PlanHeaderProps {
   /** Show the edit/delete dropdown menu (for plan creators) */
   showMenu?: boolean
   onEdit?: () => void
+  onShare?: () => void
   /** Deletion config - pass this to enable delete functionality */
   deleteConfig?: {
     onConfirm: () => void
@@ -54,6 +55,7 @@ export function PlanHeader({
   action,
   showMenu,
   onEdit,
+  onShare,
   deleteConfig,
   variant = 'default',
   className
@@ -78,6 +80,17 @@ export function PlanHeader({
           <h1 className="text-white text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">
             {name}
           </h1>
+          {onShare && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onShare}
+              aria-label="Share trip"
+              className="size-10 text-muted-foreground hover:text-foreground translate-y-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+            >
+              <Share2 className="size-5" />
+            </Button>
+          )}
           {showMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

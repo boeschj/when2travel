@@ -112,6 +112,7 @@ function MarkAvailabilityPage() {
               startRange={plan.startRange}
               endRange={plan.endRange}
               numDays={plan.numDays}
+              existingNames={plan.responses?.map((r) => r.name) ?? []}
               onSubmit={handleSubmit}
               isSubmitting={createResponseMutation.isPending}
             />

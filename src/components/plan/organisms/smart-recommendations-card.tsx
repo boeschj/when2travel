@@ -368,18 +368,24 @@ export function SmartRecommendationsCard({
               <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
                 Next Steps
               </h3>
-              <div className="flex flex-wrap justify-center gap-3">
+              <div className={cn('grid gap-3 grid-cols-1', isCreator && 'sm:grid-cols-2')}>
                 {isCreator && (
-                  <Button onClick={onEditPlan} size="lg">
+                  <Button
+                    onClick={onEditPlan}
+                    variant="outline"
+                    size="lg"
+                    className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                  >
                     Edit Plan
                   </Button>
                 )}
                 <Button
                   onClick={onEditAvailability}
-                  variant={isCreator ? 'outline' : 'default'}
+                  variant="outline"
                   size="lg"
+                  className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
                 >
-                  Edit My Availability
+                  Edit Availability
                 </Button>
               </div>
             </>

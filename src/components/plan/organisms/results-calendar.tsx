@@ -237,7 +237,7 @@ export function ResultsCalendar({
   }
 
   return (
-    <div className={cn('flex flex-wrap justify-center gap-8', className)}>
+    <div className={cn('flex flex-wrap justify-center gap-4 sm:gap-8', className)}>
       {months.map((month, index) => renderMonth(month, index))}
     </div>
   )

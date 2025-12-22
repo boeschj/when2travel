@@ -23,7 +23,7 @@ export function CalendarHeader({
   className
 }: CalendarHeaderProps) {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-2 w-full', className)}>
       {showNavigation && showPrevious && (
         <Button
           variant="ghost"
@@ -36,7 +36,7 @@ export function CalendarHeader({
         </Button>
       )}
 
-      <h2 className="text-foreground text-2xl font-bold">
+      <h2 className="text-foreground text-2xl font-bold flex-1 text-center">
         {format(date, 'MMMM yyyy')}
       </h2>
 

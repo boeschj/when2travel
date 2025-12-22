@@ -296,6 +296,7 @@ function PlanResultsPage() {
               participants={popoverParticipants}
               open={isPopoverOpen}
               onOpenChange={setIsPopoverOpen}
+              onSelectRespondent={handleRespondentClick}
             />
           </div>
 

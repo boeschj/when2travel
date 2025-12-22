@@ -24,6 +24,7 @@ interface DateAvailabilityDialogProps {
   participants: Participant[]
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSelectRespondent?: (respondentId: string) => void
 }
 
 export function DateAvailabilityDialog({
@@ -33,6 +34,7 @@ export function DateAvailabilityDialog({
   participants,
   open,
   onOpenChange,
+  onSelectRespondent,
 }: DateAvailabilityDialogProps) {
   const allAvailable = availableCount === totalCount
 
@@ -69,13 +71,17 @@ export function DateAvailabilityDialog({
 
           <div className="space-y-2">
             {participants.map(participant => (
-              <div
+              <button
                 key={participant.id}
+                type="button"
+                onClick={() => {
+                  onSelectRespondent?.(participant.id)
+                  onOpenChange(false)
+                }}
                 className={cn(
-                  'flex items-center justify-between p-3 rounded-lg',
-                  participant.isCurrentUser
-                    ? 'bg-primary/10 border border-primary/40'
-                    : 'bg-surface-darker border border-border'
+                  'flex items-center justify-between p-3 rounded-lg w-full text-left transition-colors',
+                  'bg-surface-darker border border-border',
+                  'hover:bg-surface-darker/80 hover:border-primary/40 cursor-pointer'
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -84,10 +90,7 @@ export function DateAvailabilityDialog({
                     isCurrentUser={participant.isCurrentUser}
                     colorId={participant.id}
                   />
-                  <span className={cn(
-                    'font-medium',
-                    participant.isCurrentUser ? 'text-primary' : 'text-white'
-                  )}>
+                  <span className="font-medium text-white">
                     {participant.isCurrentUser ? 'You' : participant.name}
                   </span>
                 </div>
@@ -102,7 +105,7 @@ export function DateAvailabilityDialog({
                     <X className="h-4 w-4" />
                   )}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

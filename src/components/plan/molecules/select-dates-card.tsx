@@ -53,14 +53,7 @@ export function SelectDatesCard({
   return (
     <Card className="p-4 w-fit">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center gap-3">
-          <h3 className="text-foreground text-lg font-bold">Set your availability</h3>
-          {hasSelectedDates && (
-            <Badge className={compatibleWindowsCount === 0 ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'}>
-              {compatibleWindowsCount} compatible {compatibleWindowsCount === 1 ? 'window' : 'windows'}
-            </Badge>
-          )}
-        </div>
+        <h3 className="text-foreground text-lg font-bold">Set your availability</h3>
 
         <div className="flex items-center gap-2">
           {/* Mobile: Manage Dates dropdown */}
@@ -163,9 +156,14 @@ export function SelectDatesCard({
         </div>
       </div>
 
-      <p className="text-muted-foreground text-sm -mt-2">
-        Tap once to start a range, tap again to complete it.
-      </p>
+      <div className="flex items-center justify-between gap-4 -mt-2">
+        <p className="text-muted-foreground text-sm">
+          Tap once to start a range, tap again to complete it.
+        </p>
+        <Badge className={`shrink-0 ${!hasSelectedDates ? 'invisible' : compatibleWindowsCount === 0 ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'}`}>
+          {compatibleWindowsCount} compatible {compatibleWindowsCount === 1 ? 'window' : 'windows'}
+        </Badge>
+      </div>
 
       <AvailabilityCalendar
         startRange={startRange}

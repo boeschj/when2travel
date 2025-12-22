@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { toast } from 'sonner'
+import { useShare } from '@/hooks/use-clipboard'
 import type { CompatibleDateRange } from '@/lib/types'
 
 interface BestWindowHeroProps {
@@ -36,6 +36,8 @@ export function BestWindowHero({
   onAddAvailability,
   className
 }: BestWindowHeroProps) {
+  const { share } = useShare()
+
   const startDate = parseISO(bestWindow.start)
   const endDate = parseISO(bestWindow.end)
   const formattedDateRange = `${format(startDate, 'MMM d')} – ${format(endDate, 'MMM d')}`
@@ -49,33 +51,12 @@ export function BestWindowHero({
     window.open(url, '_blank')
   }
 
-  const handleShare = async () => {
-    const url = window.location.href
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: planName,
-          text: `Check out our trip dates: ${formattedDateRange}`,
-          url
-        })
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          await copyToClipboard(url)
-        }
-      }
-    } else {
-      await copyToClipboard(url)
-    }
-  }
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success('Link copied to clipboard!')
-    } catch {
-      toast.error('Failed to copy link')
-    }
+  const handleShare = () => {
+    share({
+      title: planName,
+      text: `Check out our trip dates: ${formattedDateRange}`,
+      url: window.location.href
+    })
   }
 
   return (

@@ -138,7 +138,7 @@ export function AvailabilityCalendar({
   const goToNextMonth = () => setCurrentMonth(prev => addMonths(prev, 1))
 
   return (
-    <div className={cn('flex flex-wrap justify-center gap-8', className)}>
+    <div className={cn('flex flex-wrap justify-center gap-4 sm:gap-8', className)}>
       {months.map((month, index) => {
         const isFirst = index === 0
         const isLast = index === months.length - 1

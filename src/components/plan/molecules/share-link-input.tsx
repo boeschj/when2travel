@@ -1,9 +1,8 @@
-import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
 import { Copy, Check, Share2 } from 'lucide-react'
+import { useCopyToClipboard, useShare } from '@/hooks/use-clipboard'
 
 interface ShareLinkInputProps {
   link: string
@@ -16,36 +15,21 @@ export function ShareLinkInput({
   planName,
   className
 }: ShareLinkInputProps) {
-  const [copied, setCopied] = useState(false)
-  const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!planName
+  const { copied, copy } = useCopyToClipboard()
+  const { share, canShare } = useShare()
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(link)
-      setCopied(true)
-      toast.success('Link copied to clipboard!')
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      toast.error('Failed to copy link')
-    }
+  const handleCopy = () => copy(link)
+
+  const handleShare = () => {
+    if (!planName) return
+    share({
+      title: `Join our trip: ${planName}`,
+      text: `I'm organizing a trip and would love to know when you're available!`,
+      url: link,
+    })
   }
 
-  const handleShare = async () => {
-    if (!navigator.share || !planName) return
-
-    try {
-      await navigator.share({
-        title: `Join our trip: ${planName}`,
-        text: `I'm organizing a trip and would love to know when you're available!`,
-        url: link,
-      })
-    } catch (err) {
-      // User cancelled share - silently ignore
-      if ((err as Error).name !== 'AbortError') {
-        toast.error('Failed to share')
-      }
-    }
-  }
+  const showShareButton = canShare && !!planName
 
   return (
     <div className={cn('flex w-full items-center gap-2', className)}>
@@ -67,7 +51,7 @@ export function ShareLinkInput({
               handleCopy()
             }}
             size="sm"
-            variant={canShare ? 'secondary' : 'default'}
+            variant={showShareButton ? 'secondary' : 'default'}
             className="h-10 px-5 rounded-xl"
           >
             {copied ? (
@@ -80,7 +64,7 @@ export function ShareLinkInput({
         </div>
       </div>
 
-      {canShare && (
+      {showShareButton && (
         <Button
           onClick={handleShare}
           size="sm"

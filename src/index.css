@@ -149,3 +149,34 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Custom toast animation - slide in from right */
+[data-sonner-toast][data-mounted="true"] {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+[data-sonner-toast][data-removed="true"] {
+  animation: slideOutToRight 0.2s ease-in forwards;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { BackgroundEffects } from '@/components/create-plan'
 import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormSection } from '@/components/create-plan/form-layout'
-import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
+import { useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { format, parseISO } from 'date-fns'
@@ -34,6 +34,7 @@ function MarkAvailabilityPage() {
   const { saveResponseEditToken } = useResponseEditTokens()
 
   const { data: plan, isLoading: isPlanLoading, error } = useQuery(planKeys.detail(planId))
+  const existingResponse = useCurrentUserResponse(plan?.responses)
 
   const createResponseMutation = useMutation({
     mutationFn: async (data: ResponseFormData) => {
@@ -73,6 +74,16 @@ function MarkAvailabilityPage() {
 
   const handleSubmit = (data: ResponseFormData) => {
     createResponseMutation.mutate(data)
+  }
+
+  // Redirect to results page if user has already responded
+  if (existingResponse) {
+    navigate({
+      to: ROUTES.PLAN,
+      params: { planId },
+      replace: true,
+    })
+    return <LoadingScreen />
   }
 
   if (isPlanLoading) {

@@ -47,9 +47,23 @@ export function useUserTrips() {
     })
   }, [allPlanIds, planQueries, createdPlanIds])
 
-  // Filter out trips that errored (likely deleted plans with stale tokens)
+  // Filter out trips with 404 errors (deleted plans with stale tokens)
+  // Keep trips with other errors (e.g., 500s) so they can be surfaced
   const validTrips = useMemo(() => {
-    return trips.filter(t => !t.error || t.isLoading)
+    return trips.filter(t => {
+      if (!t.error || t.isLoading) return true
+      // Only filter out 404s (deleted plans), keep other errors
+      return !(t.error instanceof ApiError && t.error.status === 404)
+    })
+  }, [trips])
+
+  // Check for server errors (non-404) that should be thrown
+  const serverError = useMemo(() => {
+    return trips.find(t =>
+      t.error &&
+      !t.isLoading &&
+      !(t.error instanceof ApiError && t.error.status === 404)
+    )?.error ?? null
   }, [trips])
 
   // Track which stale plan IDs we've already cleaned up to prevent loops
@@ -107,6 +121,7 @@ export function useUserTrips() {
     trips: validTrips,
     isLoading: planQueries.some(q => q.isLoading),
     hasTrips: hasValidTrips,
+    error: serverError,
     refetch: () => planQueries.forEach(q => q.refetch()),
   }
 }

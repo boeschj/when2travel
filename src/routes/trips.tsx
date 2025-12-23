@@ -13,7 +13,12 @@ export const Route = createFileRoute(ROUTE_IDS.TRIPS)({
 })
 
 function TripsPage() {
-  const { trips, isLoading, hasTrips } = useUserTrips()
+  const { trips, isLoading, hasTrips, error } = useUserTrips()
+
+  // Throw server errors to be caught by error boundary
+  if (error) {
+    throw error
+  }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -32,7 +37,7 @@ function TripsPage() {
               Your Adventures
             </h1>
             <p className="text-lg text-muted-foreground">
-              Welcome back! Here are the trips saved on this computer. Manage your plans and check response status below.
+              Welcome back! Here are the trips saved on this device. Manage your plans and check response status below.
             </p>
           </motion.div>
 

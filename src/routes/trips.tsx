@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/shared/app-header'
 import { StorageBanner } from '@/components/trips/storage-banner'
 import { TripCard } from '@/components/trips/trip-card'
 import { TripCardSkeleton } from '@/components/trips/trip-card-skeleton'
+import { CreateTripCard } from '@/components/trips/create-trip-card'
 import { EmptyState } from '@/components/trips/empty-state'
 import { useUserTrips } from '@/hooks/use-user-trips'
 
@@ -66,10 +67,10 @@ function TripsPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
+              <CreateTripCard />
               {isLoading && trips.length === 0 ? (
                 // Initial loading state
                 <>
-                  <TripCardSkeleton />
                   <TripCardSkeleton />
                   <TripCardSkeleton />
                 </>

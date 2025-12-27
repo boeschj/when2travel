@@ -23,7 +23,7 @@ export function ManageDatesCard({
   onDeleteSelected
 }: ManageDatesCardProps) {
   return (
-    <Card className="hidden xl:flex p-4 w-72 flex-col">
+    <Card className="hidden xl:flex p-4 w-72 flex-col max-h-[520px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <h3 className="text-foreground text-lg font-bold">Manage Dates</h3>

@@ -69,7 +69,7 @@ export function DateAvailabilityDialog({
             Participants Availability
           </p>
 
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {participants.map(participant => (
               <button
                 key={participant.id}

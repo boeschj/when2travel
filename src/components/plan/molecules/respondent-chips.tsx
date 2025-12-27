@@ -121,66 +121,85 @@ export function RespondentChips({
     : null
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <div className="flex items-center gap-4">
-        <span className="text-foreground text-xs font-semibold uppercase tracking-wider">
-          Respondents ({respondents.length}/{respondents.length})
-        </span>
-        <span className="text-text-secondary text-sm">
-          {selectedRespondentId ? (
-            <>Viewing availability for: <span className="text-primary font-medium">{selectedName}</span></>
-          ) : (
-            'Click a person to see their availability window'
+    <div className={cn('flex flex-col gap-3 min-w-0', className)}>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-foreground text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+            Respondents ({respondents.length}/{respondents.length})
+          </span>
+          <span className="text-text-secondary text-sm">
+            {selectedRespondentId ? (
+              <>Viewing: <span className="text-primary font-medium">{selectedName}</span></>
+            ) : (
+              'Select a person to filter'
+            )}
+          </span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onRespondentClick(null)}
+          className={cn(
+            'h-6 px-2 text-xs rounded-full border-border hover:border-primary hover:text-primary hover:scale-100 hover:bg-transparent',
+            !selectedRespondentId && 'invisible'
           )}
-        </span>
-        {selectedRespondentId ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onRespondentClick(null)}
-            className="h-6 px-2 text-xs rounded-full border-border hover:border-primary hover:text-primary hover:scale-100 hover:bg-transparent"
-          >
-            Clear
-          </Button>
-        ) : (
-          <div className="h-6 w-[52px]" aria-hidden />
-        )}
+        >
+          Clear
+        </Button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto p-1 -m-1 scrollbar-hide">
-        {respondents.map(respondent => {
-          const status = getRespondentStatus(respondent, bestWindow, startRange, endRange, numDays)
-          const config = statusConfig[status]
-          const isSelected = selectedRespondentId === respondent.id
+      {/* Scrollable chips with fade edges */}
+      <div className="relative overflow-hidden">
+        {/* Left fade gradient - uses surface-dark to match card background */}
+        <div
+          className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 z-10"
+          style={{
+            background: 'linear-gradient(to right, var(--color-surface-dark) 0%, var(--color-surface-dark) 20%, transparent 100%)'
+          }}
+        />
+        {/* Right fade gradient */}
+        <div
+          className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10"
+          style={{
+            background: 'linear-gradient(to left, var(--color-surface-dark) 0%, var(--color-surface-dark) 30%, transparent 100%)'
+          }}
+        />
 
-          return (
-            <Button
-              key={respondent.id}
-              variant="outline"
-              onClick={() => handleChipClick(respondent.id)}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 h-auto rounded-full flex-shrink-0',
-                'bg-surface-dark hover:bg-surface-dark hover:scale-100',
-                isSelected
-                  ? 'ring-2 ring-primary bg-primary/20'
-                  : respondent.isCurrentUser
-                  ? 'border-primary'
-                  : 'border-border'
-              )}
-            >
-              <UserAvatar
-                name={respondent.name}
-                isCurrentUser={respondent.isCurrentUser}
-                colorId={respondent.id}
-                className="size-6"
-              />
-              <span className="text-sm font-medium text-white whitespace-nowrap">
-                {respondent.isCurrentUser ? 'You' : respondent.name}
-              </span>
-              <config.Icon className={cn('w-4 h-4', config.iconClass)} />
-            </Button>
-          )
-        })}
+        <div className="flex gap-2 overflow-x-auto px-6 py-1 scrollbar-hide max-w-full">
+          {respondents.map(respondent => {
+            const status = getRespondentStatus(respondent, bestWindow, startRange, endRange, numDays)
+            const config = statusConfig[status]
+            const isSelected = selectedRespondentId === respondent.id
+
+            return (
+              <Button
+                key={respondent.id}
+                variant="outline"
+                onClick={() => handleChipClick(respondent.id)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 h-auto rounded-full flex-shrink-0',
+                  'bg-surface-dark hover:bg-surface-dark hover:scale-100',
+                  isSelected
+                    ? 'ring-2 ring-primary bg-primary/20'
+                    : respondent.isCurrentUser
+                    ? 'border-primary'
+                    : 'border-border'
+                )}
+              >
+                <UserAvatar
+                  name={respondent.name}
+                  isCurrentUser={respondent.isCurrentUser}
+                  colorId={respondent.id}
+                  className="size-6"
+                />
+                <span className="text-sm font-medium text-white whitespace-nowrap">
+                  {respondent.isCurrentUser ? 'You' : respondent.name}
+                </span>
+                <config.Icon className={cn('w-4 h-4', config.iconClass)} />
+              </Button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

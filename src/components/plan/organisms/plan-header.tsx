@@ -70,11 +70,11 @@ export function PlanHeader({
   const formatResultsSubtitle = () => {
     const start = parseISO(startRange)
     const end = parseISO(endRange)
-    return `Showing plan for ${numDays} days between ${format(start, 'MMM d')} – ${format(end, 'MMM d')}`
+    return `Traveling for ${numDays} days between ${format(start, 'MMM d')} – ${format(end, 'MMM d')}`
   }
 
   return (
-    <div className={cn('flex flex-wrap items-end justify-between gap-4 pb-6', className)}>
+    <div className={cn('flex flex-wrap items-end justify-between gap-4 md:pb-6', className)}>
       <div className="flex min-w-72 flex-col gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-white text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">

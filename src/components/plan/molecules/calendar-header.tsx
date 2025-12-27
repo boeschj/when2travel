@@ -11,6 +11,8 @@ interface CalendarHeaderProps {
   showPrevious?: boolean
   showNext?: boolean
   className?: string
+  /** Additional class name for the next button (useful for responsive hiding) */
+  nextButtonClassName?: string
 }
 
 export function CalendarHeader({
@@ -20,7 +22,8 @@ export function CalendarHeader({
   showNavigation = true,
   showPrevious = true,
   showNext = true,
-  className
+  className,
+  nextButtonClassName
 }: CalendarHeaderProps) {
   return (
     <div className={cn('flex items-center gap-2 w-full', className)}>
@@ -45,7 +48,7 @@ export function CalendarHeader({
           variant="ghost"
           size="icon-sm"
           onClick={onNextMonth}
-          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+          className={cn("rounded-full hover:bg-white/10 text-foreground transition-colors", nextButtonClassName)}
           aria-label="Next month"
         >
           <ChevronRight className="size-5" />

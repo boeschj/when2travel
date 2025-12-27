@@ -474,8 +474,7 @@ function createP5Recommendation(
     const c = constrainers[0]
     recommendation = `${c.name} only has ${c.availableDays} day${c.availableDays === 1 ? '' : 's'} free, which limits the options. Worth checking if they can open up more dates!`
   } else {
-    const details = constrainers.map((c) => `${c.name} (${c.availableDays} days)`).join(', ')
-    recommendation = `${details} have limited availability, which constrains the options. Worth checking if they can open up more dates!`
+    recommendation = `Some people have limited availability. Check the calendar to resolve scheduling conflicts!`
   }
 
   return {

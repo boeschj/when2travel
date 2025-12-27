@@ -29,34 +29,26 @@ export const Route = createFileRoute(ROUTE_IDS.PLAN)({
 })
 
 function NoRespondentsState({
-  onAddAvailability
+  onAddAvailability,
+  onShare
 }: {
   onAddAvailability: () => void
+  onShare: () => void
 }) {
   return (
-    <>
-      <div className="rounded-2xl bg-surface-dark border border-border p-8 text-center">
-        <div className="max-w-md mx-auto">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Waiting for responses
-          </h2>
-          <p className="text-text-secondary">
-            Share this plan with your group to start collecting availability.
-          </p>
+    <div className="rounded-2xl bg-surface-dark border border-border p-6 md:p-8">
+      <div className="flex flex-col items-center text-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+          <Users className="w-8 h-8 text-primary" />
         </div>
-      </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+          Waiting for responses
+        </h2>
+        <p className="text-lg text-text-secondary">
+          Share this plan with your group to start collecting availability.
+        </p>
 
-      <div className="rounded-2xl bg-surface-dark border border-border p-6 md:p-8">
-        <div className="flex flex-col gap-4">
-          <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-            Add Your Availability
-          </h3>
-          <p className="text-text-secondary text-sm">
-            Be the first to add your availability to get the ball rolling!
-          </p>
+        <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
           <Button
             onClick={onAddAvailability}
             size="lg"
@@ -65,9 +57,17 @@ function NoRespondentsState({
             Add Dates
             <UserPlus className="w-5 h-5 ml-2" />
           </Button>
+          <Button
+            onClick={onShare}
+            variant="outline"
+            size="lg"
+            className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+          >
+            Share Plan
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -219,8 +219,8 @@ function PlanResultsPage() {
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
       <AppHeader planId={planId} />
 
-      <main className="flex-1 flex flex-col items-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
-        <div className="w-fit max-w-full mx-auto flex flex-col gap-8">
+      <main className="flex-1 flex flex-col items-center px-6 md:px-12 xl:px-20 pb-20 pt-4 md:pt-10">
+        <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-8">
           <PlanHeader
             name={plan.name}
             numDays={plan.numDays}
@@ -242,64 +242,81 @@ function PlanResultsPage() {
           />
 
           {respondents.length === 0 ? (
-            <NoRespondentsState onAddAvailability={handleEditAvailability} />
-          ) : recommendation ? (
-            <SmartRecommendationsCard
-              recommendationResult={recommendation}
-              planName={plan.name}
-              isCreator={isCreator}
-              hasResponded={!!currentUserResponse}
-              currentUserResponseId={currentUserResponse?.id}
-              onEditPlan={handleEditPlan}
-              onEditAvailability={handleEditAvailability}
-              onEditDuration={handleEditDuration}
+            <NoRespondentsState
+              onAddAvailability={handleEditAvailability}
+              onShare={() => {
+                const shareUrl = `${window.location.origin}/plan/${planId}/respond`
+                navigator.clipboard.writeText(shareUrl)
+                toast.success('Link copied to clipboard')
+              }}
             />
-          ) : null}
+          ) : (
+            <>
+              {/* Two-column layout: Recommendation (left) + Calendar (right) on desktop */}
+              {/* Calendar needs ~700px for 2 months, switch at 1350px */}
+              <div className="grid grid-cols-1 min-[1350px]:grid-cols-[minmax(300px,420px)_1fr] gap-6 min-[1350px]:gap-10 min-[1350px]:items-stretch">
+                {/* Left column: Recommendation card */}
+                <div className="order-1 min-[1350px]:h-full">
+                  {recommendation && (
+                    <SmartRecommendationsCard
+                      recommendationResult={recommendation}
+                      planName={plan.name}
+                      isCreator={isCreator}
+                      hasResponded={!!currentUserResponse}
+                      currentUserResponseId={currentUserResponse?.id}
+                      onEditPlan={handleEditPlan}
+                      onEditAvailability={handleEditAvailability}
+                      onEditDuration={handleEditDuration}
+                    />
+                  )}
+                </div>
 
-          {respondents.length > 0 && (
-            <RespondentChips
-              respondents={respondents}
-              bestWindow={bestWindow}
-              selectedRespondentId={selectedRespondentId}
-              onRespondentClick={handleRespondentClick}
-              startRange={plan.startRange}
-              endRange={plan.endRange}
-              numDays={plan.numDays}
-            />
+                {/* Right column: Calendar heatmap + Respondents */}
+                {/* min-w-0 allows grid cell to shrink below content width */}
+                <div className="order-2 min-w-0 min-[1350px]:h-full">
+                  <div className="bg-surface-dark border border-border rounded-2xl p-4 md:p-6 flex flex-col overflow-hidden min-[1350px]:h-full">
+                    <RespondentChips
+                      respondents={respondents}
+                      bestWindow={bestWindow}
+                      selectedRespondentId={selectedRespondentId}
+                      onRespondentClick={handleRespondentClick}
+                      startRange={plan.startRange}
+                      endRange={plan.endRange}
+                      numDays={plan.numDays}
+                    />
+
+                    <Separator className="my-4" />
+
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
+                      <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
+                        Availability Heatmap
+                      </h3>
+                      <ResultsLegend />
+                    </div>
+
+                    <ResultsCalendar
+                      startRange={plan.startRange}
+                      endRange={plan.endRange}
+                      responses={plan.responses ?? []}
+                      selectedRespondentId={selectedRespondentId}
+                      selectedRespondentColor={selectedRespondentColor}
+                      onDateClick={handleDateClick}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
-          <Separator className="my-2" />
-
-          <div className="flex flex-col gap-4 w-fit mx-auto">
-            <div className="flex items-center justify-between">
-              <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                Availability Heatmap
-              </h3>
-              <ResultsLegend />
-            </div>
-
-            <div className="bg-surface-dark border border-border rounded-2xl p-4 md:px-12 md:py-6">
-              <ResultsCalendar
-                startRange={plan.startRange}
-                endRange={plan.endRange}
-                responses={plan.responses ?? []}
-                selectedRespondentId={selectedRespondentId}
-                selectedRespondentColor={selectedRespondentColor}
-                onDateClick={handleDateClick}
-              />
-            </div>
-
-            <DateAvailabilityDialog
-              date={popoverDate ?? new Date()}
-              availableCount={popoverAvailableCount}
-              totalCount={respondents.length}
-              participants={popoverParticipants}
-              open={isPopoverOpen}
-              onOpenChange={setIsPopoverOpen}
-              onSelectRespondent={handleRespondentClick}
-            />
-          </div>
-
+          <DateAvailabilityDialog
+            date={popoverDate ?? new Date()}
+            availableCount={popoverAvailableCount}
+            totalCount={respondents.length}
+            participants={popoverParticipants}
+            open={isPopoverOpen}
+            onOpenChange={setIsPopoverOpen}
+            onSelectRespondent={handleRespondentClick}
+          />
         </div>
       </main>
     </div>

@@ -235,43 +235,46 @@ export function ResultsCalendar({
     )
   }
 
-  const renderMonth = (month: Date, monthIndex: number) => {
-    const monthDays = getMonthDays(month)
-    const isFirstMonth = monthIndex === 0
-    const isLastMonth = monthIndex === months.length - 1
-
-    return (
-      <div key={format(month, 'yyyy-MM')} className="flex flex-col gap-4">
-        <div className="flex items-center w-[308px]">
-          <CalendarHeader
-            date={month}
-            onPreviousMonth={goToPreviousMonth}
-            onNextMonth={goToNextMonth}
-            showNavigation={showNavigation}
-            showPrevious={isFirstMonth}
-            showNext={isLastMonth}
-          />
-        </div>
-
-        <div className="grid grid-cols-7 gap-0.5">
-          {WEEKDAYS.map(day => (
-            <div
-              key={day}
-              className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center min-h-11 flex items-center justify-center"
-            >
-              {day}
-            </div>
-          ))}
-
-          {monthDays.map((date, index) => renderDateCell(date, month, index))}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={cn('flex flex-wrap justify-center gap-4 sm:gap-8', className)}>
-      {months.map((month, index) => renderMonth(month, index))}
+    <div className={cn('flex flex-wrap justify-center gap-4 md:gap-0', className)}>
+      {months.map((month, index) => {
+        const isFirstMonth = index === 0
+        const showDivider = isFirstMonth && numberOfMonths > 1
+        return (
+          <div key={format(month, 'yyyy-MM')} className="flex">
+            <div className={cn('flex flex-col gap-4', !isFirstMonth && 'hidden md:flex')}>
+              <div className="flex items-center w-[308px]">
+                <CalendarHeader
+                  date={month}
+                  onPreviousMonth={goToPreviousMonth}
+                  onNextMonth={goToNextMonth}
+                  showNavigation={showNavigation}
+                  showPrevious={isFirstMonth}
+                  showNext={index === months.length - 1 || isFirstMonth}
+                  nextButtonClassName={isFirstMonth && numberOfMonths > 1 ? 'md:hidden' : undefined}
+                />
+              </div>
+
+              <div className="grid grid-cols-7 gap-0.5">
+                {WEEKDAYS.map(day => (
+                  <div
+                    key={day}
+                    className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center min-h-11 flex items-center justify-center"
+                  >
+                    {day}
+                  </div>
+                ))}
+
+                {getMonthDays(month).map((date, idx) => renderDateCell(date, month, idx))}
+              </div>
+            </div>
+            {/* Vertical divider between months - only on desktop */}
+            {showDivider && (
+              <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

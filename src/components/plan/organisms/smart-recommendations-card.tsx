@@ -10,13 +10,12 @@ import {
   Calendar,
   Share2,
   UserPlus,
-  HelpCircle,
   Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { Separator } from '@/components/ui/separator'
 import { useShare } from '@/hooks/use-clipboard'
 import { AlternativeSuggestionsModal } from '@/components/plan/molecules/alternative-suggestions-modal'
 import type { RecommendationResult, RecommendationStatus, AlternativeWindow } from '@/lib/recommendation-types'
@@ -170,10 +169,10 @@ export function SmartRecommendationsCard({
 
   return (
     <>
-      {/* Main recommendation card */}
+      {/* Combined recommendation + actions card */}
       <Card
         variant="action"
-        className={cn('p-6 md:p-8', className)}
+        className={cn('p-6 md:p-8 h-full', className)}
       >
         <CardContent className="p-0 flex flex-col items-center text-center gap-4">
           {/* Status icon and headline */}
@@ -192,25 +191,38 @@ export function SmartRecommendationsCard({
 
           {/* Date display - always show */}
           {bestWindow && (
-            <h3 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
+            <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
               {formatDateRangeDisplay(bestWindow.start, bestWindow.end)}
             </h3>
           )}
 
           {/* Availability with dynamic icon - always show */}
           {availabilityText && (
-            <div className="flex items-center gap-2">
-              <StatusIcon className={cn('w-5 h-5', styles.iconColor)} />
-              <span className="text-foreground font-bold">{availabilityText}</span>
-            </div>
+            <>
+              <Separator className="w-full max-w-lg" />
+              <div className="flex items-center gap-2">
+                <StatusIcon className={cn('w-5 h-5', styles.iconColor)} />
+                <span className="text-foreground font-bold">{availabilityText}</span>
+              </div>
+              <Separator className="w-full max-w-lg" />
+            </>
           )}
 
           {/* Recommendation message - only show if not perfect */}
           {needsSuggestions && (
-            <div className="bg-surface-darker rounded-lg p-4 max-w-lg w-full">
+            <div className="bg-surface-darker rounded-lg p-4 max-w-lg w-full text-left">
               <p className="text-foreground">{recommendation.recommendation}</p>
               {recommendation.secondary && (
                 <p className="text-text-secondary mt-2 text-sm">{recommendation.secondary}</p>
+              )}
+              {hasAlternatives && (
+                <Button
+                  variant="link"
+                  onClick={() => setIsSuggestionsModalOpen(true)}
+                  className="p-0 h-auto font-medium text-primary mt-3"
+                >
+                  See Alternatives →
+                </Button>
               )}
             </div>
           )}
@@ -232,54 +244,33 @@ export function SmartRecommendationsCard({
             </div>
           )}
 
-          {/* See other suggestions link - only show if not perfect */}
-          {needsSuggestions && hasAlternatives && (
-            <Button
-              variant="link"
-              onClick={() => setIsSuggestionsModalOpen(true)}
-              className="p-0 h-auto underline font-medium"
-            >
-              See other suggestions →
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+          {/* Actions section */}
+          <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
+            {/* P4: Show edit duration CTA */}
+            {priority === 4 && shorterTripSuggestion && onEditDuration && (
+              <>
+                <Button
+                  onClick={onEditDuration}
+                  size="lg"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+                >
+                  Change to {shorterTripSuggestion.duration} Days
+                  <Pencil className="w-5 h-5 ml-2" />
+                </Button>
+                <Button
+                  onClick={onEditAvailability}
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                >
+                  Edit Availability
+                </Button>
+              </>
+            )}
 
-      {/* Action card */}
-      <Card className={cn('p-6 md:p-8', className)}>
-        <CardContent className="p-0 flex flex-col gap-4">
-          {/* P4: Show edit duration CTA */}
-          {priority === 4 && shorterTripSuggestion && onEditDuration && (
-            <>
-              <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                Try a Shorter Trip
-              </h3>
-              <Button
-                onClick={onEditDuration}
-                size="lg"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-              >
-                Change to {shorterTripSuggestion.duration} Days
-                <Pencil className="w-5 h-5 ml-2" />
-              </Button>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-surface-dark px-2 text-text-secondary">or</span>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Perfect match: Next steps with flights/calendar/share */}
-          {isPerfect && hasResponded ? (
-            <>
-              <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                Next Steps
-              </h3>
-              <div className="flex flex-col gap-3">
+            {/* Perfect match + responded: flights/calendar/share */}
+            {isPerfect && hasResponded && (
+              <>
                 <Button
                   onClick={handleCheckFlights}
                   size="lg"
@@ -308,88 +299,100 @@ export function SmartRecommendationsCard({
                     Share
                   </Button>
                 </div>
-              </div>
-            </>
-          ) : !hasResponded ? (
-            /* User hasn't responded yet: Add availability CTA */
-            <>
-              <div className="flex items-center gap-2">
-                <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                  Add Your Availability
-                </h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="text-text-secondary hover:text-foreground transition-colors"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[240px]">
-                    Already responded? You may have cleared your browser data or switched browsers.
-                    If you see your name below, you're all set!
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-text-secondary text-sm">
-                Let the group know when you're free to travel
-              </p>
-              <Button
-                onClick={onEditAvailability}
-                size="lg"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-              >
-                Add Dates
-                <UserPlus className="w-5 h-5 ml-2" />
-              </Button>
-            </>
-          ) : personalizedCTA ? (
-            /* User is the blocker/constrainer: Show personalized CTA */
-            <>
-              <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                Your Turn
-              </h3>
-              <p className="text-text-secondary text-sm">
-                You can help make this trip happen!
-              </p>
-              <Button
-                onClick={onEditAvailability}
-                size="lg"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-              >
-                {personalizedCTA.label}
-                <Pencil className="w-5 h-5 ml-2" />
-              </Button>
-            </>
-          ) : (
-            /* User has responded but not perfect: Next steps with edit options */
-            <>
-              <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
-                Next Steps
-              </h3>
-              <div className={cn('grid gap-3 grid-cols-1', isCreator && 'sm:grid-cols-2')}>
-                {isCreator && (
+              </>
+            )}
+
+            {/* User hasn't responded yet */}
+            {!hasResponded && priority !== 4 && (
+              <>
+                <Button
+                  onClick={onEditAvailability}
+                  size="lg"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+                >
+                  Add Dates
+                  <UserPlus className="w-5 h-5 ml-2" />
+                </Button>
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              </>
+            )}
+
+            {/* User is the blocker/constrainer */}
+            {hasResponded && !isPerfect && personalizedCTA && priority !== 4 && (
+              <>
+                <Button
+                  onClick={onEditAvailability}
+                  size="lg"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+                >
+                  {personalizedCTA.label}
+                  <Pencil className="w-5 h-5 ml-2" />
+                </Button>
+                {isCreator ? (
                   <Button
                     onClick={onEditPlan}
                     variant="outline"
                     size="lg"
-                    className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
                   >
                     Edit Plan
                   </Button>
+                ) : (
+                  <Button
+                    onClick={handleShare}
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
                 )}
+              </>
+            )}
+
+            {/* User has responded but not perfect, no personalized CTA */}
+            {hasResponded && !isPerfect && !personalizedCTA && priority !== 4 && (
+              <>
                 <Button
                   onClick={onEditAvailability}
-                  variant="outline"
                   size="lg"
-                  className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
                 >
                   Edit Availability
+                  <Pencil className="w-5 h-5 ml-2" />
                 </Button>
-              </div>
-            </>
-          )}
+                {isCreator ? (
+                  <Button
+                    onClick={onEditPlan}
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                  >
+                    Edit Plan
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleShare}
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 

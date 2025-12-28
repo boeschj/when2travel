@@ -252,10 +252,7 @@ function PlanResultsPage() {
             />
           ) : (
             <>
-              {/* Two-column layout: Recommendation (left) + Calendar (right) on desktop */}
-              {/* Calendar needs ~700px for 2 months, switch at 1350px */}
               <div className="grid grid-cols-1 min-[1350px]:grid-cols-[minmax(300px,420px)_1fr] gap-6 min-[1350px]:gap-10 min-[1350px]:items-stretch">
-                {/* Left column: Recommendation card */}
                 <div className="order-1 min-[1350px]:h-full">
                   {recommendation && (
                     <SmartRecommendationsCard
@@ -271,8 +268,6 @@ function PlanResultsPage() {
                   )}
                 </div>
 
-                {/* Right column: Calendar heatmap + Respondents */}
-                {/* min-w-0 allows grid cell to shrink below content width */}
                 <div className="order-2 min-w-0 min-[1350px]:h-full">
                   <div className="bg-surface-dark border border-border rounded-2xl p-4 md:p-6 flex flex-col overflow-hidden min-[1350px]:h-full">
                     <RespondentChips

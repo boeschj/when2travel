@@ -80,12 +80,10 @@ export function ResponseForm({
   const [warningType, setWarningType] = useState<WarningType>(null)
   const [pendingFormData, setPendingFormData] = useState<ResponseFormData | null>(null)
 
-  // Expose isDirty state to parent
   useEffect(() => {
     onDirtyChange?.(isDirty)
   }, [isDirty, onDirtyChange])
 
-  // Expose reset function to parent
   useEffect(() => {
     onResetRef?.(reset)
   }, [reset, onResetRef])
@@ -111,14 +109,12 @@ export function ResponseForm({
     e.preventDefault()
     const formData = getFormData()
 
-    // Validate name
     const error = validateName(formData.name)
     if (error) {
       setNameError(error)
       return
     }
 
-    // Check for date warnings
     if (formData.availableDates.length === 0) {
       setPendingFormData(formData)
       setWarningType('noDates')

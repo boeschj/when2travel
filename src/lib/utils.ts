@@ -111,14 +111,11 @@ const AVATAR_PALETTE = [
  */
 export function generateColorFromString(str: string): { hsl: string; hex: string } {
   const hash = hashString(str)
-
-  // Pick from pre-defined palette for maximum distinction
   const paletteIndex = hash % AVATAR_PALETTE.length
   const { h: hue, s: saturation, l: lightness } = AVATAR_PALETTE[paletteIndex]
 
   const hsl = `hsl(${hue}, ${saturation}%, ${lightness}%)`
 
-  // Convert to hex for inline styles
   const h = hue / 360
   const s = saturation / 100
   const l = lightness / 100

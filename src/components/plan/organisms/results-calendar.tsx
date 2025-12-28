@@ -30,8 +30,6 @@ interface ResultsCalendarProps {
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
 
-// Discrete heatmap color stops for maximum visual distinction
-// Each stop represents a percentage threshold and its color
 const HEATMAP_STOPS = [
   { threshold: 1.0,  color: '#46ec13', textColor: '#0a1208', glow: true },  // 100% - Bright lime green
   { threshold: 0.8,  color: '#a3e635', textColor: '#0a1208', glow: false }, // 80%+ - Lime/yellow
@@ -55,8 +53,6 @@ function getHeatmapColor(availableCount: number, totalCount: number): {
   }
 
   const percentage = availableCount / totalCount
-
-  // Find the appropriate color stop
   const stop = HEATMAP_STOPS.find(s => percentage >= s.threshold) ?? HEATMAP_STOPS[HEATMAP_STOPS.length - 1]
 
   return {
@@ -170,7 +166,6 @@ export function ResultsCalendar({
     const isRespondentAvailable = selectedRespondentDates?.has(dateStr) ?? false
     const hasRespondentFilter = selectedRespondentDates !== null
 
-    // Determine the style to apply
     let cellStyle: React.CSSProperties | undefined
     let cellClassName = 'size-9 rounded-full flex items-center justify-center transition-all text-sm font-bold'
 
@@ -268,7 +263,6 @@ export function ResultsCalendar({
                 {getMonthDays(month).map((date, idx) => renderDateCell(date, month, idx))}
               </div>
             </div>
-            {/* Vertical divider between months - only on desktop */}
             {showDivider && (
               <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
             )}

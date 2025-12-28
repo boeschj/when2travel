@@ -1,4 +1,3 @@
-// Route IDs for createFileRoute (index routes have trailing slash)
 export const ROUTE_IDS = {
   HOME: '/',
   CREATE: '/create',
@@ -9,7 +8,6 @@ export const ROUTE_IDS = {
   RESPONSE_EDIT: '/response/$responseId/edit',
 } as const
 
-// Route paths for navigation (no trailing slashes)
 export const ROUTES = {
   HOME: '/',
   CREATE: '/create',

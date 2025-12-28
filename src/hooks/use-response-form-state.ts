@@ -12,22 +12,17 @@ interface UseResponseFormStateProps {
 }
 
 interface UseResponseFormStateReturn {
-  // Form state
   name: string
   setName: (name: string) => void
   selectedDates: Set<string>
   selectedRangeIds: Set<string>
   rangeStart: Date | null
-
-  // Derived state
   allTripDates: string[]
   availableRanges: DateRange[]
   unavailableRanges: DateRange[]
   compatibleWindowsCount: number
   hasSelectedRanges: boolean
   isDirty: boolean
-
-  // Actions
   handleDateClick: (date: Date) => void
   toggleRangeSelection: (rangeId: string) => void
   deleteSelectedRanges: () => void
@@ -81,7 +76,6 @@ export function useResponseFormState({
   const isSingleFullRange = totalRanges === 1 && selectedRangeIds.size === 1
   const hasSelectedRanges = selectedRangeIds.size > 0 && !isSingleFullRange
 
-  // Track if form has changed from initial values
   const isDirty = useMemo(() => {
     if (name !== initialName) return true
 
@@ -100,14 +94,13 @@ export function useResponseFormState({
     end: parseISO(endRange)
   }), [startRange, endRange])
 
+  // TODO: Refactor into state machine - this has 5 branches handling tap/double-tap/range selection
   const handleDateClick = useCallback((date: Date) => {
-    // Ignore clicks outside the allowed range
     if (!isWithinInterval(date, dateRange)) return
 
     const dateStr = format(date, 'yyyy-MM-dd')
     const isRangeStartDate = rangeStart !== null && format(rangeStart, 'yyyy-MM-dd') === dateStr
 
-    // Double-tap on range start: confirm single day selection
     if (isRangeStartDate) {
       setRangeStart(null)
       return
@@ -115,7 +108,6 @@ export function useResponseFormState({
 
     const isAlreadySelected = selectedDates.has(dateStr)
 
-    // Single tap on selected day: unselect only that day
     if (isAlreadySelected) {
       setSelectedDates(prev => {
         const newDates = new Set(prev)
@@ -126,9 +118,7 @@ export function useResponseFormState({
       return
     }
 
-    // Unselected day: use range selection logic
     if (rangeStart === null) {
-      // First tap: set range start and select that date
       setRangeStart(date)
       setSelectedDates(prev => {
         const newDates = new Set(prev)
@@ -136,7 +126,6 @@ export function useResponseFormState({
         return newDates
       })
     } else {
-      // Second tap: fill range from rangeStart to this date
       const start = rangeStart < date ? rangeStart : date
       const end = rangeStart < date ? date : rangeStart
       const dates = eachDayOfInterval({ start, end })
@@ -169,7 +158,6 @@ export function useResponseFormState({
     const totalRangeCount = availableRanges.length + unavailableRanges.length
     const allRangesSelected = selectedRangeIds.size === totalRangeCount
 
-    // If all ranges are selected, reset to no dates selected
     if (allRangesSelected) {
       setSelectedDates(new Set())
       setSelectedRangeIds(new Set())

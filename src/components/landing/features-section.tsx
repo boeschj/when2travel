@@ -44,7 +44,6 @@ export function FeaturesSection() {
       className="relative z-10 w-full py-24 bg-black"
       id="how-it-works"
     >
-      {/* Top border gradient */}
       <div
         className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"
         aria-hidden="true"
@@ -52,7 +51,6 @@ export function FeaturesSection() {
 
       <div className="max-w-[1200px] mx-auto px-5 md:px-10">
         <div className="flex flex-col gap-20">
-          {/* Section header */}
           <div className="flex flex-col gap-6 text-center items-center">
             <h2
               id="features-heading"
@@ -65,7 +63,6 @@ export function FeaturesSection() {
             </p>
           </div>
 
-          {/* Feature cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
             {FEATURES.map((feature, i) => {
               const Icon = feature.icon
@@ -76,7 +73,6 @@ export function FeaturesSection() {
                     feature.staggered ? 'lg:mt-8' : ''
                   }`}
                 >
-                  {/* Step number watermark */}
                   <div
                     className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none"
                     aria-hidden="true"
@@ -86,7 +82,6 @@ export function FeaturesSection() {
                     </span>
                   </div>
 
-                  {/* Icon box */}
                   <div
                     className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-transparent flex items-center justify-center text-primary shadow-[0_0_15px_rgba(70,236,19,0.15)] group-hover:scale-110 transition-transform duration-300"
                     aria-hidden="true"
@@ -94,7 +89,6 @@ export function FeaturesSection() {
                     <Icon className="size-7" />
                   </div>
 
-                  {/* Content */}
                   <div className="flex flex-col gap-3 relative z-10">
                     <h3 className="text-white text-xl font-bold">
                       {feature.title}

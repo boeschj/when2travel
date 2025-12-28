@@ -5,11 +5,8 @@ export function TripCardSkeleton() {
   return (
     <Card className="h-full">
       <CardContent className="flex-1 flex flex-col gap-4 pt-6">
-        {/* Badge */}
         <Skeleton className="h-6 w-24 rounded-full" />
-        {/* Trip name */}
         <Skeleton className="h-7 w-3/4" />
-        {/* Date range */}
         <Skeleton className="h-5 w-1/2" />
       </CardContent>
       <CardFooter className="gap-3 pb-6">

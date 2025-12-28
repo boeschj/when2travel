@@ -56,7 +56,6 @@ export function SharePanel({
         )}
       >
         <CardContent className="flex flex-col gap-8 p-0">
-          {/* Share Link Section */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-3 text-foreground">
               <div className="p-2 bg-primary/10 rounded-full text-primary">

@@ -113,11 +113,9 @@ export function SmartRecommendationsCard({
   const styles = getStatusStyles(status)
   const hasAlternatives = alternatives.length > 0
 
-  // Determine if current user is the blocker/constrainer for personalized CTAs
   const isCurrentUserBlocker = currentUserResponseId && recommendation.blockerId === currentUserResponseId
   const isCurrentUserConstrainer = currentUserResponseId && recommendation.constrainingPersonIds?.includes(currentUserResponseId)
 
-  // Get personalized CTA based on recommendation type
   const getPersonalizedCTA = (): { label: string; emphasis: boolean } | null => {
     if (isCurrentUserBlocker) {
       if (priority === 2 && recommendation.blockerShiftDirection) {
@@ -158,9 +156,14 @@ export function SmartRecommendationsCard({
   }
 
   const isPerfect = status === 'perfect'
-  const needsSuggestions = !isPerfect // Show suggestions only when not everyone is available
+  const needsSuggestions = !isPerfect
 
-  // Build availability text for below the date
+  const showDurationEditCTA = priority === 4 && shorterTripSuggestion && onEditDuration
+  const showPerfectMatchActions = isPerfect && hasResponded
+  const showAddDatesPrompt = !hasResponded && priority !== 4
+  const showBlockerCTA = hasResponded && !isPerfect && personalizedCTA && priority !== 4
+  const showGenericEditCTA = hasResponded && !isPerfect && !personalizedCTA && priority !== 4
+
   const availabilityText = bestWindow
     ? isPerfect
       ? `All ${bestWindow.totalCount} ${bestWindow.totalCount === 1 ? 'person' : 'people'} available`
@@ -169,13 +172,11 @@ export function SmartRecommendationsCard({
 
   return (
     <>
-      {/* Combined recommendation + actions card */}
       <Card
         variant="action"
         className={cn('p-6 md:p-8 h-full', className)}
       >
         <CardContent className="p-0 flex flex-col items-center text-center gap-4">
-          {/* Status icon and headline */}
           <div
             className={cn(
               'w-16 h-16 rounded-full flex items-center justify-center',
@@ -186,17 +187,14 @@ export function SmartRecommendationsCard({
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">{headline}</h2>
 
-          {/* Static subtitle */}
           <p className="text-lg text-text-secondary">Your ideal trip dates are:</p>
 
-          {/* Date display - always show */}
           {bestWindow && (
             <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
               {formatDateRangeDisplay(bestWindow.start, bestWindow.end)}
             </h3>
           )}
 
-          {/* Availability with dynamic icon - always show */}
           {availabilityText && (
             <>
               <Separator className="w-full max-w-lg" />
@@ -208,7 +206,6 @@ export function SmartRecommendationsCard({
             </>
           )}
 
-          {/* Recommendation message - only show if not perfect */}
           {needsSuggestions && (
             <div className="bg-surface-darker rounded-lg p-4 max-w-lg w-full text-left">
               <p className="text-foreground">{recommendation.recommendation}</p>
@@ -227,14 +224,12 @@ export function SmartRecommendationsCard({
             </div>
           )}
 
-          {/* Alternative windows - only show if not perfect */}
           {needsSuggestions && recommendation.alternativeWindows &&
             recommendation.alternativeWindows.length > 0 &&
             priority !== 4 && (
               <AlternativeWindowsList windows={recommendation.alternativeWindows} />
             )}
 
-          {/* P4: Shorter trip windows - only show if not perfect */}
           {needsSuggestions && priority === 4 && shorterTripSuggestion && (
             <div className="w-full max-w-lg">
               <p className="text-text-secondary text-sm mb-2">
@@ -244,10 +239,8 @@ export function SmartRecommendationsCard({
             </div>
           )}
 
-          {/* Actions section */}
           <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
-            {/* P4: Show edit duration CTA */}
-            {priority === 4 && shorterTripSuggestion && onEditDuration && (
+            {showDurationEditCTA && (
               <>
                 <Button
                   onClick={onEditDuration}
@@ -268,8 +261,7 @@ export function SmartRecommendationsCard({
               </>
             )}
 
-            {/* Perfect match + responded: flights/calendar/share */}
-            {isPerfect && hasResponded && (
+            {showPerfectMatchActions && (
               <>
                 <Button
                   onClick={handleCheckFlights}
@@ -302,8 +294,7 @@ export function SmartRecommendationsCard({
               </>
             )}
 
-            {/* User hasn't responded yet */}
-            {!hasResponded && priority !== 4 && (
+            {showAddDatesPrompt && (
               <>
                 <Button
                   onClick={onEditAvailability}
@@ -325,8 +316,7 @@ export function SmartRecommendationsCard({
               </>
             )}
 
-            {/* User is the blocker/constrainer */}
-            {hasResponded && !isPerfect && personalizedCTA && priority !== 4 && (
+            {showBlockerCTA && (
               <>
                 <Button
                   onClick={onEditAvailability}
@@ -359,8 +349,7 @@ export function SmartRecommendationsCard({
               </>
             )}
 
-            {/* User has responded but not perfect, no personalized CTA */}
-            {hasResponded && !isPerfect && !personalizedCTA && priority !== 4 && (
+            {showGenericEditCTA && (
               <>
                 <Button
                   onClick={onEditAvailability}
@@ -396,7 +385,6 @@ export function SmartRecommendationsCard({
         </CardContent>
       </Card>
 
-      {/* Alternative suggestions modal */}
       <AlternativeSuggestionsModal
         open={isSuggestionsModalOpen}
         onOpenChange={setIsSuggestionsModalOpen}

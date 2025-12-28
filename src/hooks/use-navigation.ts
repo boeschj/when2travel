@@ -21,7 +21,6 @@ export function useNavigation({ planId }: NavigationContext) {
   return useMemo(() => {
     const items: NavItem[] = []
 
-    // Helper to check if a path is active
     const isActive = (path: string, params?: Record<string, string>) => {
       let resolvedPath = path
       if (params) {
@@ -32,7 +31,6 @@ export function useNavigation({ planId }: NavigationContext) {
       return currentPath === resolvedPath || currentPath === resolvedPath + '/'
     }
 
-    // Create Plan link
     items.push({
       label: 'Create Plan',
       to: ROUTES.CREATE,
@@ -40,7 +38,6 @@ export function useNavigation({ planId }: NavigationContext) {
       variant: 'link',
     })
 
-    // View Plan link - only when in plan context
     if (planId) {
       items.push({
         label: 'View Plan',
@@ -50,7 +47,6 @@ export function useNavigation({ planId }: NavigationContext) {
         variant: 'link',
       })
 
-      // Share Plan - only when in plan context
       items.push({
         label: 'Share Plan',
         to: ROUTES.PLAN_SHARE,
@@ -60,7 +56,6 @@ export function useNavigation({ planId }: NavigationContext) {
       })
     }
 
-    // My Trips - primary action button
     items.push({
       label: 'My Trips',
       to: ROUTES.TRIPS,

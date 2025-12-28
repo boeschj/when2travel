@@ -206,19 +206,12 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        // Base styles
         "flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-medium rounded-full [&>span]:text-xs [&>span]:opacity-70 text-foreground/60 text-sm",
-        // Hover states
         "hover:text-foreground hover:bg-foreground/10",
-        // Single selected
         "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:shadow-[0_0_15px_rgba(70,236,19,0.4)]",
-        // Range middle
         "data-[range-middle=true]:bg-primary/20 data-[range-middle=true]:text-foreground",
-        // Range start
         "data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-start=true]:shadow-[0_0_15px_rgba(70,236,19,0.4)]",
-        // Range end
         "data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-end=true]:shadow-[0_0_15px_rgba(70,236,19,0.4)]",
-        // Focus states
         "group-data-[focused=true]/day:border-primary group-data-[focused=true]/day:ring-primary/50 group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px]",
         defaultClassNames.day,
         className

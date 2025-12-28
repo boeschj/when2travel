@@ -25,6 +25,7 @@ interface RespondentChipsProps {
   className?: string
 }
 
+// TODO: Refactor into smaller functions - this has two distinct branches (with/without bestWindow)
 function getRespondentStatus(
   respondent: Respondent,
   bestWindow: CompatibleDateRange | null,
@@ -32,7 +33,6 @@ function getRespondentStatus(
   endRange: string,
   numDays: number
 ): RespondentStatus {
-  // When there's a best window, check availability within that window
   if (bestWindow) {
     const windowStart = parseISO(bestWindow.start)
     const windowEnd = parseISO(bestWindow.end)
@@ -52,8 +52,6 @@ function getRespondentStatus(
     return 'unavailable'
   }
 
-  // When there's no best window, check if this respondent has enough consecutive days
-  // to potentially support the trip length - helps identify who's blocking
   const allDates = eachDayOfInterval({
     start: parseISO(startRange),
     end: parseISO(endRange)
@@ -91,6 +89,28 @@ const statusConfig = {
     iconClass: 'text-status-red'
   }
 } as const
+
+function ScrollableChipsContainer({ children }: { children: React.ReactNode }) {
+  const fadeGradientBase = 'pointer-events-none absolute top-0 bottom-0 z-10'
+
+  return (
+    <div className="relative overflow-hidden">
+      <div
+        className={cn(fadeGradientBase, 'left-0 w-12')}
+        style={{
+          background: 'linear-gradient(to right, var(--color-surface-dark) 0%, var(--color-surface-dark) 20%, transparent 100%)'
+        }}
+      />
+      <div
+        className={cn(fadeGradientBase, 'right-0 w-16')}
+        style={{
+          background: 'linear-gradient(to left, var(--color-surface-dark) 0%, var(--color-surface-dark) 30%, transparent 100%)'
+        }}
+      />
+      {children}
+    </div>
+  )
+}
 
 export function RespondentChips({
   respondents,
@@ -148,23 +168,7 @@ export function RespondentChips({
         </Button>
       </div>
 
-      {/* Scrollable chips with fade edges */}
-      <div className="relative overflow-hidden">
-        {/* Left fade gradient - uses surface-dark to match card background */}
-        <div
-          className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 z-10"
-          style={{
-            background: 'linear-gradient(to right, var(--color-surface-dark) 0%, var(--color-surface-dark) 20%, transparent 100%)'
-          }}
-        />
-        {/* Right fade gradient */}
-        <div
-          className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10"
-          style={{
-            background: 'linear-gradient(to left, var(--color-surface-dark) 0%, var(--color-surface-dark) 30%, transparent 100%)'
-          }}
-        />
-
+      <ScrollableChipsContainer>
         <div className="flex gap-2 overflow-x-auto px-6 py-1 scrollbar-hide max-w-full">
           {respondents.map(respondent => {
             const status = getRespondentStatus(respondent, bestWindow, startRange, endRange, numDays)
@@ -200,7 +204,7 @@ export function RespondentChips({
             )
           })}
         </div>
-      </div>
+      </ScrollableChipsContainer>
     </div>
   )
 }

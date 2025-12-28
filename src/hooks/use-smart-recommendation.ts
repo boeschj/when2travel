@@ -44,27 +44,21 @@ export function useSmartRecommendation(
     const totalCount = responses.length
     const { numDays, startRange, endRange } = plan
 
-    // Generate all possible windows and score them
     const allWindows = generateAllWindows(startRange, endRange, numDays)
     const scoredWindows = allWindows
       .map((w) => scoreWindow(w.start, w.end, responses, startRange, endRange))
       .sort((a, b) => b.percentage - a.percentage || a.start.localeCompare(b.start))
 
     const bestWindow = scoredWindows[0] ?? null
-
-    // Collect ALL matching recommendations
     const allRecommendations: Recommendation[] = []
 
-    // P1: Perfect window exists
     if (bestWindow && bestWindow.percentage === 100) {
       allRecommendations.push(createP1Recommendation(bestWindow, totalCount))
     }
 
-    // P2/P3: Single blocker cases
     if (bestWindow && bestWindow.blockers.length === 1) {
       const blocker = bestWindow.blockers[0]
 
-      // P2: Single blocker with adjacent availability
       if (blocker.shiftDirection && blocker.shiftDays > 0) {
         const shiftValid = validateShiftedWindow(
           bestWindow.start,
@@ -79,41 +73,34 @@ export function useSmartRecommendation(
         }
       }
 
-      // P3: Single blocker, no adjacent or invalid shift (only if P2 didn't match)
       if (!allRecommendations.some(r => r.priority === 2)) {
         allRecommendations.push(createP3Recommendation(bestWindow, blocker, totalCount))
       }
     }
 
-    // P4: Shorter trip unlocks perfect
     const shorterTrip = findShorterPerfectWindows(responses, startRange, endRange, numDays)
     if (shorterTrip) {
       allRecommendations.push(createP4Recommendation(bestWindow, shorterTrip, numDays))
     }
 
-    // P5: People constraining all top windows (must have fewer days than trip needs)
     const constrainingPeople = findConstrainingPeople(scoredWindows.slice(0, 5), responses, numDays)
     if (constrainingPeople.length > 0) {
       allRecommendations.push(createP5Recommendation(bestWindow, constrainingPeople, totalCount))
     }
 
-    // P6: Good enough exists (≥80%)
     if (bestWindow && bestWindow.percentage >= 80) {
       allRecommendations.push(createP6Recommendation(bestWindow, totalCount, scoredWindows))
     }
 
-    // P7: Range too narrow
     const rangeDays = differenceInDays(parseISO(endRange), parseISO(startRange)) + 1
     if (rangeDays < numDays * 1.5) {
       allRecommendations.push(createP7Recommendation(bestWindow, numDays, rangeDays, totalCount))
     }
 
-    // P8: Multiple comparable options (within 5% of best) with DIFFERENT blockers
     if (bestWindow) {
       const comparableWindows = scoredWindows.filter(
         (w) => Math.abs(w.percentage - bestWindow.percentage) <= 5
       )
-      // Only trigger P8 if we have 2+ windows with different blockers
       if (comparableWindows.length >= 2) {
         const [windowA, windowB] = comparableWindows
         const blockersA = new Set(windowA.blockers.map((b) => b.name))
@@ -128,13 +115,9 @@ export function useSmartRecommendation(
       }
     }
 
-    // P9: Fallback (always include as last resort)
     allRecommendations.push(createP9Recommendation(bestWindow, totalCount, scoredWindows))
-
-    // Sort by priority (lowest number = highest priority)
     allRecommendations.sort((a, b) => a.priority - b.priority)
 
-    // Return primary + alternatives
     const [primary, ...alternatives] = allRecommendations
 
     return {
@@ -143,10 +126,6 @@ export function useSmartRecommendation(
     }
   }, [plan])
 }
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 /** Generate all possible N-day windows in the range */
 function generateAllWindows(
@@ -226,7 +205,6 @@ function analyzeBlocker(
   const dayBefore = format(addDays(parseISO(windowStart), -1), 'yyyy-MM-dd')
   const dayAfter = format(addDays(parseISO(windowEnd), 1), 'yyyy-MM-dd')
 
-  // Check if adjacent dates are within plan bounds
   const beforeInRange = dayBefore >= planStart
   const afterInRange = dayAfter <= planEnd
 
@@ -237,22 +215,18 @@ function analyzeBlocker(
   let shiftDays = 0
 
   if (hasAdjacentBefore || hasAdjacentAfter) {
-    // Determine shift direction based on where missing dates are
     const windowDates = eachDayOfInterval({
       start: parseISO(windowStart),
       end: parseISO(windowEnd),
     }).map((d) => format(d, 'yyyy-MM-dd'))
 
-    // Check if missing dates are at the end (shift earlier) or start (shift later)
     const firstMissing = windowDates.indexOf(missingDates[0])
     const lastMissing = windowDates.indexOf(missingDates[missingDates.length - 1])
 
     if (hasAdjacentBefore && lastMissing === windowDates.length - 1) {
-      // Missing dates are at the end, can shift earlier
       shiftDirection = 'earlier'
       shiftDays = missingDates.length
     } else if (hasAdjacentAfter && firstMissing === 0) {
-      // Missing dates are at the start, can shift later
       shiftDirection = 'later'
       shiftDays = missingDates.length
     } else if (hasAdjacentBefore) {
@@ -305,7 +279,6 @@ function findShorterPerfectWindows(
   endRange: string,
   originalDuration: number
 ): ShorterTripSuggestion | null {
-  // Try duration - 1, then - 2, up to - 3 (but minimum 1 day)
   for (let d = originalDuration - 1; d >= Math.max(1, originalDuration - 3); d--) {
     const windows = generateAllWindows(startRange, endRange, d)
     const perfectWindows = windows
@@ -352,21 +325,17 @@ function findConstrainingPeople(
     }
   }
 
-  // Find people blocking 3+ windows who have fewer available days than the trip requires
-  // (If they have enough days, they're not "constrained" - their dates just don't align)
   const constrainers: { id: string; name: string; availableDays: number }[] = []
   for (const [name, { id, count }] of blockerCounts) {
     if (count >= 3) {
       const response = responses.find((r) => r.id === id)
       const availableDays = response?.availableDates.length ?? 0
-      // Only include if they have fewer days than needed
       if (availableDays < numDays) {
         constrainers.push({ id, name, availableDays })
       }
     }
   }
 
-  // Sort by fewest available days first (most constrained)
   return constrainers.sort((a, b) => a.availableDays - b.availableDays)
 }
 
@@ -381,10 +350,6 @@ function toAlternativeWindow(w: ScoredWindow): AlternativeWindow {
     missing: w.blockers.map((b) => b.name),
   }
 }
-
-// ============================================================================
-// Priority Case Recommendation Builders
-// ============================================================================
 
 function createP1Recommendation(
   bestWindow: ScoredWindow,
@@ -468,7 +433,6 @@ function createP5Recommendation(
   const names = constrainers.map((c) => c.name)
   const ids = constrainers.map((c) => c.id)
 
-  // Build recommendation text based on number of constrainers
   let recommendation: string
   if (constrainers.length === 1) {
     const c = constrainers[0]
@@ -576,16 +540,11 @@ function createP9Recommendation(
   }
 }
 
-// ============================================================================
-// Date Formatting Helpers
-// ============================================================================
-
 /** Format an array of dates into a readable range string */
 function formatDateRange(dates: string[]): string {
   if (dates.length === 0) return ''
   if (dates.length === 1) return formatSingleDate(dates[0])
 
-  // Check if dates are consecutive
   const sorted = [...dates].sort()
   const first = sorted[0]
   const last = sorted[sorted.length - 1]

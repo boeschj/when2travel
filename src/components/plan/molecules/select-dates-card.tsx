@@ -23,7 +23,6 @@ interface SelectDatesCardProps {
   rangeStart: Date | null
   onDateClick: (date: Date) => void
   onMarkAllAs: (status: 'available' | 'unavailable') => void
-  // Manage dates props (for mobile dropdown)
   availableRanges: DateRange[]
   unavailableRanges: DateRange[]
   selectedRangeIds: Set<string>
@@ -56,7 +55,6 @@ export function SelectDatesCard({
         <h3 className="text-foreground text-lg font-bold">Set your availability</h3>
 
         <div className="flex items-center gap-2">
-          {/* Mobile: Manage Dates dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 xl:hidden">
@@ -134,7 +132,6 @@ export function SelectDatesCard({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Quick actions dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8">

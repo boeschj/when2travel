@@ -7,7 +7,6 @@ export function CtaSection() {
     <section aria-labelledby="cta-heading" className="relative z-10 w-full py-20 px-5 bg-black">
       <div className="max-w-[1120px] mx-auto">
         <div className="bg-gradient-to-b from-[#152211] to-black rounded-[3rem] p-10 md:p-24 text-center border border-white/5 relative overflow-hidden group">
-          {/* Glow effects */}
           <div
             className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/20 transition-colors duration-700"
             aria-hidden="true"

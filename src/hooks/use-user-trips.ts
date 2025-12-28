@@ -18,7 +18,6 @@ export function useUserTrips() {
   const [responsePlanIds, setResponsePlanIds] = useAtom(responsePlanIdsAtom)
   const [, setResponseTokens] = useAtom(responseEditTokensAtom)
 
-  // Derive unique plan IDs from both created plans and responded plans
   const { allPlanIds, createdPlanIds } = useMemo(() => {
     const created = Object.keys(planTokens)
     const responded = [...new Set(Object.values(responsePlanIds))]
@@ -47,17 +46,14 @@ export function useUserTrips() {
     })
   }, [allPlanIds, planQueries, createdPlanIds])
 
-  // Filter out trips with 404 errors (deleted plans with stale tokens)
-  // Keep trips with other errors (e.g., 500s) so they can be surfaced
   const validTrips = useMemo(() => {
     return trips.filter(t => {
       if (!t.error || t.isLoading) return true
-      // Only filter out 404s (deleted plans), keep other errors
-      return !(t.error instanceof ApiError && t.error.status === 404)
+      const is404 = t.error instanceof ApiError && t.error.status === 404
+      return !is404
     })
   }, [trips])
 
-  // Check for server errors (non-404) that should be thrown
   const serverError = useMemo(() => {
     return trips.find(t =>
       t.error &&
@@ -66,14 +62,12 @@ export function useUserTrips() {
     )?.error ?? null
   }, [trips])
 
-  // Track which stale plan IDs we've already cleaned up to prevent loops
   const cleanedUpRef = useRef<Set<string>>(new Set())
 
-  // Auto-cleanup stale tokens when we detect 404 errors (not network/server errors)
+  // TODO: Extract stale token cleanup to a separate function for testability
   useEffect(() => {
     const stalePlanIds = trips
       .filter(t => {
-        // Only clean up if it's a 404 (plan deleted), not network/server errors
         if (!t.error || t.isLoading) return false
         return t.error instanceof ApiError && t.error.status === 404
       })
@@ -82,10 +76,8 @@ export function useUserTrips() {
 
     if (stalePlanIds.length === 0) return
 
-    // Mark as cleaned up to prevent re-running
     stalePlanIds.forEach(id => cleanedUpRef.current.add(id))
 
-    // Remove stale plan tokens (for creators)
     const stalePlanTokenIds = stalePlanIds.filter(id => id in planTokens)
     if (stalePlanTokenIds.length > 0) {
       setPlanTokens(prev => {
@@ -95,7 +87,6 @@ export function useUserTrips() {
       })
     }
 
-    // Remove stale response tokens and plan ID mappings (for respondents)
     const staleResponseIds = Object.entries(responsePlanIds)
       .filter(([, planId]) => stalePlanIds.includes(planId))
       .map(([responseId]) => responseId)
@@ -114,7 +105,6 @@ export function useUserTrips() {
     }
   }, [trips, planTokens, responsePlanIds, setPlanTokens, setResponsePlanIds, setResponseTokens])
 
-  // hasTrips should only be true if there are valid trips (not all stale)
   const hasValidTrips = validTrips.length > 0 || planQueries.some(q => q.isLoading)
 
   return {

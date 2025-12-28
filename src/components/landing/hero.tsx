@@ -15,7 +15,6 @@ export function Hero() {
 
   return (
     <section aria-labelledby="hero-heading" className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] w-full overflow-hidden pt-20">
-      {/* Background image panes */}
       {HERO_IMAGES.length > 0 && (
         <div
           className="absolute inset-0 z-0 hidden md:grid grid-cols-3 gap-1 select-none pointer-events-none"
@@ -36,14 +35,12 @@ export function Hero() {
         </div>
       )}
 
-      {/* Gradient overlays - darkens toward bottom and center for text readability */}
       <div className="absolute inset-0 bg-black md:hidden z-0" aria-hidden="true" />
       <div className="absolute inset-0 hidden md:block bg-linear-to-t from-black via-black/70 to-black/60 z-0" aria-hidden="true" />
       <div className="absolute inset-0 hidden md:block bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
 
       <div className="flex flex-col max-w-[1120px] w-full gap-12 relative z-20 px-5 md:px-10">
         <div className="flex flex-col items-center justify-center gap-8 text-center max-w-[900px] mx-auto">
-          {/* Headline */}
           <h1
             id="hero-heading"
             className="text-white text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter"
@@ -55,13 +52,11 @@ export function Hero() {
             </span>
           </h1>
 
-          {/* Subtitle */}
           <p className="text-white/90 text-lg md:text-2xl font-medium leading-relaxed max-w-[680px] mx-auto">
             The fastest way to find dates that work for everyone. Create a plan,
             share the link, see when everyone's free.
           </p>
 
-          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-5 pt-6 w-full justify-center">
             {mostRecentPlanId ? (
               <Link to={ROUTES.TRIPS} className="w-full sm:w-auto">

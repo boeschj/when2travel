@@ -146,7 +146,6 @@ export function AvailabilityCalendar({
 
         return (
           <div key={format(month, 'yyyy-MM')} className="flex flex-col gap-4">
-            {/* Month header */}
             <div className="flex items-center w-[308px]">
               {showNavigation && isFirst && (
                 <Button
@@ -177,7 +176,6 @@ export function AvailabilityCalendar({
               )}
             </div>
 
-            {/* Month grid */}
             <div className="grid grid-cols-7 gap-0.5">
               {weekDays.map(day => (
                 <div

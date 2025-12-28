@@ -39,7 +39,6 @@ async function injectOgMetadata(
   const db = drizzle(c.env.planthetrip_d1)
   const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
 
-  // Get the base HTML from assets
   const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
   let html = await assetResponse.text()
 
@@ -61,7 +60,6 @@ async function injectOgMetadata(
       ? `https://justplanthetrip.com/plan/${planId}/respond`
       : `https://justplanthetrip.com/plan/${planId}`
 
-    // Replace OG meta tags
     html = html
       .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
       .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
@@ -103,8 +101,6 @@ app.get('/plan/:planId', async (c) => {
   }
 })
 
-// Catch-all: forward to static assets
-// The assets layer handles SPA fallback via not_found_handling: "single-page-application"
 app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 
 app.notFound((c) => {

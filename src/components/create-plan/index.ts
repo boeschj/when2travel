@@ -2,7 +2,6 @@ export { BackgroundEffects } from './background-effects'
 export { DateRangeField } from './date-range-field'
 export { DurationPicker } from './duration-picker'
 export { PlanSummaryCard } from './plan-summary-card'
-export { StepIndicator } from './step-indicator'
 export { TripNameField } from './trip-name-field'
 
 export type {

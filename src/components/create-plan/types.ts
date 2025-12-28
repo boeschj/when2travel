@@ -31,20 +31,3 @@ export interface FormField<TValue> {
 export type TripNameField = FormField<string>
 export type NumDaysField = Omit<FormField<number>, 'handleBlur'>
 export type DateRangeField = Omit<FormField<DateRange | undefined>, 'handleBlur' | 'name'>
-
-/**
- * Extract displayable error messages from TanStack Form's meta.errors array.
- * Handles both string errors and StandardSchema issue objects (from Zod).
- */
-export function getFieldErrors(errors: unknown[]): Array<{ message: string }> {
-  return errors
-    .map((err) => {
-      if (typeof err === 'string') return err
-      if (err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
-        return (err as { message: string }).message
-      }
-      return null
-    })
-    .filter((msg): msg is string => msg !== null)
-    .map((msg) => ({ message: msg }))
-}

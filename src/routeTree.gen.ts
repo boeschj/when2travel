@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TripsRouteImport } from './routes/trips'
-import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanPlanIdIndexRouteImport } from './routes/plan/$planId.index'
@@ -21,11 +20,6 @@ import { Route as PlanPlanIdRespondRouteImport } from './routes/plan/$planId.res
 const TripsRoute = TripsRouteImport.update({
   id: '/trips',
   path: '/trips',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlaygroundRoute = PlaygroundRouteImport.update({
-  id: '/playground',
-  path: '/playground',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -62,7 +56,6 @@ const PlanPlanIdRespondRoute = PlanPlanIdRespondRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
-  '/playground': typeof PlaygroundRoute
   '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
@@ -72,7 +65,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
-  '/playground': typeof PlaygroundRoute
   '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
@@ -83,7 +75,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
-  '/playground': typeof PlaygroundRoute
   '/trips': typeof TripsRoute
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
@@ -95,7 +86,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/create'
-    | '/playground'
     | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
@@ -105,7 +95,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/create'
-    | '/playground'
     | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
@@ -115,7 +104,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/create'
-    | '/playground'
     | '/trips'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
@@ -126,7 +114,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
-  PlaygroundRoute: typeof PlaygroundRoute
   TripsRoute: typeof TripsRoute
   PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
   PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
@@ -141,13 +128,6 @@ declare module '@tanstack/react-router' {
       path: '/trips'
       fullPath: '/trips'
       preLoaderRoute: typeof TripsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/playground': {
-      id: '/playground'
-      path: '/playground'
-      fullPath: '/playground'
-      preLoaderRoute: typeof PlaygroundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -198,7 +178,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
-  PlaygroundRoute: PlaygroundRoute,
   TripsRoute: TripsRoute,
   PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
   PlanPlanIdShareRoute: PlanPlanIdShareRoute,

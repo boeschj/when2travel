@@ -20,10 +20,6 @@ export interface CompatibleDateRange {
   totalCount: number
 }
 
-export interface Respondent extends Pick<PlanResponse, 'id' | 'name' | 'availableDates'> {
-  isCurrentUser: boolean
-}
-
 export interface ResponseFormData {
   name: string
   availableDates: string[]

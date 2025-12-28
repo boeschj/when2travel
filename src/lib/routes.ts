@@ -2,7 +2,6 @@
 export const ROUTE_IDS = {
   HOME: '/',
   CREATE: '/create',
-  PLAYGROUND: '/playground',
   TRIPS: '/trips',
   PLAN: '/plan/$planId/',
   PLAN_SHARE: '/plan/$planId/share',
@@ -14,7 +13,6 @@ export const ROUTE_IDS = {
 export const ROUTES = {
   HOME: '/',
   CREATE: '/create',
-  PLAYGROUND: '/playground',
   TRIPS: '/trips',
   PLAN: '/plan/$planId',
   PLAN_SHARE: '/plan/$planId/share',

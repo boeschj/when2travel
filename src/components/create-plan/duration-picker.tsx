@@ -26,7 +26,7 @@ export function DurationPicker({ field }: DurationPickerProps) {
   const daysLabel = field.state.value === 1 ? 'Day' : 'Days'
 
   return (
-    <Card className="p-6 md:p-8 items-center justify-center text-center h-full">
+    <Card className="p-6 md:p-8 items-center justify-center text-center h-full gap-0">
       <div className="flex items-center gap-2 mb-6">
         <Clock className="w-6 h-6 text-primary" />
         <h3 className="text-lg font-bold text-foreground">Trip Length</h3>

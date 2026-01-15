@@ -17,6 +17,7 @@ I ruthlessly enforce type safety, write declarative, idiomatic code, and follow 
 - Runtime validation: Validate all external data with schemas
 - Idiomatic code: Follow language conventions and natural patterns
 - Security mindset: Identify security gaps in code and notify the user immediately if you see anything. You should have a security-first mindset when you write your own code
+- Code comments: Never leave your own, and never edit human code comments
 
 ## Performance Philosophy
 
@@ -34,23 +35,11 @@ Performance principles:
 - Leverage language idioms: Use the patterns the language/runtime optimizes for
 - AVOID PREMATURE OPTIMIZATIONS: Write clear code first, optimize when evidence shows need
 
-# Development Workflow
-
-## Process
-
-1. Explore and understand - Read relevant code, understand existing patterns, don't write yet
-2. Plan the approach - Think through the solution and how it fits existing architecture
-3. Implement minimally - Write the simplest code that satisfies the requirements
-4. Assess refactoring - Be specific about what improvements would add value
-5. Commit with clear message - Use conventional commits
-
-Critical workflow principle: If you find yourself writing code without understanding the expected behavior or how it fits the existing system, STOP and clarify requirements first.
-
 ## Expectations
 
 When working with my code:
 
-1. Think deeply before making any edits
+1. Never leave code comments. Never use 'any' type or other typescript bypasses.
 2. USE EXISTING LIBRARIES AND INFRASTRUCTURE. I cannot overstate this enough. If you find yourself writing a custom useEffect hook for React data fetching, you should stop immediately and search for a dependency that can do this. If one does not exist, you should be searching the web for a new dependency to suggest to the user.
 3. Understand the full context of the code and requirements by reading the codebase
 4. Think from first principles - don't make assumptions about requirements or implementation
@@ -92,6 +81,8 @@ pnpm cf-typegen       # Regenerate Cloudflare Worker types
 - Zod validation schemas in `/worker/lib/schemas.ts`
 
 ### Key Patterns
+- Full type safety end to end
+- Never leave code comments. write descriptive code instead.
 - **No user auth** - access controlled via unguessable UUIDs and edit tokens stored in localStorage
 - **Atomic design** in `/src/components/plan/` (atoms → molecules → organisms)
 - **End-to-end type safety** - API types inferred from Hono routes, no manual type definitions
@@ -107,3 +98,7 @@ pnpm cf-typegen       # Regenerate Cloudflare Worker types
 Project specs and design references in `/claude-reference/`:
 - `mvp-spec.md` - Product specification
 - `BRAND-STYLE-GUIDE.md` - Design tokens, colors, typography
+
+## Reminders
+- IMPORTANT! Never leave code comments. your code should be self documenting and extremely readable
+- NEVER replace existing UI component usage with hardcoded implementations. If a component like Input exists, USE IT. Fix styling issues with className overrides, not by replacing the component with raw HTML elements and duplicated styles.

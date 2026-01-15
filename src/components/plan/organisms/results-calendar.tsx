@@ -1,19 +1,14 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { format, parseISO, addMonths, eachDayOfInterval } from 'date-fns'
+import { Calendar } from '@/components/ui/calendar'
 import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  getDay,
-  isSameMonth,
-  addMonths,
-  subMonths,
-  isWithinInterval,
-  parseISO
-} from 'date-fns'
-import { CalendarHeader } from '../molecules/calendar-header'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+  CalendarProvider,
+  CalendarNavHeader,
+  HeatmapDayButton,
+  useMonthNavigation,
+  type AvailabilityData,
+} from '@/components/calendar'
 import type { PlanResponse } from '@/lib/types'
 
 interface ResultsCalendarProps {
@@ -28,55 +23,6 @@ interface ResultsCalendarProps {
   numberOfMonths?: 1 | 2
 }
 
-const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
-
-const HEATMAP_STOPS = [
-  { threshold: 1.0,  color: '#46ec13', textColor: '#0a1208', glow: true },  // 100% - Bright lime green
-  { threshold: 0.8,  color: '#a3e635', textColor: '#0a1208', glow: false }, // 80%+ - Lime/yellow
-  { threshold: 0.6,  color: '#facc15', textColor: '#0a1208', glow: false }, // 60%+ - Yellow
-  { threshold: 0.4,  color: '#f97316', textColor: '#0a1208', glow: false }, // 40%+ - Orange
-  { threshold: 0.2,  color: '#ea580c', textColor: '#ffffff', glow: false }, // 20%+ - Dark orange
-  { threshold: 0.0,  color: '#ef4444', textColor: '#ffffff', glow: false }, // 0%+ - Red
-] as const
-
-/**
- * Gets the heatmap color based on availability percentage.
- * Uses discrete color stops for clear visual distinction.
- */
-function getHeatmapColor(availableCount: number, totalCount: number): {
-  backgroundColor: string
-  color: string
-  glow: string | null
-} {
-  if (totalCount === 0) {
-    return { backgroundColor: 'var(--color-border)', color: 'var(--color-foreground)', glow: null }
-  }
-
-  const percentage = availableCount / totalCount
-  const stop = HEATMAP_STOPS.find(s => percentage >= s.threshold) ?? HEATMAP_STOPS[HEATMAP_STOPS.length - 1]
-
-  return {
-    backgroundColor: stop.color,
-    color: stop.textColor,
-    glow: stop.glow ? 'rgba(70, 236, 19, 0.4)' : null
-  }
-}
-
-function getMonthDays(month: Date): (Date | null)[] {
-  const monthStart = startOfMonth(month)
-  const monthEnd = endOfMonth(month)
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
-
-  const dayOfWeek = getDay(monthStart)
-  const emptyDaysBeforeMonthStart = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-  const leadingEmptyDays = Array(emptyDaysBeforeMonthStart).fill(null)
-
-  const totalCells = leadingEmptyDays.length + daysInMonth.length
-  const trailingEmptyDays = Array(42 - totalCells).fill(null)
-
-  return [...leadingEmptyDays, ...daysInMonth, ...trailingEmptyDays]
-}
-
 export function ResultsCalendar({
   startRange,
   endRange,
@@ -88,40 +34,43 @@ export function ResultsCalendar({
   className,
   numberOfMonths = 2,
 }: ResultsCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(() =>
-    startOfMonth(parseISO(startRange))
+  const { month: currentMonth, setMonth: setCurrentMonth, goToPrevious, goToNext } =
+    useMonthNavigation(parseISO(startRange))
+
+  const dateRange = useMemo(
+    () => ({
+      start: parseISO(startRange),
+      end: parseISO(endRange),
+    }),
+    [startRange, endRange]
   )
 
-  const dateRange = useMemo(() => ({
-    start: parseISO(startRange),
-    end: parseISO(endRange)
-  }), [startRange, endRange])
-
-  const dateAvailabilityMap = useMemo(() => {
-    const map = new Map<string, number>()
+  const availabilityMap = useMemo(() => {
+    const map = new Map<string, AvailabilityData>()
 
     const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
     for (const date of allDates) {
-      map.set(format(date, 'yyyy-MM-dd'), 0)
+      const dateStr = format(date, 'yyyy-MM-dd')
+      map.set(dateStr, {
+        date: dateStr,
+        availableCount: 0,
+        totalCount: responses.length,
+        respondentIds: [],
+      })
     }
 
-    responses.forEach(response => {
-      response.availableDates.forEach(dateStr => {
-        const current = map.get(dateStr)
-        if (current !== undefined) {
-          map.set(dateStr, current + 1)
+    responses.forEach((response) => {
+      response.availableDates.forEach((dateStr) => {
+        const data = map.get(dateStr)
+        if (data) {
+          data.availableCount += 1
+          data.respondentIds.push(response.id)
         }
       })
     })
 
     return map
   }, [responses, dateRange])
-
-  const selectedRespondentDates = useMemo(() => {
-    if (!selectedRespondentId) return null
-    const respondent = responses.find(r => r.id === selectedRespondentId)
-    return respondent ? new Set(respondent.availableDates) : null
-  }, [selectedRespondentId, responses])
 
   const months = useMemo(() => {
     const result = [currentMonth]
@@ -131,144 +80,59 @@ export function ResultsCalendar({
     return result
   }, [currentMonth, numberOfMonths])
 
-  const getDateInfo = useCallback((date: Date) => {
-    const isOutsideRange = !isWithinInterval(date, dateRange)
-    if (isOutsideRange) {
-      return { availableCount: 0, totalCount: responses.length, isDisabled: true, heatmapColor: null }
-    }
-
-    const dateStr = format(date, 'yyyy-MM-dd')
-    const availableCount = dateAvailabilityMap.get(dateStr) ?? 0
-    const totalCount = responses.length
-    const heatmapColor = getHeatmapColor(availableCount, totalCount)
-
-    return { availableCount, totalCount, isDisabled: false, heatmapColor }
-  }, [dateRange, dateAvailabilityMap, responses.length])
-
-  const handleDateClick = (date: Date) => {
-    if (onDateClick) {
-      onDateClick(date)
-    }
-  }
-
-  const goToPreviousMonth = () => setCurrentMonth(prev => subMonths(prev, 1))
-  const goToNextMonth = () => setCurrentMonth(prev => addMonths(prev, 1))
-
-  const renderDateCell = (date: Date | null, month: Date, index: number) => {
-    if (!date) {
-      return <div key={`empty-${format(month, 'yyyy-MM')}-${index}`} className="min-h-11" />
-    }
-
-    const { isDisabled, heatmapColor, availableCount, totalCount } = getDateInfo(date)
-    const isOutOfMonth = !isSameMonth(date, month)
-    const dateStr = format(date, 'yyyy-MM-dd')
-
-    const isRespondentAvailable = selectedRespondentDates?.has(dateStr) ?? false
-    const hasRespondentFilter = selectedRespondentDates !== null
-
-    let cellStyle: React.CSSProperties | undefined
-    let cellClassName = 'size-9 rounded-full flex items-center justify-center transition-all text-sm font-bold'
-
-    if (hasRespondentFilter) {
-      if (isRespondentAvailable && selectedRespondentColor) {
-        cellStyle = {
-          backgroundColor: selectedRespondentColor,
-          color: '#1a1a1a',
-          boxShadow: `0 0 10px ${selectedRespondentColor}66`
-        }
-      } else if (isRespondentAvailable) {
-        cellClassName = cn(cellClassName, 'bg-primary text-primary-foreground shadow-[0_0_10px_rgba(70,236,19,0.4)]')
-      } else {
-        cellClassName = cn(cellClassName, 'bg-border text-foreground opacity-50')
-      }
-    } else if (heatmapColor) {
-      cellStyle = {
-        backgroundColor: heatmapColor.backgroundColor,
-        color: heatmapColor.color,
-        boxShadow: heatmapColor.glow ? `0 0 10px ${heatmapColor.glow}` : undefined
-      }
-    }
-
-    const isClickable = !isDisabled && !isOutOfMonth
-    const tooltipText = `${availableCount}/${totalCount} people available`
-
-    const button = (
-      <button
-        key={dateStr}
-        type="button"
-        disabled={!isClickable}
-        onClick={() => handleDateClick(date)}
-        className={cn(
-          'group relative min-h-11 flex items-center justify-center',
-          isClickable ? 'cursor-pointer' : 'cursor-not-allowed'
-        )}
-        aria-label={`${format(date, 'MMMM d')} - ${tooltipText}`}
-      >
-        {!isClickable ? (
-          <span className="text-muted-foreground/50">{date.getDate()}</span>
-        ) : (
-          <div className={cellClassName} style={cellStyle}>
-            {date.getDate()}
-          </div>
-        )}
-      </button>
-    )
-
-    if (!isClickable) {
-      return button
-    }
-
-    return (
-      <Tooltip key={dateStr}>
-        <TooltipTrigger asChild>
-          {button}
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-semibold">{tooltipText}</p>
-        </TooltipContent>
-      </Tooltip>
-    )
-  }
+  const contextValue = useMemo(
+    () => ({
+      availabilityMap,
+      selectedRespondentId,
+      selectedRespondentColor,
+      onDateClick,
+    }),
+    [availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick]
+  )
 
   return (
-    <div className={cn('flex flex-wrap justify-center gap-4 md:gap-0', className)}>
-      {months.map((month, index) => {
-        const isFirstMonth = index === 0
-        const showDivider = isFirstMonth && numberOfMonths > 1
-        return (
-          <div key={format(month, 'yyyy-MM')} className="flex">
-            <div className={cn('flex flex-col gap-4', !isFirstMonth && 'hidden md:flex')}>
-              <div className="flex items-center w-[308px]">
-                <CalendarHeader
-                  date={month}
-                  onPreviousMonth={goToPreviousMonth}
-                  onNextMonth={goToNextMonth}
-                  showNavigation={showNavigation}
-                  showPrevious={isFirstMonth}
-                  showNext={index === months.length - 1 || isFirstMonth}
-                  nextButtonClassName={isFirstMonth && numberOfMonths > 1 ? 'md:hidden' : undefined}
+    <CalendarProvider value={contextValue}>
+      <div className={cn('flex flex-wrap justify-center gap-4 md:gap-0', className)}>
+        {months.map((month, index) => {
+          const isFirst = index === 0
+          const isLast = index === months.length - 1
+          const showDivider = isFirst && numberOfMonths > 1
+
+          return (
+            <div key={format(month, 'yyyy-MM')} className="flex">
+              <div className={cn('flex flex-col gap-4', !isFirst && 'hidden md:flex')}>
+                <CalendarNavHeader
+                  month={month}
+                  onPrevious={goToPrevious}
+                  onNext={goToNext}
+                  showPrevious={showNavigation && isFirst}
+                  showNext={showNavigation && isLast}
+                />
+
+                <Calendar
+                  month={month}
+                  onMonthChange={setCurrentMonth}
+                  showOutsideDays
+                  fixedWeeks
+                  weekStartsOn={1}
+                  disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
+                  className="[--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
+                  classNames={{
+                    nav: 'hidden',
+                    month_caption: 'hidden',
+                  }}
+                  components={{
+                    DayButton: HeatmapDayButton,
+                  }}
                 />
               </div>
-
-              <div className="grid grid-cols-7 gap-0.5">
-                {WEEKDAYS.map(day => (
-                  <div
-                    key={day}
-                    className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center min-h-11 flex items-center justify-center"
-                  >
-                    {day}
-                  </div>
-                ))}
-
-                {getMonthDays(month).map((date, idx) => renderDateCell(date, month, idx))}
-              </div>
+              {showDivider && (
+                <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
+              )}
             </div>
-            {showDivider && (
-              <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
-            )}
-          </div>
-        )
-      })}
-    </div>
+          )
+        })}
+      </div>
+    </CalendarProvider>
   )
 }

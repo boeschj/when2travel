@@ -44,7 +44,7 @@ export function DurationPicker({ field }: DurationPickerProps) {
         <div className="flex flex-col items-center">
           <motion.span
             key={field.state.value}
-            className="text-6xl font-black text-foreground tracking-tighter tabular-nums leading-none w-[5rem] inline-block text-center"
+            className="text-6xl font-black text-foreground tracking-tighter tabular-nums leading-none w-20 inline-block text-center"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}

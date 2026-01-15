@@ -1,10 +1,9 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { format, parseISO, addMonths } from 'date-fns'
+import { parseISO, startOfMonth, addMonths, isSameMonth } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import {
   CalendarProvider,
-  CalendarNavHeader,
   AvailabilityDayButton,
   useMonthNavigation,
 } from '@/components/calendar'
@@ -15,7 +14,6 @@ interface AvailabilityCalendarProps {
   selectedDates?: string[]
   onDateClick?: (date: Date) => void
   rangeStart?: Date | null
-  mode?: 'view' | 'select'
   showNavigation?: boolean
   className?: string
   numberOfMonths?: 1 | 2
@@ -27,13 +25,21 @@ export function AvailabilityCalendar({
   selectedDates = [],
   onDateClick,
   rangeStart = null,
-  mode = 'view',
   showNavigation = true,
   className,
   numberOfMonths = 1,
 }: AvailabilityCalendarProps) {
-  const { month: currentMonth, setMonth: setCurrentMonth, goToPrevious, goToNext } =
+  const { month: currentMonth, setMonth: setCurrentMonth } =
     useMonthNavigation(parseISO(startRange))
+
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const dateRange = useMemo(
     () => ({
@@ -45,69 +51,49 @@ export function AvailabilityCalendar({
 
   const selectedDatesSet = useMemo(() => new Set(selectedDates), [selectedDates])
 
-  const months = useMemo(() => {
-    const result = [currentMonth]
-    if (numberOfMonths === 2) {
-      result.push(addMonths(currentMonth, 1))
-    }
-    return result
-  }, [currentMonth, numberOfMonths])
-
-  const handleDateClick = useCallback(
-    (date: Date) => {
-      if (mode === 'select' && onDateClick) {
-        onDateClick(date)
-      }
-    },
-    [mode, onDateClick]
-  )
+  const singleMonthRange = isSameMonth(dateRange.start, dateRange.end)
+  const effectiveMonths = (isMobile && singleMonthRange) ? 1 : numberOfMonths
 
   const contextValue = useMemo(
     () => ({
       selectedDates: selectedDatesSet,
       rangeStart,
-      onDateClick: handleDateClick,
+      onDateClick,
     }),
-    [selectedDatesSet, rangeStart, handleDateClick]
+    [selectedDatesSet, rangeStart, onDateClick]
   )
 
   return (
     <CalendarProvider value={contextValue}>
-      <div className={cn('flex flex-wrap justify-center gap-4 sm:gap-8', className)}>
-        {months.map((month, index) => {
-          const isFirst = index === 0
-          const isLast = index === months.length - 1
-
-          return (
-            <div key={format(month, 'yyyy-MM')} className="flex flex-col gap-4">
-              <CalendarNavHeader
-                month={month}
-                onPrevious={goToPrevious}
-                onNext={goToNext}
-                showPrevious={showNavigation && isFirst}
-                showNext={showNavigation && isLast}
-              />
-
-              <Calendar
-                month={month}
-                onMonthChange={setCurrentMonth}
-                showOutsideDays
-                fixedWeeks
-                weekStartsOn={0}
-                disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
-                className="[--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
-                classNames={{
-                  nav: 'hidden',
-                  month_caption: 'hidden',
-                }}
-                components={{
-                  DayButton: AvailabilityDayButton,
-                }}
-              />
-            </div>
-          )
-        })}
-      </div>
+        <Calendar
+          mode="single"
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+          numberOfMonths={effectiveMonths}
+          startMonth={startOfMonth(dateRange.start)}
+          endMonth={addMonths(startOfMonth(dateRange.end), effectiveMonths - 1)}
+          showOutsideDays
+          fixedWeeks
+          weekStartsOn={0}
+          disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
+          className={cn('bg-transparent p-0', className)}
+          classNames={{
+            months: 'flex flex-wrap justify-center gap-8 sm:gap-16',
+            month: 'flex flex-col',
+            month_caption: 'flex items-center justify-center h-10 mb-4',
+            caption_label: 'text-foreground text-lg font-bold',
+            nav: showNavigation ? 'absolute inset-x-0 top-0 flex items-center justify-between h-10' : 'hidden',
+            button_previous: 'p-2 rounded-full hover:bg-white/10 text-foreground transition-colors',
+            button_next: 'p-2 rounded-full hover:bg-white/10 text-foreground transition-colors',
+            weekdays: 'grid grid-cols-7 gap-x-1',
+            weekday: 'text-muted-foreground font-bold text-xs uppercase tracking-wider text-center',
+            week: 'grid grid-cols-7 gap-x-1 mt-2',
+            day: 'aspect-square flex items-center justify-center',
+          }}
+          components={{
+            DayButton: AvailabilityDayButton,
+          }}
+        />
     </CalendarProvider>
   )
 }

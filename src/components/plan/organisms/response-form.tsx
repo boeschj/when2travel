@@ -145,22 +145,35 @@ export function ResponseForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
-      <div className="flex flex-col xl:flex-row xl:items-stretch gap-6">
-        <SelectDatesCard
-          startRange={startRange}
-          endRange={endRange}
-          selectedDates={Array.from(selectedDates)}
-          compatibleWindowsCount={compatibleWindowsCount}
-          rangeStart={rangeStart}
-          onDateClick={handleDateClick}
-          onMarkAllAs={markAllAs}
-          availableRanges={availableRanges}
-          unavailableRanges={unavailableRanges}
-          selectedRangeIds={selectedRangeIds}
-          hasSelectedRanges={hasSelectedRanges}
-          onToggleRangeSelection={toggleRangeSelection}
-          onDeleteSelected={deleteSelectedRanges}
-        />
+      <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
+        <div className="flex flex-col gap-6">
+          <SelectDatesCard
+            startRange={startRange}
+            endRange={endRange}
+            selectedDates={Array.from(selectedDates)}
+            compatibleWindowsCount={compatibleWindowsCount}
+            rangeStart={rangeStart}
+            onDateClick={handleDateClick}
+            onMarkAllAs={markAllAs}
+            availableRanges={availableRanges}
+            unavailableRanges={unavailableRanges}
+            selectedRangeIds={selectedRangeIds}
+            hasSelectedRanges={hasSelectedRanges}
+            onToggleRangeSelection={toggleRangeSelection}
+            onDeleteSelected={deleteSelectedRanges}
+          />
+
+          <NameInputCard
+            name={name}
+            onNameChange={handleNameChange}
+            isSubmitting={isSubmitting}
+            isEditMode={isEditMode}
+            hasChanges={isDirty}
+            error={nameError ?? undefined}
+            onDelete={onDelete}
+            isDeleting={isDeleting}
+          />
+        </div>
 
         <ManageDatesCard
           availableRanges={availableRanges}
@@ -171,17 +184,6 @@ export function ResponseForm({
           onDeleteSelected={deleteSelectedRanges}
         />
       </div>
-
-      <NameInputCard
-        name={name}
-        onNameChange={handleNameChange}
-        isSubmitting={isSubmitting}
-        isEditMode={isEditMode}
-        hasChanges={isDirty}
-        error={nameError ?? undefined}
-        onDelete={onDelete}
-        isDeleting={isDeleting}
-      />
 
       <AlertDialog open={warningType !== null} onOpenChange={(open) => !open && handleCancelSubmit()}>
         <AlertDialogContent>

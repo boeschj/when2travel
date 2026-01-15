@@ -1,41 +1,11 @@
+import type { ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { AvailabilityCalendar } from '../organisms/availability-calendar'
 import { AvailabilityActions } from './availability-actions'
+import { cn } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
-
-function SelectionStatusBar({
-  hasSelectedDates,
-  compatibleWindowsCount
-}: {
-  hasSelectedDates: boolean
-  compatibleWindowsCount: number
-}) {
-  const badgeVisible = hasSelectedDates
-  const isZeroCompatible = compatibleWindowsCount === 0
-  const badgeClassName = [
-    "shrink-0",
-    !badgeVisible
-      ? "invisible"
-      : isZeroCompatible
-      ? "bg-destructive text-destructive-foreground"
-      : "bg-primary text-primary-foreground"
-  ].join(" ")
-
-  const windowLabel = `window${compatibleWindowsCount === 1 ? '' : 's'}`
-
-  return (
-    <div className="flex items-center justify-between gap-4 -mt-2">
-      <p className="text-muted-foreground text-sm">
-        Tap once to start a range, tap again to complete it.
-      </p>
-      <Badge className={badgeClassName}>
-        {compatibleWindowsCount} compatible {windowLabel}
-      </Badge>
-    </div>
-  )
-}
-
 interface SelectDatesCardProps {
   startRange: string
   endRange: string
@@ -67,13 +37,27 @@ export function SelectDatesCard({
   onToggleRangeSelection,
   onDeleteSelected
 }: SelectDatesCardProps) {
-  const hasSelectedDates = selectedDates.length > 0
   const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0
+  const hasSelectedDates = selectedDates.length > 0
+  const isZeroCompatible = compatibleWindowsCount === 0
 
   return (
     <Card className="p-4 w-full md:w-fit items-center">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4 w-full">
-        <h3 className="text-foreground text-lg font-bold">Set your availability</h3>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 w-full">
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <CardHeader>Set your availability</CardHeader>
+            {hasSelectedDates && (
+              <SelectionBadge
+                compatibleWindowsCount={compatibleWindowsCount}
+                isZeroCompatible={isZeroCompatible}
+              />
+            )}
+          </div>
+          <CardSubheader>
+            Tap once to start a range, tap again to complete it.
+          </CardSubheader>
+        </div>
         <AvailabilityActions
           availableRanges={availableRanges}
           unavailableRanges={unavailableRanges}
@@ -85,10 +69,7 @@ export function SelectDatesCard({
           onMarkAllAs={onMarkAllAs}
         />
       </div>
-      <SelectionStatusBar
-        hasSelectedDates={hasSelectedDates}
-        compatibleWindowsCount={compatibleWindowsCount}
-      />
+      <Separator className="mb-4" />
       <AvailabilityCalendar
         startRange={startRange}
         endRange={endRange}
@@ -98,5 +79,39 @@ export function SelectDatesCard({
         numberOfMonths={2}
       />
     </Card>
+  )
+}
+
+function CardHeader({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="text-foreground text-lg font-bold">{children}</h3>
+  )
+}
+
+interface SelectionBadgeProps {
+  compatibleWindowsCount: number
+  isZeroCompatible: boolean
+}
+
+function SelectionBadge({
+  compatibleWindowsCount,
+  isZeroCompatible
+}: SelectionBadgeProps) {
+  const windowLabel = `window${compatibleWindowsCount === 1 ? '' : 's'}`
+
+  return (
+    <Badge className={cn(
+      isZeroCompatible
+        ? "bg-destructive text-destructive-foreground"
+        : "bg-primary text-primary-foreground"
+    )}>
+      {compatibleWindowsCount} compatible {windowLabel}
+    </Badge>
+  )
+}
+
+function CardSubheader({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-muted-foreground text-sm mt-1">{children}</p>
   )
 }

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, MoreVertical, Trash2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
+import { pluralize } from '@/lib/utils'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -190,7 +191,7 @@ export function TripCard({ plan, role }: TripCardProps) {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isCreator
-                ? `This action cannot be undone. This will permanently delete "${plan.name}" and all ${responseCount} response${responseCount !== 1 ? 's' : ''}.`
+                ? `This action cannot be undone. This will permanently delete "${plan.name}" and all ${responseCount} ${pluralize(responseCount, 'response')}.`
                 : `This will remove your availability from "${plan.name}". You can rejoin later if you have the link.`
               }
             </AlertDialogDescription>

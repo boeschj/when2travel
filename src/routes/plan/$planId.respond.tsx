@@ -14,6 +14,7 @@ import { useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-
 import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { format, parseISO } from 'date-fns'
+import { pluralize } from '@/lib/utils'
 
 const $createResponse = client.responses.$post
 
@@ -113,7 +114,7 @@ function MarkAvailabilityPage() {
             </h1>
             <p className="text-lg font-normal leading-normal text-muted-foreground">
               Sharing availability for: <span className="text-foreground font-medium">{plan.name}</span> for{' '}
-              <span className="text-foreground font-medium">{plan.numDays} {plan.numDays === 1 ? 'day' : 'days'}</span>{' '}
+              <span className="text-foreground font-medium">{plan.numDays} {pluralize(plan.numDays, 'day')}</span>{' '}
               between {format(parseISO(plan.startRange), 'MMM d')} - {format(parseISO(plan.endRange), 'MMM d, yyyy')}
             </p>
           </FormSection>

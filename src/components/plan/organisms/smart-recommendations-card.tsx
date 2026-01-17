@@ -12,7 +12,7 @@ import {
   UserPlus,
   Pencil,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, pluralize } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -166,8 +166,8 @@ export function SmartRecommendationsCard({
 
   const availabilityText = bestWindow
     ? isPerfect
-      ? `All ${bestWindow.totalCount} ${bestWindow.totalCount === 1 ? 'person' : 'people'} available`
-      : `${bestWindow.availableCount}/${bestWindow.totalCount} ${bestWindow.totalCount === 1 ? 'person' : 'people'} available`
+      ? `All ${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
+      : `${bestWindow.availableCount}/${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
     : null
 
   return (

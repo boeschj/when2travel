@@ -1,5 +1,5 @@
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatDateRangeDisplay } from '@/lib/utils'
+import { formatDateRangeDisplay, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 
 interface DateRangeListProps {
@@ -41,7 +41,7 @@ export function DateRangeList({
                 {formatDateRangeDisplay(range)}
               </p>
               <p className="text-muted-foreground text-xs">
-                {range.days} {range.days === 1 ? 'day' : 'days'}
+                {range.days} {pluralize(range.days, 'day')}
               </p>
             </div>
           </div>

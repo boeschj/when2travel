@@ -9,7 +9,7 @@ import {
   DropdownMenuCheckboxItem
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, CheckCircle, Ban, CalendarDays, Trash2 } from 'lucide-react'
-import { formatDateRangeDisplay, cn } from '@/lib/utils'
+import { formatDateRangeDisplay, cn, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 import type { LucideIcon } from 'lucide-react'
 
@@ -27,7 +27,7 @@ function DateRangeCheckboxItem({
   onToggle
 }: DateRangeCheckboxItemProps) {
   const dateRangeDisplay = formatDateRangeDisplay(range)
-  const dayCountLabel = `${range.days} day${range.days === 1 ? '' : 's'}`
+  const dayCountLabel = `${range.days} ${pluralize(range.days, 'day')}`
 
   return (
     <DropdownMenuCheckboxItem

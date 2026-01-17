@@ -5,6 +5,8 @@
  * and provides actionable guidance when perfect alignment doesn't exist.
  */
 
+import { pluralize } from '@/lib/utils'
+
 /** Status based on availability percentage thresholds */
 export type RecommendationStatus =
   | 'perfect' // 100%
@@ -129,5 +131,31 @@ export function formatNameList(names: string[]): string {
 
   const displayNames = names.slice(0, 3)
   const remaining = names.length - 3
-  return `${displayNames.join(', ')}, and ${remaining} other${remaining > 1 ? 's' : ''}`
+  return `${displayNames.join(', ')}, and ${remaining} ${pluralize(remaining, 'other')}`
+}
+
+/** Get a short label for each priority case */
+export function getPriorityLabel(priority: RecommendationPriority): string {
+  switch (priority) {
+    case 1:
+      return 'Perfect Match'
+    case 2:
+      return 'Shift Window'
+    case 3:
+      return 'Single Blocker'
+    case 4:
+      return 'Shorter Trip'
+    case 5:
+      return 'Schedule Conflict'
+    case 6:
+      return 'Good Enough'
+    case 7:
+      return 'Expand Range'
+    case 8:
+      return 'Multiple Options'
+    case 9:
+      return 'General'
+    default:
+      return 'Suggestion'
+  }
 }

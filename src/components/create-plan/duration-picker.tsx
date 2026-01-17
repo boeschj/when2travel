@@ -2,6 +2,7 @@ import { Clock, Minus, Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { pluralize } from '@/lib/utils'
 import type { NumDaysField } from './types'
 
 const MIN_TRIP_LENGTH_DAYS = 1
@@ -23,7 +24,7 @@ export function DurationPicker({ field }: DurationPickerProps) {
     field.handleChange(incrementedValue)
   }
 
-  const daysLabel = field.state.value === 1 ? 'Day' : 'Days'
+  const daysLabel = pluralize(field.state.value, 'Day')
 
   return (
     <Card className="p-6 md:p-8 items-center justify-center text-center h-full gap-0">

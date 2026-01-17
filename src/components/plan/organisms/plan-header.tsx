@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, pluralize } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import {
@@ -73,6 +73,14 @@ export function PlanHeader({
     return `Traveling for ${numDays} days between ${format(start, 'MMM d')} – ${format(end, 'MMM d')}`
   }
 
+  const responsesCount = deleteConfig?.responsesCount
+  const hasResponses = responsesCount && responsesCount > 0
+  const baseMessage = `This action cannot be undone. This will permanently delete the plan "${name}"`
+  const responsesText = hasResponses
+    ? ` and all ${responsesCount} ${pluralize(responsesCount, 'response')}`
+    : ''
+  const deleteConfirmationMessage = `${baseMessage}${responsesText}.`
+
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-4 md:pb-6', className)}>
       <div className="flex min-w-72 flex-col gap-2">
@@ -124,11 +132,7 @@ export function PlanHeader({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the plan
-                    "{name}"{deleteConfig.responsesCount !== undefined && deleteConfig.responsesCount > 0
-                      ? ` and all ${deleteConfig.responsesCount} response${deleteConfig.responsesCount !== 1 ? 's' : ''}`
-                      : ''
-                    }.
+                    {deleteConfirmationMessage}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -7,6 +7,7 @@ import {
   differenceInDays,
 } from 'date-fns'
 import type { PlanWithResponses, PlanResponse } from '@/lib/types'
+import { pluralize } from '@/lib/utils'
 import {
   type Recommendation,
   type RecommendationResult,
@@ -378,7 +379,7 @@ function createP2Recommendation(
     status: getStatusFromPercentage(bestWindow.percentage),
     headline: 'So close!',
     detail: `${bestWindow.availableCount}/${totalCount} travelers ready to go`,
-    recommendation: `${blocker.name} can't make ${missingStr}, but shifting ${blocker.shiftDays} day${blocker.shiftDays > 1 ? 's' : ''} ${shiftDir} could get everyone on board.`,
+    recommendation: `${blocker.name} can't make ${missingStr}, but shifting ${blocker.shiftDays} ${pluralize(blocker.shiftDays, 'day')} ${shiftDir} could get everyone on board.`,
     bestWindow,
     blockerId: blocker.id,
     blockerShiftDirection: blocker.shiftDirection ?? undefined,
@@ -417,7 +418,7 @@ function createP4Recommendation(
     detail: bestWindow
       ? `${originalDuration} days is tricky, but ${shorterTrip.duration} days works perfectly`
       : `${originalDuration} days doesn't quite fit, but ${shorterTrip.duration} days does`,
-    recommendation: `Good news! ${shorterTrip.windowCount === 1 ? "There's a" : `There are ${shorterTrip.windowCount}`} perfect ${shorterTrip.duration}-day window${shorterTrip.windowCount === 1 ? "" : "s"} where everyone's free.`,
+    recommendation: `Good news! ${shorterTrip.windowCount === 1 ? "There's a" : `There are ${shorterTrip.windowCount}`} perfect ${shorterTrip.duration}-day ${pluralize(shorterTrip.windowCount, 'window')} where everyone's free.`,
     shorterTripSuggestion: shorterTrip,
     bestWindow: bestWindow ?? undefined,
     alternativeWindows: shorterTrip.windows,
@@ -436,7 +437,7 @@ function createP5Recommendation(
   let recommendation: string
   if (constrainers.length === 1) {
     const c = constrainers[0]
-    recommendation = `${c.name} only has ${c.availableDays} day${c.availableDays === 1 ? '' : 's'} free, which limits the options. Worth checking if they can open up more dates!`
+    recommendation = `${c.name} only has ${c.availableDays} ${pluralize(c.availableDays, 'day')} free, which limits the options. Worth checking if they can open up more dates!`
   } else {
     recommendation = `Some people have limited availability. Check the calendar to resolve scheduling conflicts!`
   }

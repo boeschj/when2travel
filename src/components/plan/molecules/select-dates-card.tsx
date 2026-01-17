@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { AvailabilityCalendar } from '../organisms/availability-calendar'
 import { AvailabilityActions } from './availability-actions'
-import { cn } from '@/lib/utils'
+import { cn, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 interface SelectDatesCardProps {
   startRange: string
@@ -97,7 +97,7 @@ function SelectionBadge({
   compatibleWindowsCount,
   isZeroCompatible
 }: SelectionBadgeProps) {
-  const windowLabel = `window${compatibleWindowsCount === 1 ? '' : 's'}`
+  const windowLabel = pluralize(compatibleWindowsCount, 'window')
 
   return (
     <Badge className={cn(

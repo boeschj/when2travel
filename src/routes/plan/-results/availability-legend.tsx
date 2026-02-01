@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { AvailabilityBadge } from '../atoms/availability-badge'
+import { AvailabilityBadge } from '@/components/response-form/availability-badge'
 
 const ALL_STATUSES = ['unavailable', 'partial', 'high', 'available'] as const
 

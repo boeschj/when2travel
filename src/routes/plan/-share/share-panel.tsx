@@ -2,8 +2,8 @@ import { ROUTES, buildAbsoluteUrl } from '@/lib/routes'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ShareLinkInput } from '../molecules/share-link-input'
-import { ShareButton } from '../atoms/share-button'
+import { ShareLinkInput } from './share-link-input'
+import { ShareButton } from './share-button'
 import { Share2, CalendarPlus, Eye } from 'lucide-react'
 
 interface SharePanelProps {

@@ -2,14 +2,14 @@ import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { ROUTE_IDS } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
-import StorageBanner from '@/components/trips/storage-banner'
-import { TripCard } from '@/components/trips/trip-card'
-import { TripCardSkeleton } from '@/components/trips/trip-card-skeleton'
-import { CreateTripCard } from '@/components/trips/create-trip-card'
-import { EmptyState } from '@/components/trips/empty-state'
-import { useUserTrips } from '@/hooks/use-user-trips'
+import StorageBanner from './-trips/storage-banner'
+import { TripCard } from './-trips/trip-card'
+import { TripCardSkeleton } from './-trips/trip-card-skeleton'
+import { CreateTripCard } from './-trips/create-trip-card'
+import { EmptyState } from './-trips/empty-state'
+import { useUserTrips } from './-trips/use-user-trips'
 
-import type { UserTrip } from '@/hooks/use-user-trips'
+import type { UserTrip } from './-trips/use-user-trips'
 
 export const Route = createFileRoute(ROUTE_IDS.TRIPS)({
   component: TripsPage,

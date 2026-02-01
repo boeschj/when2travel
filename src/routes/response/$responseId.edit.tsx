@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { planKeys, responseKeys } from '@/lib/queries'
-import { ResponseForm } from '@/components/plan/organisms/response-form'
+import { ResponseForm } from '@/components/response-form/response-form'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import {

@@ -5,16 +5,16 @@ import type {
   RecommendationPriority,
   ScoredWindow,
   ShorterTripSuggestion,
-} from '@/lib/recommendation-types'
+} from './recommendation-types'
 import {
   RECOMMENDATION_STATUS,
   getStatusFromPercentage,
   formatNameList,
-} from '@/lib/recommendation-types'
+} from './recommendation-types'
 import {
   validateShiftedWindow,
   toAlternativeWindow,
-} from '@/lib/recommendation-scoring'
+} from './recommendation-scoring'
 
 export interface RuleContext {
   bestWindow: ScoredWindow | null

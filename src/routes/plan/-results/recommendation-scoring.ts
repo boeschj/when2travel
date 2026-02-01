@@ -11,7 +11,7 @@ import type {
   BlockerInfo,
   AlternativeWindow,
   ShorterTripSuggestion,
-} from '@/lib/recommendation-types'
+} from './recommendation-types'
 
 export function generateAllWindows(
   startRange: string,

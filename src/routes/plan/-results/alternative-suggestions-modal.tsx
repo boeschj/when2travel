@@ -6,8 +6,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import type { Recommendation } from '@/lib/recommendation-types'
-import { getPriorityLabel } from '@/lib/recommendation-types'
+import type { Recommendation } from './recommendation-types'
+import { getPriorityLabel } from './recommendation-types'
 
 interface AlternativeSuggestionsModalProps {
   open: boolean

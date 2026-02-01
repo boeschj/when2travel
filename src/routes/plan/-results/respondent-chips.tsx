@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { UserAvatar } from '../atoms/user-avatar'
+import { UserAvatar } from './user-avatar'
 import type { CompatibleDateRange } from '@/lib/types'
 import { parseISO, eachDayOfInterval, format } from 'date-fns'
 

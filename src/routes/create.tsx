@@ -8,15 +8,13 @@ import { format, differenceInDays, parseISO } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 import { ROUTES } from '@/lib/routes'
 import { toast } from 'sonner'
-import {
-  BackgroundEffects,
-  DateRangeField,
-  DurationPicker,
-  PlanSummaryCard,
-  TripNameField,
-} from '@/components/create-plan'
+import { DateRangeField } from './-create/date-range-field'
+import { DurationPicker } from './-create/duration-picker'
+import { PlanSummaryCard } from './-create/plan-summary-card'
+import { TripNameField } from './-create/trip-name-field'
+import { BackgroundEffects } from '@/components/layout/background-effects'
 import { AppHeader } from '@/components/shared/app-header'
-import { PageLayout, FormContainer, FormSection } from '@/components/create-plan/form-layout'
+import { PageLayout, FormContainer, FormSection } from '@/components/layout/form-layout'
 import {
   AlertDialog,
   AlertDialogAction,

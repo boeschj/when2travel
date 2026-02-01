@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { UserAvatar } from '../atoms/user-avatar'
+import { UserAvatar } from './user-avatar'
 
 interface Participant {
   id: string

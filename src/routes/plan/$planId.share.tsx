@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { planKeys } from '@/lib/queries'
-import { SharePanel } from '@/components/plan/organisms/share-panel'
+import { SharePanel } from './-share/share-panel'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'

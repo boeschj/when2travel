@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import type { PlanWithResponses } from '@/lib/types'
-import type { RecommendationResult } from '@/lib/recommendation-types'
+import type { RecommendationResult } from './recommendation-types'
 import {
   scoreWindows,
   findShorterPerfectWindows,
   findConstrainingPeople,
-} from '@/lib/recommendation-scoring'
-import { evaluateRules, type RuleContext } from '@/lib/recommendation-rules'
+} from './recommendation-scoring'
+import { evaluateRules, type RuleContext } from './recommendation-rules'
 
 export function useSmartRecommendation(
   plan: PlanWithResponses | undefined | null

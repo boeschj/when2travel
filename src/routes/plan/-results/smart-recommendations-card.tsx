@@ -17,11 +17,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useShare } from '@/hooks/use-clipboard'
-import { AlternativeSuggestionsModal } from '@/components/plan/molecules/alternative-suggestions-modal'
+import { AlternativeSuggestionsModal } from './alternative-suggestions-modal'
 
-import { RECOMMENDATION_STATUS } from '@/lib/recommendation-types'
+import { RECOMMENDATION_STATUS } from './recommendation-types'
 
-import type { RecommendationResult, RecommendationStatus, AlternativeWindow } from '@/lib/recommendation-types'
+import type { RecommendationResult, RecommendationStatus, AlternativeWindow } from './recommendation-types'
 
 interface SmartRecommendationsCardProps {
   recommendationResult: RecommendationResult

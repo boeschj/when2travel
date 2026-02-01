@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { useResponseFormState } from '@/hooks/use-response-form-state'
-import { NameInputCard } from '../molecules/name-input-card'
-import { SelectDatesCard } from '../molecules/select-dates-card'
-import { ManageDatesCard } from '../molecules/manage-dates-card'
+import { useResponseFormState } from './use-response-form-state'
+import { NameInputCard } from './name-input-card'
+import { SelectDatesCard } from './select-dates-card'
+import { ManageDatesCard } from './manage-dates-card'
 import {
   AlertDialog,
   AlertDialogContent,

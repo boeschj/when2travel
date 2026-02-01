@@ -1,12 +1,13 @@
 import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory'
 import { client } from './api'
+import { ApiError } from './errors'
 
 async function fetchPlanById(planId: string) {
   const response = await client.plans[':id'].$get({
     param: { id: planId },
   })
   if (!response.ok) {
-    throw response
+    throw await ApiError.fromResponse(response)
   }
   return response.json()
 }
@@ -27,7 +28,7 @@ export const responseKeys = createQueryKeys('responses', {
         (response) => response.id === responseId,
       )
       if (!matchingResponse) {
-        throw new Response('Response not found in plan', { status: 404 })
+        throw new ApiError(404, 'Response not found in plan')
       }
       return { plan, response: matchingResponse }
     },

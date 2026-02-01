@@ -1,8 +1,9 @@
-import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { client } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
+import { ApiError } from '@/lib/errors'
 import type { InferRequestType, InferResponseType } from 'hono/client'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
@@ -15,6 +16,8 @@ import { TripNameField } from './-create/trip-name-field'
 import { BackgroundEffects } from '@/components/layout/background-effects'
 import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormContainer, FormSection } from '@/components/layout/form-layout'
+import { ErrorScreen } from '@/components/shared/error-screen'
+import { NotFound } from '@/components/shared/not-found'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +30,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { z } from 'zod'
 import { usePlanEditTokens } from '@/hooks/use-auth-tokens'
+
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
 const $createPlan = client.plans.$post
 const $updatePlan = client.plans[':id'].$put
@@ -46,7 +51,23 @@ const searchSchema = z.object({
 })
 
 export const Route = createFileRoute(ROUTES.CREATE)({
+  loader: async ({ context: { queryClient }, location }) => {
+    const { planId } = searchSchema.parse(location.search)
+
+    if (!planId) return { mode: 'create' as const }
+
+    try {
+      const plan = await queryClient.ensureQueryData(planKeys.detail(planId))
+      return { mode: 'edit' as const, plan }
+    } catch (error) {
+      if (error instanceof ApiError && error.isNotFound) throw notFound()
+      throw error
+    }
+  },
   component: CreatePlanPage,
+  notFoundComponent: NotFound,
+  errorComponent: CreateErrorComponent,
+  pendingComponent: () => null,
   validateSearch: searchSchema,
 })
 
@@ -59,34 +80,54 @@ function CreatePlanPage() {
   const isEditMode = Boolean(planId)
   const editToken = planId ? getPlanEditToken(planId) : null
 
-  const { data: existingPlan, isLoading: isLoadingPlan } = useQuery({
-    ...planKeys.detail(planId ?? ''),
-    enabled: isEditMode,
-  })
+  if (isEditMode && editToken && planId) {
+    return (
+      <EditModeContent
+        planId={planId}
+        editToken={editToken}
+        returnUrl={returnUrl}
+        navigate={navigate}
+        queryClient={queryClient}
+      />
+    )
+  }
 
-  const createPlanMutation = useMutation({
-    mutationFn: async (input: CreatePlanInput): Promise<CreatePlanResponse> => {
-      const response = await $createPlan({ json: input })
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: 'Failed to create plan' }))
-        const message = extractErrorMessage(errorBody, 'Failed to create plan')
-        throw new Error(message)
-      }
-      return response.json()
-    },
-    onSuccess: (createdPlan) => {
-      savePlanEditToken(createdPlan.id, createdPlan.editToken)
-      toast.success('Plan created successfully!')
-      navigate({ to: ROUTES.PLAN_SHARE, params: { planId: createdPlan.id } })
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create plan. Please try again.')
-    },
-  })
+  if (isEditMode && !editToken) {
+    return (
+      <PageLayout>
+        <BackgroundEffects />
+        <PermissionDeniedState />
+      </PageLayout>
+    )
+  }
+
+  return (
+    <CreateModeContent
+      navigate={navigate}
+      savePlanEditToken={savePlanEditToken}
+    />
+  )
+}
+
+interface EditModeContentProps {
+  planId: string
+  editToken: string
+  returnUrl: string | undefined
+  navigate: ReturnType<typeof useNavigate>
+  queryClient: ReturnType<typeof useQueryClient>
+}
+
+function EditModeContent({
+  planId,
+  editToken,
+  returnUrl,
+  navigate,
+  queryClient,
+}: EditModeContentProps) {
+  const { data: existingPlan } = useSuspenseQuery(planKeys.detail(planId))
 
   const updatePlanMutation = useMutation({
     mutationFn: async (input: UpdatePlanInput): Promise<UpdatePlanResponse> => {
-      if (!planId) throw new Error('No plan ID for update')
       const response = await $updatePlan({ param: { id: planId }, json: input })
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({ error: 'Failed to update plan' }))
@@ -96,7 +137,6 @@ function CreatePlanPage() {
       return response.json()
     },
     onMutate: async (newData) => {
-      if (!planId) return
       await queryClient.cancelQueries({ queryKey: planKeys.detail(planId).queryKey })
       const previousPlan = queryClient.getQueryData(planKeys.detail(planId).queryKey)
       queryClient.setQueryData(planKeys.detail(planId).queryKey, (old: typeof previousPlan) =>
@@ -112,31 +152,25 @@ function CreatePlanPage() {
       }
     },
     onError: (error: Error, _newData, context) => {
-      if (planId && context?.previousPlan) {
+      if (context?.previousPlan) {
         queryClient.setQueryData(planKeys.detail(planId).queryKey, context.previousPlan)
       }
       toast.error(error.message || 'Failed to update plan. Please try again.')
     },
     onSettled: () => {
-      if (planId) {
-        queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
-      }
+      queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
     },
   })
 
-  const defaultDateRange = existingPlan
-    ? { from: parseISO(existingPlan.startRange), to: parseISO(existingPlan.endRange) }
-    : undefined
+  const defaultDateRange = { from: parseISO(existingPlan.startRange), to: parseISO(existingPlan.endRange) }
 
   const planForm = useForm({
     defaultValues: {
-      tripName: existingPlan?.name ?? '',
-      numDays: existingPlan?.numDays ?? 7,
+      tripName: existingPlan.name,
+      numDays: existingPlan.numDays,
       dateRange: defaultDateRange as DateRange | undefined,
     },
   })
-
-  const isPending = createPlanMutation.isPending || updatePlanMutation.isPending
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,29 +179,7 @@ function CreatePlanPage() {
     const validatedValues = validateFormValues(planForm.state.values)
     if (!validatedValues) return
 
-    if (isEditMode && editToken) {
-      updatePlanMutation.mutate({ editToken, ...validatedValues })
-    } else {
-      createPlanMutation.mutate(validatedValues)
-    }
-  }
-
-  if (isEditMode && isLoadingPlan) {
-    return (
-      <PageLayout>
-        <BackgroundEffects />
-        <LoadingState />
-      </PageLayout>
-    )
-  }
-
-  if (isEditMode && !editToken) {
-    return (
-      <PageLayout>
-        <BackgroundEffects />
-        <PermissionDeniedState />
-      </PageLayout>
-    )
+    updatePlanMutation.mutate({ editToken, ...validatedValues })
   }
 
   return (
@@ -178,7 +190,7 @@ function CreatePlanPage() {
 
         <FormContainer>
           <FormSection className="space-y-6 text-center md:text-left">
-            <PageHeading isEditMode={isEditMode} />
+            <PageHeading isEditMode />
             <planForm.Field name="tripName" children={(field) => <TripNameField field={field} />} />
           </FormSection>
 
@@ -203,8 +215,8 @@ function CreatePlanPage() {
                     <PlanSummaryCard
                       numDays={numDays}
                       dateRange={dateRange}
-                      isPending={isPending}
-                      isEditMode={isEditMode}
+                      isPending={updatePlanMutation.isPending}
+                      isEditMode
                       planId={planId}
                       hasChanges={isDirty}
                     />
@@ -215,19 +227,119 @@ function CreatePlanPage() {
           </div>
         </FormContainer>
 
-        {isEditMode && (
-          <planForm.Subscribe
-            selector={(state) => state.isDirty}
-            children={(isDirty) => (
-              <NavigationBlocker
-                shouldBlock={isDirty}
-                onDiscard={() => planForm.reset()}
-              />
-            )}
-          />
-        )}
+        <planForm.Subscribe
+          selector={(state) => state.isDirty}
+          children={(isDirty) => (
+            <NavigationBlocker
+              shouldBlock={isDirty}
+              onDiscard={() => planForm.reset()}
+            />
+          )}
+        />
       </PageLayout>
     </form>
+  )
+}
+
+interface CreateModeContentProps {
+  navigate: ReturnType<typeof useNavigate>
+  savePlanEditToken: (id: string, token: string) => void
+}
+
+function CreateModeContent({ navigate, savePlanEditToken }: CreateModeContentProps) {
+  const createPlanMutation = useMutation({
+    mutationFn: async (input: CreatePlanInput): Promise<CreatePlanResponse> => {
+      const response = await $createPlan({ json: input })
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ error: 'Failed to create plan' }))
+        const message = extractErrorMessage(errorBody, 'Failed to create plan')
+        throw new Error(message)
+      }
+      return response.json()
+    },
+    onSuccess: (createdPlan) => {
+      savePlanEditToken(createdPlan.id, createdPlan.editToken)
+      toast.success('Plan created successfully!')
+      navigate({ to: ROUTES.PLAN_SHARE, params: { planId: createdPlan.id } })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create plan. Please try again.')
+    },
+  })
+
+  const planForm = useForm({
+    defaultValues: {
+      tripName: '',
+      numDays: 7,
+      dateRange: undefined as DateRange | undefined,
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const validatedValues = validateFormValues(planForm.state.values)
+    if (!validatedValues) return
+
+    createPlanMutation.mutate(validatedValues)
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <PageLayout>
+        <BackgroundEffects />
+        <AppHeader />
+
+        <FormContainer>
+          <FormSection className="space-y-6 text-center md:text-left">
+            <PageHeading isEditMode={false} />
+            <planForm.Field name="tripName" children={(field) => <TripNameField field={field} />} />
+          </FormSection>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <FormSection className="lg:col-span-7" direction="left" delay={0.2}>
+              <planForm.Field name="dateRange" children={(field) => <DateRangeField field={field} />} />
+            </FormSection>
+
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              <FormSection className="flex-1" direction="right" delay={0.3}>
+                <planForm.Field name="numDays" children={(field) => <DurationPicker field={field} />} />
+              </FormSection>
+
+              <FormSection delay={0.4}>
+                <planForm.Subscribe
+                  selector={(state) => ({
+                    numDays: state.values.numDays,
+                    dateRange: state.values.dateRange,
+                    isDirty: state.isDirty,
+                  })}
+                  children={({ numDays, dateRange, isDirty }) => (
+                    <PlanSummaryCard
+                      numDays={numDays}
+                      dateRange={dateRange}
+                      isPending={createPlanMutation.isPending}
+                      isEditMode={false}
+                      hasChanges={isDirty}
+                    />
+                  )}
+                />
+              </FormSection>
+            </div>
+          </div>
+        </FormContainer>
+      </PageLayout>
+    </form>
+  )
+}
+
+function CreateErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We couldn't load this page. Please try again."}
+      onRetry={reset}
+    />
   )
 }
 
@@ -287,14 +399,6 @@ function PageHeading({ isEditMode }: PageHeadingProps) {
         planning.
       </span>
     </h1>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="text-foreground">Loading plan...</div>
-    </div>
   )
 }
 

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { PostHogProvider } from 'posthog-js/react'
+import { queryClient } from './lib/query-client'
 import './index.css'
 
 if ('scrollRestoration' in history) {
@@ -11,6 +12,7 @@ if ('scrollRestoration' in history) {
 
 const router = createRouter({
   routeTree,
+  context: { queryClient },
   scrollRestoration: false,
 })
 

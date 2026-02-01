@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Users, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -8,8 +8,9 @@ import { client } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { planKeys } from '@/lib/queries'
+import { ApiError } from '@/lib/errors'
+import { NotFound } from '@/components/shared/not-found'
 import { PlanHeader } from './-results/plan-header'
-import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { ResultsCalendar } from './-results/results-calendar'
 import { SmartRecommendationsCard } from './-results/smart-recommendations-card'
@@ -27,9 +28,21 @@ import { copyToClipboard } from '@/hooks/use-clipboard'
 import type { PlanResponse } from '@/lib/types'
 import type { CompatibleDateRange } from '@/lib/types'
 import type { RecommendationResult } from './-results/recommendation-types'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
 export const Route = createFileRoute(ROUTE_IDS.PLAN)({
+  loader: async ({ context: { queryClient }, params: { planId } }) => {
+    try {
+      await queryClient.ensureQueryData(planKeys.detail(planId))
+    } catch (error) {
+      if (error instanceof ApiError && error.isNotFound) throw notFound()
+      throw error
+    }
+  },
   component: PlanResultsPage,
+  notFoundComponent: NotFound,
+  errorComponent: PlanErrorComponent,
+  pendingComponent: () => null,
 })
 
 const $deletePlan = client.plans[':id'].$delete
@@ -42,7 +55,7 @@ function PlanResultsPage() {
   const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null)
   const [popoverDate, setPopoverDate] = useState<Date | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
+  const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
 
   const deletePlanMutation = useMutation({
     mutationFn: async () => {
@@ -108,20 +121,6 @@ function PlanResultsPage() {
     setIsPopoverOpen(true)
   }
 
-  if (isLoading) return <LoadingScreen />
-
-  if (error) return <PlanErrorState error={error} />
-
-  if (!plan) {
-    return (
-      <ErrorScreen
-        variant="not-found"
-        title="Off the Map?"
-        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
-      />
-    )
-  }
-
   const hasRespondents = respondents.length > 0
 
   const deleteConfig = buildDeleteConfig({
@@ -185,6 +184,16 @@ function PlanResultsPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+function PlanErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We're having trouble loading this trip. Please try again in a moment."}
+      onRetry={reset}
+    />
   )
 }
 
@@ -324,34 +333,6 @@ function HeatmapHeader() {
       <ResultsLegend />
     </div>
   )
-}
-
-function PlanErrorState({ error }: { error: Error }) {
-  const is404 = isNotFoundError(error)
-
-  if (is404) {
-    return (
-      <ErrorScreen
-        variant="not-found"
-        title="Off the Map?"
-        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
-      />
-    )
-  }
-
-  return (
-    <ErrorScreen
-      title="Something went wrong"
-      message="We're having trouble loading this trip. Please try again in a moment."
-      onRetry={() => window.location.reload()}
-    />
-  )
-}
-
-function isNotFoundError(error: Error): boolean {
-  if (!('status' in error)) return false
-  const statusValue = (error as unknown as { status: unknown }).status
-  return statusValue === 404
 }
 
 function getSelectedRespondentColor(respondentId: string | null): string | null {

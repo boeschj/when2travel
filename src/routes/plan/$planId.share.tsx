@@ -1,38 +1,38 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { planKeys } from '@/lib/queries'
+import { ApiError } from '@/lib/errors'
 import { SharePanel } from './-share/share-panel'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
-import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
+import { NotFound } from '@/components/shared/not-found'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 
+import type { ErrorComponentProps } from '@tanstack/react-router'
+
 export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
+  loader: async ({ context: { queryClient }, params: { planId } }) => {
+    try {
+      await queryClient.ensureQueryData(planKeys.detail(planId))
+    } catch (error) {
+      if (error instanceof ApiError && error.isNotFound) throw notFound()
+      throw error
+    }
+  },
   component: ShareTripPage,
+  notFoundComponent: NotFound,
+  errorComponent: ShareErrorComponent,
+  pendingComponent: () => null,
 })
 
 function ShareTripPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
-  const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
+  const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
   const userResponse = useCurrentUserResponse(plan?.responses)
-
-  if (isLoading) {
-    return <LoadingScreen />
-  }
-
-  if (error || !plan) {
-    return (
-      <ErrorScreen
-        variant="not-found"
-        title="Off the Map?"
-        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
-      />
-    )
-  }
 
   const hasExistingResponse = !!userResponse
   const formattedDateRange = formatDateRange(plan)
@@ -79,6 +79,16 @@ function ShareTripPage() {
         </motion.div>
       </main>
     </div>
+  )
+}
+
+function ShareErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We couldn't load this page. Please try again."}
+      onRetry={reset}
+    />
   )
 }
 

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { planKeys, responseKeys } from '@/lib/queries'
+import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
@@ -21,16 +22,41 @@ import { ROUTES } from '@/lib/routes'
 import { z } from 'zod'
 import { CalendarDays } from 'lucide-react'
 import { AppHeader } from '@/components/shared/app-header'
-import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
+import { NotFound } from '@/components/shared/not-found'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
+import { getStorageRecord, STORAGE_KEYS } from '@/lib/atoms'
+
+import type { ErrorComponentProps } from '@tanstack/react-router'
+
+type LoaderResult = { hasPermission: false } | { hasPermission: true }
 
 const searchSchema = z.object({
   returnUrl: z.string().optional(),
 })
 
 export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
+  loader: async ({ context: { queryClient }, params: { responseId } }) => {
+    const editTokens = getStorageRecord(STORAGE_KEYS.responseEditTokens)
+    const planIds = getStorageRecord(STORAGE_KEYS.responsePlanIds)
+    const editToken = editTokens[responseId]
+    const storedPlanId = planIds[responseId]
+
+    if (!editToken || !storedPlanId) return { hasPermission: false } satisfies LoaderResult
+
+    try {
+      await queryClient.ensureQueryData(responseKeys.withPlan(responseId, storedPlanId))
+    } catch (error) {
+      if (error instanceof ApiError && error.isNotFound) throw notFound()
+      throw error
+    }
+
+    return { hasPermission: true } satisfies LoaderResult
+  },
   component: EditResponsePage,
+  notFoundComponent: NotFound,
+  errorComponent: EditResponseErrorComponent,
+  pendingComponent: () => null,
   validateSearch: searchSchema,
 })
 
@@ -46,17 +72,58 @@ function EditResponsePage() {
   const editToken = getResponseEditToken(responseId)
   const storedPlanId = getResponsePlanId(responseId)
 
-  const { data, isLoading, error, refetch } = useQuery({
-    ...responseKeys.withPlan(responseId, storedPlanId ?? ''),
-    enabled: !!editToken && !!storedPlanId,
-  })
+  if (!editToken || !storedPlanId) {
+    return <NoPermissionScreen />
+  }
+
+  return (
+    <EditResponseContent
+      responseId={responseId}
+      editToken={editToken}
+      storedPlanId={storedPlanId}
+      returnUrl={returnUrl}
+      navigate={navigate}
+      queryClient={queryClient}
+      removeResponseToken={removeResponseToken}
+      isDirty={isDirty}
+      setIsDirty={setIsDirty}
+      resetFormFn={resetFormFn}
+      setResetFormFn={setResetFormFn}
+    />
+  )
+}
+
+interface EditResponseContentProps {
+  responseId: string
+  editToken: string
+  storedPlanId: string
+  returnUrl: string | undefined
+  navigate: ReturnType<typeof useNavigate>
+  queryClient: ReturnType<typeof useQueryClient>
+  removeResponseToken: (id: string) => void
+  isDirty: boolean
+  setIsDirty: (dirty: boolean) => void
+  resetFormFn: (() => void) | null
+  setResetFormFn: (fn: (() => void) | null) => void
+}
+
+function EditResponseContent({
+  responseId,
+  editToken,
+  storedPlanId,
+  returnUrl,
+  navigate,
+  queryClient,
+  removeResponseToken,
+  isDirty,
+  setIsDirty,
+  resetFormFn,
+  setResetFormFn,
+}: EditResponseContentProps) {
+  const { data } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId))
 
   const updateResponseMutation = useMutation({
     mutationFn: async (formData: ResponseFormData) => {
-      if (!editToken) {
-        throw new Error('No edit permission')
-      }
-
       const res = await client.responses[':id'].$put({
         param: { id: responseId },
         json: {
@@ -73,8 +140,6 @@ function EditResponsePage() {
       return res.json()
     },
     onMutate: async (newData) => {
-      if (!data?.plan.id) return
-
       await queryClient.cancelQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
 
       const previousPlan = queryClient.getQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey)
@@ -99,7 +164,7 @@ function EditResponsePage() {
       setTimeout(() => {
         if (returnUrl) {
           navigate({ to: returnUrl })
-        } else if (data?.plan.id) {
+        } else {
           navigate({
             to: ROUTES.PLAN,
             params: { planId: data.plan.id },
@@ -108,24 +173,18 @@ function EditResponsePage() {
       }, 0)
     },
     onError: (err: Error, _newData, context) => {
-      if (data?.plan.id && context?.previousPlan) {
+      if (context?.previousPlan) {
         queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, context.previousPlan)
       }
       toast.error(err.message || 'Failed to update availability')
     },
     onSettled: () => {
-      if (data?.plan.id) {
-        queryClient.invalidateQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
-      }
+      queryClient.invalidateQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
     },
   })
 
   const deleteResponseMutation = useMutation({
     mutationFn: async () => {
-      if (!editToken) {
-        throw new Error('No edit permission')
-      }
-
       const res = await client.responses[':id'].$delete({
         param: { id: responseId },
         json: { editToken },
@@ -140,9 +199,7 @@ function EditResponsePage() {
     onSuccess: async () => {
       removeResponseToken(responseId)
       toast.success('Your response has been deleted')
-      if (data?.plan.id) {
-        await queryClient.refetchQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
-      }
+      await queryClient.refetchQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
       navigate({ to: returnUrl ?? ROUTES.TRIPS })
     },
     onError: (err: Error) => {
@@ -166,24 +223,6 @@ function EditResponsePage() {
 
   const handleResetRef = (reset: () => void) => {
     setResetFormFn(() => reset)
-  }
-
-  if (!editToken) {
-    return <NoPermissionScreen />
-  }
-
-  if (isLoading) {
-    return <LoadingScreen />
-  }
-
-  if (error || !data) {
-    return (
-      <ErrorScreen
-        title="Failed to load response"
-        message={error?.message || 'Please try navigating from the plan page.'}
-        onRetry={() => refetch()}
-      />
-    )
   }
 
   const { plan, response } = data
@@ -226,6 +265,16 @@ function EditResponsePage() {
         onDiscard={() => resetFormFn?.()}
       />
     </div>
+  )
+}
+
+function EditResponseErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Failed to load response"
+      message={error.message || 'Please try navigating from the plan page.'}
+      onRetry={reset}
+    />
   )
 }
 

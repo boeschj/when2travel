@@ -1,22 +1,19 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
-import { QueryBoundary } from '@/components/shared/query-boundary'
 import { NotFound } from '@/components/shared/not-found'
+import { ErrorScreen } from '@/components/shared/error-screen'
+import { queryClient } from '@/lib/query-client'
 
-const STALE_TIME_MS = 1000 * 60 * 5
+import type { QueryClient } from '@tanstack/react-query'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: STALE_TIME_MS,
-      retry: 1,
-    },
-  },
-})
+export interface RouterContext {
+  queryClient: QueryClient
+}
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
@@ -25,12 +22,21 @@ export const Route = createRootRoute({
         enableSystem={false}
         disableTransitionOnChange
       >
-        <QueryBoundary>
-          <Outlet />
-        </QueryBoundary>
+        <Outlet />
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   ),
   notFoundComponent: NotFound,
+  errorComponent: RootErrorComponent,
 })
+
+function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We encountered an unexpected error. Please try again."}
+      onRetry={reset}
+    />
+  )
+}

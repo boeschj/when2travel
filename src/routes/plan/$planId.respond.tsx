@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
+import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
@@ -13,8 +14,11 @@ import { PageLayout, FormSection } from '@/components/layout/form-layout'
 import { useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
+import { NotFound } from '@/components/shared/not-found'
 import { format, parseISO } from 'date-fns'
 import { pluralize } from '@/lib/utils'
+
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
 const $createResponse = client.responses.$post
 
@@ -23,7 +27,18 @@ const searchSchema = z.object({
 })
 
 export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
+  loader: async ({ context: { queryClient }, params: { planId } }) => {
+    try {
+      await queryClient.ensureQueryData(planKeys.detail(planId))
+    } catch (error) {
+      if (error instanceof ApiError && error.isNotFound) throw notFound()
+      throw error
+    }
+  },
   component: MarkAvailabilityPage,
+  notFoundComponent: NotFound,
+  errorComponent: RespondErrorComponent,
+  pendingComponent: () => null,
   validateSearch: searchSchema,
 })
 
@@ -33,7 +48,7 @@ function MarkAvailabilityPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
-  const { data: plan, isLoading: isPlanLoading, error: planError } = useQuery(planKeys.detail(planId))
+  const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
   const existingResponse = useCurrentUserResponse(plan?.responses)
 
   const createResponseMutation = useMutation({
@@ -72,20 +87,6 @@ function MarkAvailabilityPage() {
     return <LoadingScreen />
   }
 
-  if (isPlanLoading) {
-    return <LoadingScreen />
-  }
-
-  if (planError || !plan) {
-    return (
-      <ErrorScreen
-        variant="not-found"
-        title="Off the Map?"
-        message="We couldn't find the page you're looking for. It seems this trip doesn't exist, or you may have taken a wrong turn on your journey."
-      />
-    )
-  }
-
   const formattedStartDate = format(parseISO(plan.startRange), 'MMM d')
   const formattedEndDate = format(parseISO(plan.endRange), 'MMM d, yyyy')
   const durationLabel = `${plan.numDays} ${pluralize(plan.numDays, 'day')}`
@@ -121,6 +122,16 @@ function MarkAvailabilityPage() {
         </div>
       </main>
     </PageLayout>
+  )
+}
+
+function RespondErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We couldn't load this page. Please try again."}
+      onRetry={reset}
+    />
   )
 }
 

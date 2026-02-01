@@ -139,7 +139,7 @@ function MonthPanel({
           fixedWeeks
           weekStartsOn={1}
           disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
-          className="[--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
+          className="bg-transparent p-0 [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
           classNames={{
             nav: 'hidden',
             month_caption: 'hidden',

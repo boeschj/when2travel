@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TripsRouteImport } from './routes/trips'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ResponseResponseIdRouteImport } from './routes/response/$responseId'
+import { Route as PlanPlanIdRouteImport } from './routes/plan/$planId'
 import { Route as PlanPlanIdIndexRouteImport } from './routes/plan/$planId.index'
 import { Route as ResponseResponseIdEditRouteImport } from './routes/response/$responseId.edit'
 import { Route as PlanPlanIdShareRouteImport } from './routes/plan/$planId.share'
@@ -32,40 +34,53 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanPlanIdIndexRoute = PlanPlanIdIndexRouteImport.update({
-  id: '/plan/$planId/',
-  path: '/plan/$planId/',
+const ResponseResponseIdRoute = ResponseResponseIdRouteImport.update({
+  id: '/response/$responseId',
+  path: '/response/$responseId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlanPlanIdRoute = PlanPlanIdRouteImport.update({
+  id: '/plan/$planId',
+  path: '/plan/$planId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanPlanIdIndexRoute = PlanPlanIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlanPlanIdRoute,
 } as any)
 const ResponseResponseIdEditRoute = ResponseResponseIdEditRouteImport.update({
-  id: '/response/$responseId/edit',
-  path: '/response/$responseId/edit',
-  getParentRoute: () => rootRouteImport,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ResponseResponseIdRoute,
 } as any)
 const PlanPlanIdShareRoute = PlanPlanIdShareRouteImport.update({
-  id: '/plan/$planId/share',
-  path: '/plan/$planId/share',
-  getParentRoute: () => rootRouteImport,
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => PlanPlanIdRoute,
 } as any)
 const PlanPlanIdRespondRoute = PlanPlanIdRespondRouteImport.update({
-  id: '/plan/$planId/respond',
-  path: '/plan/$planId/respond',
-  getParentRoute: () => rootRouteImport,
+  id: '/respond',
+  path: '/respond',
+  getParentRoute: () => PlanPlanIdRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/trips': typeof TripsRoute
+  '/plan/$planId': typeof PlanPlanIdRouteWithChildren
+  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
-  '/plan/$planId': typeof PlanPlanIdIndexRoute
+  '/plan/$planId/': typeof PlanPlanIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/trips': typeof TripsRoute
+  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
@@ -76,6 +91,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/create': typeof CreateRoute
   '/trips': typeof TripsRoute
+  '/plan/$planId': typeof PlanPlanIdRouteWithChildren
+  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
   '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
   '/plan/$planId/share': typeof PlanPlanIdShareRoute
   '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
@@ -87,15 +104,18 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/trips'
+    | '/plan/$planId'
+    | '/response/$responseId'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
-    | '/plan/$planId'
+    | '/plan/$planId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/create'
     | '/trips'
+    | '/response/$responseId'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
@@ -105,6 +125,8 @@ export interface FileRouteTypes {
     | '/'
     | '/create'
     | '/trips'
+    | '/plan/$planId'
+    | '/response/$responseId'
     | '/plan/$planId/respond'
     | '/plan/$planId/share'
     | '/response/$responseId/edit'
@@ -115,10 +137,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateRoute: typeof CreateRoute
   TripsRoute: typeof TripsRoute
-  PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
-  PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
-  ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute
-  PlanPlanIdIndexRoute: typeof PlanPlanIdIndexRoute
+  PlanPlanIdRoute: typeof PlanPlanIdRouteWithChildren
+  ResponseResponseIdRoute: typeof ResponseResponseIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -144,45 +164,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan/$planId/': {
-      id: '/plan/$planId/'
+    '/response/$responseId': {
+      id: '/response/$responseId'
+      path: '/response/$responseId'
+      fullPath: '/response/$responseId'
+      preLoaderRoute: typeof ResponseResponseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/$planId': {
+      id: '/plan/$planId'
       path: '/plan/$planId'
       fullPath: '/plan/$planId'
-      preLoaderRoute: typeof PlanPlanIdIndexRouteImport
+      preLoaderRoute: typeof PlanPlanIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/plan/$planId/': {
+      id: '/plan/$planId/'
+      path: '/'
+      fullPath: '/plan/$planId/'
+      preLoaderRoute: typeof PlanPlanIdIndexRouteImport
+      parentRoute: typeof PlanPlanIdRoute
     }
     '/response/$responseId/edit': {
       id: '/response/$responseId/edit'
-      path: '/response/$responseId/edit'
+      path: '/edit'
       fullPath: '/response/$responseId/edit'
       preLoaderRoute: typeof ResponseResponseIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ResponseResponseIdRoute
     }
     '/plan/$planId/share': {
       id: '/plan/$planId/share'
-      path: '/plan/$planId/share'
+      path: '/share'
       fullPath: '/plan/$planId/share'
       preLoaderRoute: typeof PlanPlanIdShareRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PlanPlanIdRoute
     }
     '/plan/$planId/respond': {
       id: '/plan/$planId/respond'
-      path: '/plan/$planId/respond'
+      path: '/respond'
       fullPath: '/plan/$planId/respond'
       preLoaderRoute: typeof PlanPlanIdRespondRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PlanPlanIdRoute
     }
   }
 }
+
+interface PlanPlanIdRouteChildren {
+  PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
+  PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
+  PlanPlanIdIndexRoute: typeof PlanPlanIdIndexRoute
+}
+
+const PlanPlanIdRouteChildren: PlanPlanIdRouteChildren = {
+  PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
+  PlanPlanIdShareRoute: PlanPlanIdShareRoute,
+  PlanPlanIdIndexRoute: PlanPlanIdIndexRoute,
+}
+
+const PlanPlanIdRouteWithChildren = PlanPlanIdRoute._addFileChildren(
+  PlanPlanIdRouteChildren,
+)
+
+interface ResponseResponseIdRouteChildren {
+  ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute
+}
+
+const ResponseResponseIdRouteChildren: ResponseResponseIdRouteChildren = {
+  ResponseResponseIdEditRoute: ResponseResponseIdEditRoute,
+}
+
+const ResponseResponseIdRouteWithChildren =
+  ResponseResponseIdRoute._addFileChildren(ResponseResponseIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateRoute: CreateRoute,
   TripsRoute: TripsRoute,
-  PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
-  PlanPlanIdShareRoute: PlanPlanIdShareRoute,
-  ResponseResponseIdEditRoute: ResponseResponseIdEditRoute,
-  PlanPlanIdIndexRoute: PlanPlanIdIndexRoute,
+  PlanPlanIdRoute: PlanPlanIdRouteWithChildren,
+  ResponseResponseIdRoute: ResponseResponseIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

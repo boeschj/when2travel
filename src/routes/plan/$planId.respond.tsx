@@ -1,20 +1,17 @@
-import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
-import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
 import { z } from 'zod'
 import { BackgroundEffects } from '@/components/layout/background-effects'
-import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormSection } from '@/components/layout/form-layout'
 import { useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { LoadingScreen } from '@/components/shared/loading-screen'
 import { ErrorScreen } from '@/components/shared/error-screen'
-import { NotFound } from '@/components/shared/not-found'
 import { format, parseISO } from 'date-fns'
 import { pluralize } from '@/lib/utils'
 
@@ -27,16 +24,7 @@ const searchSchema = z.object({
 })
 
 export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
-  loader: async ({ context: { queryClient }, params: { planId } }) => {
-    try {
-      await queryClient.ensureQueryData(planKeys.detail(planId))
-    } catch (error) {
-      if (error instanceof ApiError && error.isNotFound) throw notFound()
-      throw error
-    }
-  },
   component: MarkAvailabilityPage,
-  notFoundComponent: NotFound,
   errorComponent: RespondErrorComponent,
   pendingComponent: () => null,
   validateSearch: searchSchema,
@@ -95,8 +83,6 @@ function MarkAvailabilityPage() {
   return (
     <PageLayout>
       <BackgroundEffects />
-      <AppHeader planId={planId} />
-
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
         <div className="w-full md:w-fit mx-auto flex flex-col gap-12">
           <FormSection className="space-y-2">

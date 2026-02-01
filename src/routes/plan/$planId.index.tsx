@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Users, UserPlus } from 'lucide-react'
@@ -8,8 +8,6 @@ import { client } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { planKeys } from '@/lib/queries'
-import { ApiError } from '@/lib/errors'
-import { NotFound } from '@/components/shared/not-found'
 import { PlanHeader } from './-results/plan-header'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { ResultsCalendar } from './-results/results-calendar'
@@ -21,7 +19,6 @@ import { useCompatibleRanges } from './-results/use-compatible-ranges'
 import { useSmartRecommendation } from './-results/use-smart-recommendation'
 import { useCurrentUserResponse, useResponseEditTokens, usePlanAuthContext } from '@/hooks/use-auth-tokens'
 import { getRespondentColor } from './-results/user-avatar'
-import { AppHeader } from '@/components/shared/app-header'
 import { ROUTES, ROUTE_IDS, buildAbsoluteUrl } from '@/lib/routes'
 import { copyToClipboard } from '@/hooks/use-clipboard'
 
@@ -31,16 +28,7 @@ import type { RecommendationResult } from './-results/recommendation-types'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
 export const Route = createFileRoute(ROUTE_IDS.PLAN)({
-  loader: async ({ context: { queryClient }, params: { planId } }) => {
-    try {
-      await queryClient.ensureQueryData(planKeys.detail(planId))
-    } catch (error) {
-      if (error instanceof ApiError && error.isNotFound) throw notFound()
-      throw error
-    }
-  },
   component: PlanResultsPage,
-  notFoundComponent: NotFound,
   errorComponent: PlanErrorComponent,
   pendingComponent: () => null,
 })
@@ -132,8 +120,6 @@ function PlanResultsPage() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
-      <AppHeader planId={planId} />
-
       <main className="flex-1 flex flex-col items-center px-6 md:px-12 xl:px-20 pb-20 pt-4 md:pt-10">
         <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-8">
           <PlanHeader

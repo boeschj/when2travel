@@ -1,29 +1,17 @@
-import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { planKeys } from '@/lib/queries'
-import { ApiError } from '@/lib/errors'
 import { SharePanel } from './-share/share-panel'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
 import { ROUTES } from '@/lib/routes'
-import { AppHeader } from '@/components/shared/app-header'
 import { ErrorScreen } from '@/components/shared/error-screen'
-import { NotFound } from '@/components/shared/not-found'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
 export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
-  loader: async ({ context: { queryClient }, params: { planId } }) => {
-    try {
-      await queryClient.ensureQueryData(planKeys.detail(planId))
-    } catch (error) {
-      if (error instanceof ApiError && error.isNotFound) throw notFound()
-      throw error
-    }
-  },
   component: ShareTripPage,
-  notFoundComponent: NotFound,
   errorComponent: ShareErrorComponent,
   pendingComponent: () => null,
 })
@@ -54,8 +42,6 @@ function ShareTripPage() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
-      <AppHeader planId={planId} variant="transparent" />
-
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-20 pt-10 md:px-12 lg:px-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

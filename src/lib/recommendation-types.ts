@@ -7,13 +7,15 @@
 
 import { pluralize } from '@/lib/utils'
 
-/** Status based on availability percentage thresholds */
-export type RecommendationStatus =
-  | 'perfect' // 100%
-  | 'great' // 80-99%
-  | 'good' // 67-79%
-  | 'possible' // 50-66%
-  | 'unlikely' // <50%
+export const RECOMMENDATION_STATUS = {
+  PERFECT: 'perfect',
+  GREAT: 'great',
+  GOOD: 'good',
+  POSSIBLE: 'possible',
+  UNLIKELY: 'unlikely',
+} as const
+
+export type RecommendationStatus = (typeof RECOMMENDATION_STATUS)[keyof typeof RECOMMENDATION_STATUS]
 
 /** Priority levels for recommendation cases (P1 highest, P9 fallback) */
 export type RecommendationPriority = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
@@ -115,11 +117,11 @@ export const STATUS_THRESHOLDS = {
 
 /** Get status from percentage */
 export function getStatusFromPercentage(percentage: number): RecommendationStatus {
-  if (percentage >= STATUS_THRESHOLDS.PERFECT) return 'perfect'
-  if (percentage >= STATUS_THRESHOLDS.GREAT) return 'great'
-  if (percentage >= STATUS_THRESHOLDS.GOOD) return 'good'
-  if (percentage >= STATUS_THRESHOLDS.POSSIBLE) return 'possible'
-  return 'unlikely'
+  if (percentage >= STATUS_THRESHOLDS.PERFECT) return RECOMMENDATION_STATUS.PERFECT
+  if (percentage >= STATUS_THRESHOLDS.GREAT) return RECOMMENDATION_STATUS.GREAT
+  if (percentage >= STATUS_THRESHOLDS.GOOD) return RECOMMENDATION_STATUS.GOOD
+  if (percentage >= STATUS_THRESHOLDS.POSSIBLE) return RECOMMENDATION_STATUS.POSSIBLE
+  return RECOMMENDATION_STATUS.UNLIKELY
 }
 
 /** Format a list of names with truncation (max 3 shown) */

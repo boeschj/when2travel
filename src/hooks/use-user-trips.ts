@@ -2,7 +2,7 @@ import { useMemo, useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import { useQueries } from '@tanstack/react-query'
 import { planEditTokensAtom, responsePlanIdsAtom, responseEditTokensAtom } from '@/lib/atoms'
-import { planKeys, ApiError } from '@/lib/queries'
+import { planKeys } from '@/lib/queries'
 import type { PlanWithResponses } from '@/lib/types'
 
 export interface UserTrip {
@@ -10,7 +10,58 @@ export interface UserTrip {
   plan: PlanWithResponses | null
   role: 'creator' | 'respondent'
   isLoading: boolean
-  error: Error | null
+}
+
+const FIVE_MINUTES = 1000 * 60 * 5
+
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof Response && error.status === 404
+}
+
+function useCleanupDeletedPlans(
+  deletedPlanIds: string[],
+  planTokens: Record<string, string>,
+  responsePlanIds: Record<string, string>,
+  setPlanTokens: (fn: (prev: Record<string, string>) => Record<string, string>) => void,
+  setResponsePlanIds: (fn: (prev: Record<string, string>) => Record<string, string>) => void,
+  setResponseTokens: (fn: (prev: Record<string, string>) => Record<string, string>) => void,
+) {
+  const alreadyCleanedPlanIds = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const newlyDeletedIds = deletedPlanIds.filter(id => !alreadyCleanedPlanIds.current.has(id))
+    if (newlyDeletedIds.length === 0) return
+
+    for (const id of newlyDeletedIds) {
+      alreadyCleanedPlanIds.current.add(id)
+    }
+
+    const deletedPlanTokenIds = newlyDeletedIds.filter(id => id in planTokens)
+    if (deletedPlanTokenIds.length > 0) {
+      setPlanTokens(prev => {
+        const result = { ...prev }
+        for (const key of deletedPlanTokenIds) delete result[key]
+        return result
+      })
+    }
+
+    const orphanedResponseIds = Object.entries(responsePlanIds)
+      .filter(([, planId]) => newlyDeletedIds.includes(planId))
+      .map(([responseId]) => responseId)
+
+    if (orphanedResponseIds.length > 0) {
+      setResponsePlanIds(prev => {
+        const result = { ...prev }
+        for (const key of orphanedResponseIds) delete result[key]
+        return result
+      })
+      setResponseTokens(prev => {
+        const result = { ...prev }
+        for (const key of orphanedResponseIds) delete result[key]
+        return result
+      })
+    }
+  }, [deletedPlanIds, planTokens, responsePlanIds, setPlanTokens, setResponsePlanIds, setResponseTokens])
 }
 
 export function useUserTrips() {
@@ -19,99 +70,62 @@ export function useUserTrips() {
   const [, setResponseTokens] = useAtom(responseEditTokensAtom)
 
   const { allPlanIds, createdPlanIds } = useMemo(() => {
-    const created = Object.keys(planTokens)
-    const responded = [...new Set(Object.values(responsePlanIds))]
-    const all = [...new Set([...created, ...responded])]
-    return { allPlanIds: all, createdPlanIds: new Set(created) }
+    const createdIds = Object.keys(planTokens)
+    const respondedIds = [...new Set(Object.values(responsePlanIds))]
+    const combinedIds = [...new Set([...createdIds, ...respondedIds])]
+    return { allPlanIds: combinedIds, createdPlanIds: new Set(createdIds) }
   }, [planTokens, responsePlanIds])
 
-  const planQueries = useQueries({
+  const queryResults = useQueries({
     queries: allPlanIds.map(planId => ({
       ...planKeys.detail(planId),
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: false, // Don't retry 404s for deleted plans
-    }))
+      staleTime: FIVE_MINUTES,
+      retry: false,
+    })),
   })
 
-  const trips: UserTrip[] = useMemo(() => {
-    return allPlanIds.map((planId, index) => {
-      const query = planQueries[index]
-      return {
-        planId,
-        plan: query.data ?? null,
-        role: createdPlanIds.has(planId) ? 'creator' : 'respondent',
-        isLoading: query.isLoading,
-        error: query.error as Error | null,
-      }
-    })
-  }, [allPlanIds, planQueries, createdPlanIds])
-
-  const validTrips = useMemo(() => {
-    return trips.filter(t => {
-      if (!t.error || t.isLoading) return true
-      const is404 = t.error instanceof ApiError && t.error.status === 404
-      return !is404
-    })
-  }, [trips])
-
-  const serverError = useMemo(() => {
-    return trips.find(t =>
-      t.error &&
-      !t.isLoading &&
-      !(t.error instanceof ApiError && t.error.status === 404)
-    )?.error ?? null
-  }, [trips])
-
-  const cleanedUpRef = useRef<Set<string>>(new Set())
-
-  // TODO: Extract stale token cleanup to a separate function for testability
-  useEffect(() => {
-    const stalePlanIds = trips
-      .filter(t => {
-        if (!t.error || t.isLoading) return false
-        return t.error instanceof ApiError && t.error.status === 404
-      })
-      .map(t => t.planId)
-      .filter(id => !cleanedUpRef.current.has(id))
-
-    if (stalePlanIds.length === 0) return
-
-    stalePlanIds.forEach(id => cleanedUpRef.current.add(id))
-
-    const stalePlanTokenIds = stalePlanIds.filter(id => id in planTokens)
-    if (stalePlanTokenIds.length > 0) {
-      setPlanTokens(prev => {
-        const next = { ...prev }
-        stalePlanTokenIds.forEach(id => delete next[id])
-        return next
-      })
+  const trips = allPlanIds.map((planId, index) => {
+    const query = queryResults[index]
+    const role = createdPlanIds.has(planId) ? 'creator' as const : 'respondent' as const
+    return {
+      planId,
+      plan: query.data ?? null,
+      role,
+      isLoading: query.isLoading,
+      error: query.error,
     }
+  })
 
-    const staleResponseIds = Object.entries(responsePlanIds)
-      .filter(([, planId]) => stalePlanIds.includes(planId))
-      .map(([responseId]) => responseId)
+  const deletedPlanIds = trips
+    .filter(trip => trip.error && !trip.isLoading && isNotFoundError(trip.error))
+    .map(trip => trip.planId)
 
-    if (staleResponseIds.length > 0) {
-      setResponsePlanIds(prev => {
-        const next = { ...prev }
-        staleResponseIds.forEach(id => delete next[id])
-        return next
-      })
-      setResponseTokens(prev => {
-        const next = { ...prev }
-        staleResponseIds.forEach(id => delete next[id])
-        return next
-      })
-    }
-  }, [trips, planTokens, responsePlanIds, setPlanTokens, setResponsePlanIds, setResponseTokens])
+  const validTrips: UserTrip[] = trips.filter(trip => {
+    if (!trip.error || trip.isLoading) return true
+    return !isNotFoundError(trip.error)
+  })
 
-  const hasValidTrips = validTrips.length > 0 || planQueries.some(q => q.isLoading)
+  const firstServerError = trips.find(trip =>
+    trip.error && !trip.isLoading && !isNotFoundError(trip.error)
+  )?.error ?? null
+
+  useCleanupDeletedPlans(
+    deletedPlanIds,
+    planTokens,
+    responsePlanIds,
+    setPlanTokens,
+    setResponsePlanIds,
+    setResponseTokens,
+  )
+
+  const isLoading = queryResults.some(query => query.isLoading)
+  const hasTrips = validTrips.length > 0 || isLoading
 
   return {
     trips: validTrips,
-    isLoading: planQueries.some(q => q.isLoading),
-    hasTrips: hasValidTrips,
-    error: serverError,
-    refetch: () => planQueries.forEach(q => q.refetch()),
+    isLoading,
+    hasTrips,
+    error: firstServerError,
+    refetch: () => queryResults.forEach(query => query.refetch()),
   }
 }

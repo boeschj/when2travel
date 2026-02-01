@@ -5,7 +5,13 @@ import { UserAvatar } from '../atoms/user-avatar'
 import type { CompatibleDateRange } from '@/lib/types'
 import { parseISO, eachDayOfInterval, format } from 'date-fns'
 
-type RespondentStatus = 'available' | 'partial' | 'unavailable'
+const RESPONDENT_STATUS = {
+  AVAILABLE: 'available',
+  PARTIAL: 'partial',
+  UNAVAILABLE: 'unavailable'
+} as const
+
+type RespondentStatus = (typeof RESPONDENT_STATUS)[keyof typeof RESPONDENT_STATUS]
 
 interface Respondent {
   id: string
@@ -25,70 +31,208 @@ interface RespondentChipsProps {
   className?: string
 }
 
-// TODO: Refactor into smaller functions - this has two distinct branches (with/without bestWindow)
-function getRespondentStatus(
+interface RespondentChipProps {
+  respondent: Respondent
+  status: RespondentStatus
+  isSelected: boolean
+  onClick: () => void
+}
+
+function getWindowAvailabilityStatus(
   respondent: Respondent,
-  bestWindow: CompatibleDateRange | null,
-  startRange: string,
-  endRange: string,
-  numDays: number
+  bestWindow: CompatibleDateRange
 ): RespondentStatus {
-  if (bestWindow) {
-    const windowStart = parseISO(bestWindow.start)
-    const windowEnd = parseISO(bestWindow.end)
-    const windowDates = eachDayOfInterval({ start: windowStart, end: windowEnd })
+  const windowDates = eachDayOfInterval({
+    start: parseISO(bestWindow.start),
+    end: parseISO(bestWindow.end)
+  })
 
-    const availableDatesSet = new Set(respondent.availableDates)
-    let availableDaysInWindow = 0
+  const availableDatesSet = new Set(respondent.availableDates)
+  const availableDaysInWindow = windowDates.filter(date =>
+    availableDatesSet.has(format(date, 'yyyy-MM-dd'))
+  ).length
 
-    for (const date of windowDates) {
-      if (availableDatesSet.has(format(date, 'yyyy-MM-dd'))) {
-        availableDaysInWindow++
-      }
-    }
+  if (availableDaysInWindow === windowDates.length) return RESPONDENT_STATUS.AVAILABLE
+  if (availableDaysInWindow > 0) return RESPONDENT_STATUS.PARTIAL
+  return RESPONDENT_STATUS.UNAVAILABLE
+}
 
-    if (availableDaysInWindow === windowDates.length) return 'available'
-    if (availableDaysInWindow > 0) return 'partial'
-    return 'unavailable'
-  }
-
+function getConsecutiveAvailabilityStatus({
+  respondent,
+  startRange,
+  endRange,
+  requiredDays
+}: {
+  respondent: Respondent
+  startRange: string
+  endRange: string
+  requiredDays: number
+}): RespondentStatus {
   const allDates = eachDayOfInterval({
     start: parseISO(startRange),
     end: parseISO(endRange)
   })
 
   const availableDatesSet = new Set(respondent.availableDates)
-  let maxConsecutive = 0
-  let currentConsecutive = 0
+  let maxConsecutiveDays = 0
+  let currentConsecutiveDays = 0
 
   for (const date of allDates) {
     if (availableDatesSet.has(format(date, 'yyyy-MM-dd'))) {
-      currentConsecutive++
-      maxConsecutive = Math.max(maxConsecutive, currentConsecutive)
+      currentConsecutiveDays++
+      maxConsecutiveDays = Math.max(maxConsecutiveDays, currentConsecutiveDays)
     } else {
-      currentConsecutive = 0
+      currentConsecutiveDays = 0
     }
   }
 
-  if (maxConsecutive >= numDays) return 'available'
-  if (maxConsecutive > 0) return 'partial'
-  return 'unavailable'
+  if (maxConsecutiveDays >= requiredDays) return RESPONDENT_STATUS.AVAILABLE
+  if (maxConsecutiveDays > 0) return RESPONDENT_STATUS.PARTIAL
+  return RESPONDENT_STATUS.UNAVAILABLE
 }
 
-const statusConfig = {
-  available: {
-    Icon: CheckCircle,
+function getRespondentStatus({
+  respondent,
+  bestWindow,
+  startRange,
+  endRange,
+  requiredDays
+}: {
+  respondent: Respondent
+  bestWindow: CompatibleDateRange | null
+  startRange: string
+  endRange: string
+  requiredDays: number
+}): RespondentStatus {
+  if (bestWindow) {
+    return getWindowAvailabilityStatus(respondent, bestWindow)
+  }
+  return getConsecutiveAvailabilityStatus({ respondent, startRange, endRange, requiredDays })
+}
+
+const STATUS_DISPLAY = {
+  [RESPONDENT_STATUS.AVAILABLE]: {
+    StatusIcon: CheckCircle,
     iconClass: 'text-primary'
   },
-  partial: {
-    Icon: AlertCircle,
+  [RESPONDENT_STATUS.PARTIAL]: {
+    StatusIcon: AlertCircle,
     iconClass: 'text-status-yellow'
   },
-  unavailable: {
-    Icon: XCircle,
+  [RESPONDENT_STATUS.UNAVAILABLE]: {
+    StatusIcon: XCircle,
     iconClass: 'text-status-red'
   }
-} as const
+} as const satisfies Record<RespondentStatus, { StatusIcon: typeof CheckCircle; iconClass: string }>
+
+function getDisplayName(respondent: Respondent): string {
+  if (respondent.isCurrentUser) return 'You'
+  return respondent.name
+}
+
+export function RespondentChips({
+  respondents,
+  bestWindow,
+  selectedRespondentId,
+  onRespondentClick,
+  startRange,
+  endRange,
+  numDays,
+  className
+}: RespondentChipsProps) {
+  const selectedRespondent = respondents.find(
+    respondent => respondent.id === selectedRespondentId
+  )
+  const selectedDisplayName = selectedRespondent && getDisplayName(selectedRespondent)
+  const hasSelection = Boolean(selectedRespondentId)
+
+  const handleChipClick = (respondentId: string) => {
+    if (selectedRespondentId === respondentId) {
+      onRespondentClick(null)
+      return
+    }
+    onRespondentClick(respondentId)
+  }
+
+  return (
+    <div className={cn('flex flex-col gap-3 min-w-0', className)}>
+      <ChipsHeader
+        respondentCount={respondents.length}
+        selectedName={selectedDisplayName}
+        hasSelection={hasSelection}
+        onClear={() => onRespondentClick(null)}
+      />
+
+      <ScrollableChipsContainer>
+        <div className="flex gap-2 overflow-x-auto px-6 py-1 scrollbar-hide max-w-full">
+          {respondents.map(respondent => {
+            const status = getRespondentStatus({
+              respondent,
+              bestWindow,
+              startRange,
+              endRange,
+              requiredDays: numDays
+            })
+            const isSelected = selectedRespondentId === respondent.id
+
+            return (
+              <RespondentChip
+                key={respondent.id}
+                respondent={respondent}
+                status={status}
+                isSelected={isSelected}
+                onClick={() => handleChipClick(respondent.id)}
+              />
+            )
+          })}
+        </div>
+      </ScrollableChipsContainer>
+    </div>
+  )
+}
+
+interface ChipsHeaderProps {
+  respondentCount: number
+  selectedName: string | undefined
+  hasSelection: boolean
+  onClear: () => void
+}
+
+function ChipsHeader({ respondentCount, selectedName, hasSelection, onClear }: ChipsHeaderProps) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex flex-col">
+        <span className="text-foreground text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+          Respondents ({respondentCount}/{respondentCount})
+        </span>
+        <FilterStatus selectedName={selectedName} />
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onClear}
+        className={cn(
+          'h-6 px-2 text-xs rounded-full border-border hover:border-primary hover:text-primary hover:scale-100 hover:bg-transparent',
+          !hasSelection && 'invisible'
+        )}
+      >
+        Clear
+      </Button>
+    </div>
+  )
+}
+
+function FilterStatus({ selectedName }: { selectedName: string | undefined }) {
+  if (!selectedName) {
+    return <span className="text-text-secondary text-sm">Select a person to filter</span>
+  }
+
+  return (
+    <span className="text-text-secondary text-sm">
+      Viewing: <span className="text-primary font-medium">{selectedName}</span>
+    </span>
+  )
+}
 
 function ScrollableChipsContainer({ children }: { children: React.ReactNode }) {
   const fadeGradientBase = 'pointer-events-none absolute top-0 bottom-0 z-10'
@@ -112,99 +256,33 @@ function ScrollableChipsContainer({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function RespondentChips({
-  respondents,
-  bestWindow,
-  selectedRespondentId,
-  onRespondentClick,
-  startRange,
-  endRange,
-  numDays,
-  className
-}: RespondentChipsProps) {
-  const handleChipClick = (respondentId: string) => {
-    if (selectedRespondentId === respondentId) {
-      onRespondentClick(null)
-    } else {
-      onRespondentClick(respondentId)
-    }
-  }
+function RespondentChip({ respondent, status, isSelected, onClick }: RespondentChipProps) {
+  const { StatusIcon, iconClass } = STATUS_DISPLAY[status]
+  const displayName = getDisplayName(respondent)
 
-  const selectedRespondent = selectedRespondentId
-    ? respondents.find(r => r.id === selectedRespondentId)
-    : null
-
-  const selectedName = selectedRespondent
-    ? selectedRespondent.isCurrentUser
-      ? 'You'
-      : selectedRespondent.name
-    : null
+  const chipClassName = cn(
+    'flex items-center gap-2 px-3 py-2 h-auto rounded-full flex-shrink-0',
+    'bg-surface-dark hover:bg-surface-dark hover:scale-100',
+    isSelected && 'ring-2 ring-primary bg-primary/20',
+    !isSelected && respondent.isCurrentUser && 'border-primary',
+    !isSelected && !respondent.isCurrentUser && 'border-border'
+  )
 
   return (
-    <div className={cn('flex flex-col gap-3 min-w-0', className)}>
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-foreground text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-            Respondents ({respondents.length}/{respondents.length})
-          </span>
-          <span className="text-text-secondary text-sm">
-            {selectedRespondentId ? (
-              <>Viewing: <span className="text-primary font-medium">{selectedName}</span></>
-            ) : (
-              'Select a person to filter'
-            )}
-          </span>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onRespondentClick(null)}
-          className={cn(
-            'h-6 px-2 text-xs rounded-full border-border hover:border-primary hover:text-primary hover:scale-100 hover:bg-transparent',
-            !selectedRespondentId && 'invisible'
-          )}
-        >
-          Clear
-        </Button>
-      </div>
-
-      <ScrollableChipsContainer>
-        <div className="flex gap-2 overflow-x-auto px-6 py-1 scrollbar-hide max-w-full">
-          {respondents.map(respondent => {
-            const status = getRespondentStatus(respondent, bestWindow, startRange, endRange, numDays)
-            const config = statusConfig[status]
-            const isSelected = selectedRespondentId === respondent.id
-
-            return (
-              <Button
-                key={respondent.id}
-                variant="outline"
-                onClick={() => handleChipClick(respondent.id)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 h-auto rounded-full flex-shrink-0',
-                  'bg-surface-dark hover:bg-surface-dark hover:scale-100',
-                  isSelected
-                    ? 'ring-2 ring-primary bg-primary/20'
-                    : respondent.isCurrentUser
-                    ? 'border-primary'
-                    : 'border-border'
-                )}
-              >
-                <UserAvatar
-                  name={respondent.name}
-                  isCurrentUser={respondent.isCurrentUser}
-                  colorId={respondent.id}
-                  className="size-6"
-                />
-                <span className="text-sm font-medium text-white whitespace-nowrap">
-                  {respondent.isCurrentUser ? 'You' : respondent.name}
-                </span>
-                <config.Icon className={cn('w-4 h-4', config.iconClass)} />
-              </Button>
-            )
-          })}
-        </div>
-      </ScrollableChipsContainer>
-    </div>
+    <Button
+      variant="outline"
+      onClick={onClick}
+      className={chipClassName}
+    >
+      <UserAvatar
+        name={respondent.name}
+        colorId={respondent.id}
+        className="size-6"
+      />
+      <span className="text-sm font-medium text-white whitespace-nowrap">
+        {displayName}
+      </span>
+      <StatusIcon className={cn('w-4 h-4', iconClass)} />
+    </Button>
   )
 }

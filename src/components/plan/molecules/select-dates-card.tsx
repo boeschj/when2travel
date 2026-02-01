@@ -6,6 +6,7 @@ import { AvailabilityCalendar } from '../organisms/availability-calendar'
 import { AvailabilityActions } from './availability-actions'
 import { cn, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
+
 interface SelectDatesCardProps {
   startRange: string
   endRange: string
@@ -39,24 +40,20 @@ export function SelectDatesCard({
 }: SelectDatesCardProps) {
   const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0
   const hasSelectedDates = selectedDates.length > 0
-  const isZeroCompatible = compatibleWindowsCount === 0
 
   return (
     <Card className="p-4 w-full md:w-fit items-center">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 w-full">
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <CardHeader>Set your availability</CardHeader>
+            <SectionHeader>Set your availability</SectionHeader>
             {hasSelectedDates && (
-              <SelectionBadge
-                compatibleWindowsCount={compatibleWindowsCount}
-                isZeroCompatible={isZeroCompatible}
-              />
+              <CompatibleWindowsBadge count={compatibleWindowsCount} />
             )}
           </div>
-          <CardSubheader>
+          <SectionSubheader>
             Tap once to start a range, tap again to complete it.
-          </CardSubheader>
+          </SectionSubheader>
         </div>
         <AvailabilityActions
           availableRanges={availableRanges}
@@ -82,36 +79,34 @@ export function SelectDatesCard({
   )
 }
 
-function CardHeader({ children }: { children: ReactNode }) {
+function SectionHeader({ children }: { children: ReactNode }) {
   return (
     <h3 className="text-foreground text-lg font-bold">{children}</h3>
   )
 }
 
-interface SelectionBadgeProps {
-  compatibleWindowsCount: number
-  isZeroCompatible: boolean
-}
-
-function SelectionBadge({
-  compatibleWindowsCount,
-  isZeroCompatible
-}: SelectionBadgeProps) {
-  const windowLabel = pluralize(compatibleWindowsCount, 'window')
-
+function SectionSubheader({ children }: { children: ReactNode }) {
   return (
-    <Badge className={cn(
-      isZeroCompatible
-        ? "bg-destructive text-destructive-foreground"
-        : "bg-primary text-primary-foreground"
-    )}>
-      {compatibleWindowsCount} compatible {windowLabel}
-    </Badge>
+    <p className="text-muted-foreground text-sm mt-1">{children}</p>
   )
 }
 
-function CardSubheader({ children }: { children: ReactNode }) {
+interface CompatibleWindowsBadgeProps {
+  count: number
+}
+
+function CompatibleWindowsBadge({ count }: CompatibleWindowsBadgeProps) {
+  const isZeroCompatible = count === 0
+  const windowLabel = pluralize(count, 'window')
+
+  let badgeVariantClassName = 'bg-primary text-primary-foreground'
+  if (isZeroCompatible) {
+    badgeVariantClassName = 'bg-destructive text-destructive-foreground'
+  }
+
   return (
-    <p className="text-muted-foreground text-sm mt-1">{children}</p>
+    <Badge className={cn(badgeVariantClassName)}>
+      {count} compatible {windowLabel}
+    </Badge>
   )
 }

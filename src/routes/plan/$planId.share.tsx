@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import { planKeys } from '@/lib/queries'
 import { SharePanel } from '@/components/plan/organisms/share-panel'
 import { motion } from 'motion/react'
@@ -18,25 +17,8 @@ export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
 function ShareTripPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate()
-
   const { data: plan, isLoading, error } = useQuery(planKeys.detail(planId))
   const userResponse = useCurrentUserResponse(plan?.responses)
-
-  const handleAddAvailability = () => {
-    navigate({
-      to: ROUTES.PLAN_RESPOND,
-      params: { planId },
-    })
-  }
-
-  const handleViewAvailability = () => {
-    if (userResponse) {
-      navigate({
-        to: ROUTES.RESPONSE_EDIT,
-        params: { responseId: userResponse.id },
-      })
-    }
-  }
 
   if (isLoading) {
     return <LoadingScreen />
@@ -52,41 +34,75 @@ function ShareTripPage() {
     )
   }
 
-  const formatDateRange = () => {
-    const start = parseISO(plan.startRange)
-    const end = parseISO(plan.endRange)
-    return `from ${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
+  const hasExistingResponse = !!userResponse
+  const formattedDateRange = formatDateRange(plan)
+
+  const navigateToAddAvailability = () => {
+    navigate({
+      to: ROUTES.PLAN_RESPOND,
+      params: { planId },
+    })
+  }
+
+  const navigateToEditAvailability = () => {
+    if (!userResponse) return
+    navigate({
+      to: ROUTES.RESPONSE_EDIT,
+      params: { responseId: userResponse.id },
+    })
   }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
       <AppHeader planId={planId} variant="transparent" />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
+      <main className="flex flex-1 flex-col items-center justify-center px-6 pb-20 pt-10 md:px-12 lg:px-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-fit mx-auto flex flex-col gap-10"
+          className="mx-auto flex w-fit flex-col gap-10"
         >
-          <div className="flex flex-col gap-2 w-full text-center">
-            <h1 className="text-foreground text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
-              Your plan: {plan.name} is ready to share!
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl font-bold">
-              for {plan.numDays} days {formatDateRange()}
-            </p>
-          </div>
+          <ShareHeading
+            planName={plan.name}
+            numDays={plan.numDays}
+            dateRange={formattedDateRange}
+          />
 
           <SharePanel
             planId={planId}
             planName={plan.name}
-            onAddAvailability={handleAddAvailability}
-            onViewAvailability={handleViewAvailability}
-            hasUserResponse={!!userResponse}
+            onAddAvailability={navigateToAddAvailability}
+            onViewAvailability={navigateToEditAvailability}
+            hasUserResponse={hasExistingResponse}
           />
         </motion.div>
       </main>
     </div>
   )
+}
+
+interface ShareHeadingProps {
+  planName: string
+  numDays: number
+  dateRange: string
+}
+
+function ShareHeading({ planName, numDays, dateRange }: ShareHeadingProps) {
+  return (
+    <div className="flex w-full flex-col gap-2 text-center">
+      <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground md:text-4xl">
+        Your plan: {planName} is ready to share!
+      </h1>
+      <p className="text-lg font-bold text-muted-foreground md:text-xl">
+        for {numDays} days {dateRange}
+      </p>
+    </div>
+  )
+}
+
+function formatDateRange(plan: { startRange: string; endRange: string }) {
+  const start = parseISO(plan.startRange)
+  const end = parseISO(plan.endRange)
+  return `from ${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
 }

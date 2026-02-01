@@ -33,57 +33,42 @@ function MarkAvailabilityPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
-
-  const { data: plan, isLoading: isPlanLoading, error } = useQuery(planKeys.detail(planId))
+  const { data: plan, isLoading: isPlanLoading, error: planError } = useQuery(planKeys.detail(planId))
   const existingResponse = useCurrentUserResponse(plan?.responses)
 
   const createResponseMutation = useMutation({
-    mutationFn: async (data: ResponseFormData) => {
-      const res = await $createResponse({
+    mutationFn: async (formData: ResponseFormData) => {
+      const response = await $createResponse({
         json: {
           planId,
-          name: data.name,
-          availableDates: data.availableDates,
+          name: formData.name,
+          availableDates: formData.availableDates,
         },
       })
 
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Failed to submit availability' }))
-        throw new Error('error' in error ? error.error : 'Failed to submit availability')
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ error: 'Failed to submit availability' }))
+        throw new Error('error' in errorBody ? errorBody.error : 'Failed to submit availability')
       }
 
-      return res.json()
+      return response.json()
     },
-    onSuccess: async (data) => {
-      saveResponseEditToken(data.id, data.editToken, planId)
+    onSuccess: async (responseData) => {
+      saveResponseEditToken({ responseId: responseData.id, token: responseData.editToken, planId })
       await queryClient.refetchQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
-      if (returnUrl) {
-        navigate({ to: returnUrl })
-      } else {
-        navigate({
-          to: ROUTES.PLAN,
-          params: { planId },
-        })
-      }
+      const destination = returnUrl ?? ROUTES.PLAN
+      const navigationOptions = returnUrl ? { to: destination } : { to: destination, params: { planId } }
+      navigate(navigationOptions)
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to submit availability. Please try again.')
+    onError: (mutationError: Error) => {
+      toast.error(mutationError.message || 'Failed to submit availability. Please try again.')
     },
   })
 
-  const handleSubmit = (data: ResponseFormData) => {
-    createResponseMutation.mutate(data)
-  }
-
-  // Redirect to results page if user has already responded
   if (existingResponse) {
-    navigate({
-      to: ROUTES.PLAN,
-      params: { planId },
-      replace: true,
-    })
+    navigate({ to: ROUTES.PLAN, params: { planId }, replace: true })
     return <LoadingScreen />
   }
 
@@ -91,7 +76,7 @@ function MarkAvailabilityPage() {
     return <LoadingScreen />
   }
 
-  if (error || !plan) {
+  if (planError || !plan) {
     return (
       <ErrorScreen
         variant="not-found"
@@ -101,6 +86,11 @@ function MarkAvailabilityPage() {
     )
   }
 
+  const formattedStartDate = format(parseISO(plan.startRange), 'MMM d')
+  const formattedEndDate = format(parseISO(plan.endRange), 'MMM d, yyyy')
+  const durationLabel = `${plan.numDays} ${pluralize(plan.numDays, 'day')}`
+  const existingRespondentNames = plan.responses?.map((r) => r.name) ?? []
+
   return (
     <PageLayout>
       <BackgroundEffects />
@@ -109,14 +99,13 @@ function MarkAvailabilityPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10 relative z-10">
         <div className="w-full md:w-fit mx-auto flex flex-col gap-12">
           <FormSection className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
-              When can you go?
-            </h1>
-            <p className="text-lg font-normal leading-normal text-muted-foreground">
-              Sharing availability for: <span className="text-foreground font-medium">{plan.name}</span> for{' '}
-              <span className="text-foreground font-medium">{plan.numDays} {pluralize(plan.numDays, 'day')}</span>{' '}
-              between {format(parseISO(plan.startRange), 'MMM d')} - {format(parseISO(plan.endRange), 'MMM d, yyyy')}
-            </p>
+            <PageHeading />
+            <PlanDescription
+              planName={plan.name}
+              durationLabel={durationLabel}
+              startDate={formattedStartDate}
+              endDate={formattedEndDate}
+            />
           </FormSection>
 
           <FormSection delay={0.1}>
@@ -124,13 +113,38 @@ function MarkAvailabilityPage() {
               startRange={plan.startRange}
               endRange={plan.endRange}
               numDays={plan.numDays}
-              existingNames={plan.responses?.map((r) => r.name) ?? []}
-              onSubmit={handleSubmit}
+              existingNames={existingRespondentNames}
+              onSubmit={(data) => createResponseMutation.mutate(data)}
               isSubmitting={createResponseMutation.isPending}
             />
           </FormSection>
         </div>
       </main>
     </PageLayout>
+  )
+}
+
+function PageHeading() {
+  return (
+    <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
+      When can you go?
+    </h1>
+  )
+}
+
+interface PlanDescriptionProps {
+  planName: string
+  durationLabel: string
+  startDate: string
+  endDate: string
+}
+
+function PlanDescription({ planName, durationLabel, startDate, endDate }: PlanDescriptionProps) {
+  return (
+    <p className="text-lg font-normal leading-normal text-muted-foreground">
+      Sharing availability for: <span className="text-foreground font-medium">{planName}</span> for{' '}
+      <span className="text-foreground font-medium">{durationLabel}</span>{' '}
+      between {startDate} - {endDate}
+    </p>
   )
 }

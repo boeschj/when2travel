@@ -6,6 +6,14 @@ import { plans, planResponses } from '../db/schema'
 import { createResponseSchema, updateResponseSchema, deleteResponseSchema } from '../lib/schemas'
 import type { Bindings } from '../lib/env'
 
+function parseAvailableDates(serialized: string): string[] {
+  return JSON.parse(serialized)
+}
+
+function serializeAvailableDates(dates: string[]): string {
+  return JSON.stringify(dates)
+}
+
 export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
   .post('/', zValidator('json', createResponseSchema), async (c) => {
     const db = c.var.db
@@ -25,7 +33,7 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
       id,
       planId: body.planId,
       name: body.name,
-      availableDates: JSON.stringify(body.availableDates),
+      availableDates: serializeAvailableDates(body.availableDates),
       editToken,
       createdAt: now,
       updatedAt: now,
@@ -48,29 +56,27 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
     const responseId = c.req.param('id')
     const body = c.req.valid('json')
 
-    const [response] = await db
+    const [existingResponse] = await db
       .select()
       .from(planResponses)
       .where(eq(planResponses.id, responseId))
       .limit(1)
 
-    if (!response) {
+    if (!existingResponse) {
       return c.json({ error: 'Response not found' }, 404)
     }
 
-    if (response.editToken !== body.editToken) {
+    if (existingResponse.editToken !== body.editToken) {
       return c.json({ error: 'Unauthorized' }, 401)
     }
 
     const now = new Date().toISOString()
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Justification: editToken explicitly excluded from obj
-    const { editToken, ...updateData } = body
 
     await db
       .update(planResponses)
       .set({
-        ...(updateData.name && { name: updateData.name }),
-        ...(updateData.availableDates && { availableDates: JSON.stringify(updateData.availableDates) }),
+        ...(body.name && { name: body.name }),
+        ...(body.availableDates && { availableDates: serializeAvailableDates(body.availableDates) }),
         updatedAt: now,
       })
       .where(eq(planResponses.id, responseId))
@@ -83,7 +89,7 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
 
     return c.json({
       ...updatedResponse,
-      availableDates: JSON.parse(updatedResponse.availableDates) as string[],
+      availableDates: parseAvailableDates(updatedResponse.availableDates),
     })
   })
   .delete('/:id', zValidator('json', deleteResponseSchema), async (c) => {
@@ -91,17 +97,17 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
     const responseId = c.req.param('id')
     const body = c.req.valid('json')
 
-    const [response] = await db
+    const [existingResponse] = await db
       .select()
       .from(planResponses)
       .where(eq(planResponses.id, responseId))
       .limit(1)
 
-    if (!response) {
+    if (!existingResponse) {
       return c.json({ error: 'Response not found' }, 404)
     }
 
-    if (response.editToken !== body.editToken) {
+    if (existingResponse.editToken !== body.editToken) {
       return c.json({ error: 'Unauthorized' }, 401)
     }
 

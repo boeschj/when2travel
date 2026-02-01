@@ -2,11 +2,13 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Mail, MessageCircle, Send, Copy, type LucideIcon } from 'lucide-react'
 
+type Platform = 'email' | 'whatsapp' | 'telegram' | 'copy'
+
 interface ShareButtonProps extends React.ComponentProps<typeof Button> {
-  platform: 'email' | 'whatsapp' | 'telegram' | 'copy'
+  platform: Platform
 }
 
-const platformConfig: Record<string, { icon: LucideIcon; bgColor: string; title: string }> = {
+const platformConfig: Record<Platform, { icon: LucideIcon; bgColor: string; title: string }> = {
   email: {
     icon: Mail,
     bgColor: 'hover:bg-[#25D366] hover:text-white',

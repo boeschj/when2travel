@@ -1,28 +1,20 @@
 import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory'
 import { client } from './api'
 
-// Custom error class to preserve HTTP status for error handling
-export class ApiError extends Error {
-  status: number
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
+async function fetchPlanById(planId: string) {
+  const response = await client.plans[':id'].$get({
+    param: { id: planId },
+  })
+  if (!response.ok) {
+    throw response
   }
+  return response.json()
 }
 
 export const planKeys = createQueryKeys('plans', {
   detail: (planId: string) => ({
     queryKey: [planId],
-    queryFn: async () => {
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new ApiError('Failed to fetch plan', res.status)
-      }
-      return res.json()
-    },
+    queryFn: () => fetchPlanById(planId),
   }),
 })
 
@@ -30,16 +22,12 @@ export const responseKeys = createQueryKeys('responses', {
   withPlan: (responseId: string, planId: string) => ({
     queryKey: [responseId, planId],
     queryFn: async () => {
-      const res = await client.plans[':id'].$get({
-        param: { id: planId },
-      })
-      if (!res.ok) {
-        throw new ApiError('Failed to fetch plan', res.status)
-      }
-      const plan = await res.json()
-      const matchingResponse = plan.responses?.find((r) => r.id === responseId)
+      const plan = await fetchPlanById(planId)
+      const matchingResponse = plan.responses?.find(
+        (response) => response.id === responseId,
+      )
       if (!matchingResponse) {
-        throw new ApiError('Response not found in plan', 404)
+        throw new Response('Response not found in plan', { status: 404 })
       }
       return { plan, response: matchingResponse }
     },

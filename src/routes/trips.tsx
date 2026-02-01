@@ -2,24 +2,33 @@ import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { ROUTE_IDS } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
-import { StorageBanner } from '@/components/trips/storage-banner'
+import StorageBanner from '@/components/trips/storage-banner'
 import { TripCard } from '@/components/trips/trip-card'
 import { TripCardSkeleton } from '@/components/trips/trip-card-skeleton'
 import { CreateTripCard } from '@/components/trips/create-trip-card'
 import { EmptyState } from '@/components/trips/empty-state'
 import { useUserTrips } from '@/hooks/use-user-trips'
 
+import type { UserTrip } from '@/hooks/use-user-trips'
+
 export const Route = createFileRoute(ROUTE_IDS.TRIPS)({
   component: TripsPage,
 })
 
+const FADE_UP_ANIMATION = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+}
+
 function TripsPage() {
   const { trips, isLoading, hasTrips, error } = useUserTrips()
 
-  // Throw server errors to be caught by error boundary
   if (error) {
     throw error
   }
+
+  const showEmptyState = !hasTrips && !isLoading
+  const showSkeletons = isLoading && trips.length === 0
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -27,67 +36,81 @@ function TripsPage() {
 
       <main className="flex-1 flex flex-col px-6 md:px-12 lg:px-20 pb-20 pt-10">
         <div className="max-w-6xl mx-auto w-full space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-2"
-          >
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
-              Your Adventures
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Welcome back! Here are the trips saved on this device. Manage your plans and check response status below.
-            </p>
-          </motion.div>
+          <PageHeading />
+          <AnimatedBanner />
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <StorageBanner />
-          </motion.div>
-
-          {!hasTrips && !isLoading ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <EmptyState />
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
+          {showEmptyState && <AnimatedEmptyState />}
+          {!showEmptyState && (
+            <TripGrid>
               <CreateTripCard />
-              {isLoading && trips.length === 0 ? (
-                // Initial loading state
-                <>
-                  <TripCardSkeleton />
-                  <TripCardSkeleton />
-                </>
-              ) : (
-                trips.map((trip) =>
-                  trip.isLoading ? (
-                    <TripCardSkeleton key={trip.planId} />
-                  ) : trip.plan ? (
-                    <TripCard
-                      key={trip.planId}
-                      plan={trip.plan}
-                      role={trip.role}
-                    />
-                  ) : null
-                )
-              )}
-            </motion.div>
+              {showSkeletons && <LoadingSkeletons />}
+              {!showSkeletons && trips.map((trip) => <TripItem key={trip.planId} trip={trip} />)}
+            </TripGrid>
           )}
         </div>
       </main>
     </div>
   )
+}
+
+function PageHeading() {
+  return (
+    <motion.div {...FADE_UP_ANIMATION} transition={{ duration: 0.5 }} className="space-y-2">
+      <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
+        Your Adventures
+      </h1>
+      <p className="text-lg text-muted-foreground">
+        Welcome back! Here are the trips saved on this device. Manage your plans and check response status below.
+      </p>
+    </motion.div>
+  )
+}
+
+function AnimatedBanner() {
+  return (
+    <motion.div {...FADE_UP_ANIMATION} transition={{ duration: 0.5, delay: 0.1 }}>
+      <StorageBanner />
+    </motion.div>
+  )
+}
+
+function AnimatedEmptyState() {
+  return (
+    <motion.div {...FADE_UP_ANIMATION} transition={{ duration: 0.5, delay: 0.2 }}>
+      <EmptyState />
+    </motion.div>
+  )
+}
+
+function TripGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      {...FADE_UP_ANIMATION}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function LoadingSkeletons() {
+  return (
+    <>
+      <TripCardSkeleton />
+      <TripCardSkeleton />
+    </>
+  )
+}
+
+function TripItem({ trip }: { trip: UserTrip }) {
+  if (trip.isLoading) {
+    return <TripCardSkeleton />
+  }
+
+  if (!trip.plan) {
+    return null
+  }
+
+  return <TripCard plan={trip.plan} role={trip.role} />
 }

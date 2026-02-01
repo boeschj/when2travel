@@ -4,10 +4,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { tripsBannerDismissedAtom } from '@/lib/atoms'
 
-export function StorageBanner() {
+export default function StorageBanner() {
   const [dismissed, setDismissed] = useAtom(tripsBannerDismissedAtom)
 
   if (dismissed) return null
+
+  const handleDismiss = () => setDismissed(true)
 
   return (
     <Alert className="relative pr-12 rounded-lg">
@@ -16,15 +18,25 @@ export function StorageBanner() {
         <span className="font-semibold text-foreground">Browser Storage:</span>{' '}
         These trips are stored in your browser's local cache. Avoid clearing your browsing data to keep this list, or bookmark your trip links directly.
       </AlertDescription>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="absolute right-3 top-3"
-        onClick={() => setDismissed(true)}
-        aria-label="Dismiss"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      <DismissButton onDismiss={handleDismiss} />
     </Alert>
+  )
+}
+
+interface DismissButtonProps {
+  onDismiss: () => void
+}
+
+function DismissButton({ onDismiss }: DismissButtonProps) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="absolute right-3 top-3"
+      onClick={onDismiss}
+      aria-label="Dismiss"
+    >
+      <X className="h-4 w-4" />
+    </Button>
   )
 }

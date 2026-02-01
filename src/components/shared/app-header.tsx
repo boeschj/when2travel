@@ -17,44 +17,74 @@ interface AppHeaderProps {
   className?: string
 }
 
-function NavLink({ item }: { item: NavItem }) {
-  const linkProps = {
-    to: item.to,
-    ...(item.params && { params: item.params }),
-  }
+export default function AppHeader({
+  planId,
+  variant = 'default',
+  className,
+}: AppHeaderProps) {
+  const navItems = useNavigation({ planId })
+
+  const isDefault = variant === 'default'
+  const outerStyles = cn(
+    'w-full border-b border-border',
+    isDefault && 'bg-background-dark',
+    !isDefault && 'bg-background/95 backdrop-blur sticky top-0 z-50'
+  )
 
   return (
-    <Link
-      {...linkProps}
-      className={cn(
-        'text-sm font-medium transition-colors',
-        item.isActive
-          ? 'text-primary'
-          : 'text-muted-foreground hover:text-primary'
-      )}
-    >
+    <div className={outerStyles}>
+      <header
+        className={cn(
+          'flex items-center justify-between whitespace-nowrap mx-auto max-w-[1440px] px-4 md:px-10 py-3',
+          className
+        )}
+      >
+        <Wordmark />
+        <DesktopNav items={navItems} />
+        <MobileNav items={navItems} />
+      </header>
+    </div>
+  )
+}
+
+export { AppHeader }
+
+function buildLinkProps(item: NavItem) {
+  const props: { to: string; params?: Record<string, string> } = {
+    to: item.to,
+  }
+  if (item.params) {
+    props.params = item.params
+  }
+  return props
+}
+
+function NavLink({ item }: { item: NavItem }) {
+  const linkProps = buildLinkProps(item)
+  const linkStyles = cn(
+    'text-sm font-medium transition-colors',
+    item.isActive && 'text-primary',
+    !item.isActive && 'text-muted-foreground hover:text-primary'
+  )
+
+  return (
+    <Link {...linkProps} className={linkStyles}>
       {item.label}
     </Link>
   )
 }
 
 function NavButton({ item }: { item: NavItem }) {
-  const linkProps = {
-    to: item.to,
-    ...(item.params && { params: item.params }),
-  }
+  const linkProps = buildLinkProps(item)
+
+  const buttonVariant = item.isActive ? 'default' : 'outline'
+  const buttonStyles = cn(
+    !item.isActive && 'border-border hover:border-primary hover:text-primary'
+  )
 
   return (
     <Link {...linkProps}>
-      <Button
-        size="sm"
-        variant={item.isActive ? 'default' : 'outline'}
-        className={cn(
-          item.isActive
-            ? ''
-            : 'border-border hover:border-primary hover:text-primary'
-        )}
-      >
+      <Button size="sm" variant={buttonVariant} className={buttonStyles}>
         {item.label}
       </Button>
     </Link>
@@ -79,13 +109,14 @@ function MobileNav({ items }: { items: NavItem[] }) {
   const linkItems = items.filter((item) => item.variant === 'link')
   const buttonItem = items.find((item) => item.variant === 'button')
 
-  // Don't show menu if there's only the button
-  if (linkItems.length === 0) {
-    return buttonItem ? (
+  const hasNoLinks = linkItems.length === 0
+
+  if (hasNoLinks) {
+    return (
       <div className="md:hidden">
-        <NavButton item={buttonItem} />
+        {buttonItem && <NavButton item={buttonItem} />}
       </div>
-    ) : null
+    )
   }
 
   return (
@@ -98,26 +129,9 @@ function MobileNav({ items }: { items: NavItem[] }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          {linkItems.map((item) => {
-            const linkProps = {
-              to: item.to,
-              ...(item.params && { params: item.params }),
-            }
-
-            return (
-              <DropdownMenuItem key={item.label} asChild>
-                <Link
-                  {...linkProps}
-                  className={cn(
-                    'w-full cursor-pointer',
-                    item.isActive && 'text-primary font-medium'
-                  )}
-                >
-                  {item.label}
-                </Link>
-              </DropdownMenuItem>
-            )
-          })}
+          {linkItems.map((item) => (
+            <MobileNavLink key={item.label} item={item} />
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -126,30 +140,18 @@ function MobileNav({ items }: { items: NavItem[] }) {
   )
 }
 
-export function AppHeader({
-  planId,
-  variant = 'default',
-  className,
-}: AppHeaderProps) {
-  const navItems = useNavigation({ planId })
-
-  const outerStyles =
-    variant === 'default'
-      ? 'w-full border-b border-border bg-background-dark'
-      : 'w-full border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50'
+function MobileNavLink({ item }: { item: NavItem }) {
+  const linkProps = buildLinkProps(item)
+  const linkStyles = cn(
+    'w-full cursor-pointer',
+    item.isActive && 'text-primary font-medium'
+  )
 
   return (
-    <div className={outerStyles}>
-      <header
-        className={cn(
-          'flex items-center justify-between whitespace-nowrap mx-auto max-w-[1440px] px-4 md:px-10 py-3',
-          className
-        )}
-      >
-        <Wordmark />
-        <DesktopNav items={navItems} />
-        <MobileNav items={navItems} />
-      </header>
-    </div>
+    <DropdownMenuItem asChild>
+      <Link {...linkProps} className={linkStyles}>
+        {item.label}
+      </Link>
+    </DropdownMenuItem>
   )
 }

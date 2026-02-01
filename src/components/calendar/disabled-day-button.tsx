@@ -12,6 +12,8 @@ export function DisabledDayButton({
 }: DayButtonProps) {
   const ref = useDayButtonFocus(modifiers.focused)
 
+  const dayNumber = day.date.getDate()
+
   return (
     <button
       ref={ref}
@@ -24,7 +26,7 @@ export function DisabledDayButton({
       )}
       {...props}
     >
-      {day.date.getDate()}
+      {dayNumber}
     </button>
   )
 }

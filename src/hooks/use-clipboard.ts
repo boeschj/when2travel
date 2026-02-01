@@ -1,35 +1,33 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
-/**
- * Fallback copy method for browsers that block the Clipboard API (e.g., Firefox Focus)
- */
-function fallbackCopy(text: string): void {
+function createHiddenTextArea(text: string): HTMLTextAreaElement {
   const textArea = document.createElement('textarea')
   textArea.value = text
   textArea.style.position = 'fixed'
   textArea.style.left = '-9999px'
-  document.body.appendChild(textArea)
-  textArea.select()
-  document.execCommand('copy')
-  document.body.removeChild(textArea)
+  return textArea
 }
 
-/**
- * Copy text to clipboard with fallback support
- */
+function copyViaLegacyTextArea(text: string): boolean {
+  const textArea = createHiddenTextArea(text)
+  document.body.appendChild(textArea)
+  textArea.select()
+  const didCopy = document.execCommand('copy')
+  document.body.removeChild(textArea)
+  return didCopy
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text)
-    } else {
-      fallbackCopy(text)
+      return true
     }
-    return true
+    return copyViaLegacyTextArea(text)
   } catch {
     try {
-      fallbackCopy(text)
-      return true
+      return copyViaLegacyTextArea(text)
     } catch {
       return false
     }
@@ -42,22 +40,17 @@ interface UseCopyToClipboardOptions {
   resetDelay?: number
 }
 
-/**
- * Hook for copying text to clipboard with state management and toast notifications
- */
-export function useCopyToClipboard(options: UseCopyToClipboardOptions = {}) {
-  const {
-    successMessage = 'Link copied to clipboard!',
-    errorMessage = 'Failed to copy link',
-    resetDelay = 2000,
-  } = options
+export function useCopyToClipboard(options?: UseCopyToClipboardOptions) {
+  const successMessage = options?.successMessage ?? 'Link copied to clipboard!'
+  const errorMessage = options?.errorMessage ?? 'Failed to copy link'
+  const resetDelay = options?.resetDelay ?? 2000
 
   const [copied, setCopied] = useState(false)
 
   const copy = useCallback(async (text: string) => {
-    const success = await copyToClipboard(text)
+    const didCopy = await copyToClipboard(text)
 
-    if (success) {
+    if (didCopy) {
       setCopied(true)
       toast.success(successMessage)
       setTimeout(() => setCopied(false), resetDelay)
@@ -65,7 +58,7 @@ export function useCopyToClipboard(options: UseCopyToClipboardOptions = {}) {
       toast.error(errorMessage)
     }
 
-    return success
+    return didCopy
   }, [successMessage, errorMessage, resetDelay])
 
   return { copied, copy }
@@ -82,21 +75,25 @@ interface UseShareOptions {
   errorMessage?: string
 }
 
-/**
- * Check if the native share API is available
- */
 export function canShare(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.share
 }
 
-/**
- * Hook for native share functionality with clipboard fallback
- */
-export function useShare(options: UseShareOptions = {}) {
-  const {
-    fallbackToClipboard = true,
-    errorMessage = 'Failed to share',
-  } = options
+async function copyUrlWithToast(url: string, errorMessage: string): Promise<boolean> {
+  const didCopy = await copyToClipboard(url)
+
+  if (didCopy) {
+    toast.success('Link copied to clipboard!')
+  } else {
+    toast.error(errorMessage)
+  }
+
+  return didCopy
+}
+
+export function useShare(options?: UseShareOptions) {
+  const fallbackToClipboard = options?.fallbackToClipboard ?? true
+  const errorMessage = options?.errorMessage ?? 'Failed to share'
 
   const share = useCallback(async (data: ShareData) => {
     if (navigator.share) {
@@ -104,34 +101,20 @@ export function useShare(options: UseShareOptions = {}) {
         await navigator.share(data)
         return true
       } catch (error) {
-        // User cancelled share - silently ignore
-        if ((error as Error).name === 'AbortError') {
-          return false
-        }
-        // Share failed, try clipboard fallback
+        const isUserCancellation = error instanceof Error && error.name === 'AbortError'
+        if (isUserCancellation) return false
+
         if (fallbackToClipboard) {
-          const success = await copyToClipboard(data.url)
-          if (success) {
-            toast.success('Link copied to clipboard!')
-          } else {
-            toast.error(errorMessage)
-          }
-          return success
+          return copyUrlWithToast(data.url, errorMessage)
         }
+
         toast.error(errorMessage)
         return false
       }
     }
 
-    // No native share, use clipboard
     if (fallbackToClipboard) {
-      const success = await copyToClipboard(data.url)
-      if (success) {
-        toast.success('Link copied to clipboard!')
-      } else {
-        toast.error(errorMessage)
-      }
-      return success
+      return copyUrlWithToast(data.url, errorMessage)
     }
 
     return false

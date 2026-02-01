@@ -17,3 +17,11 @@ export const ROUTES = {
   PLAN_RESPOND: '/plan/$planId/respond',
   RESPONSE_EDIT: '/response/$responseId/edit',
 } as const
+
+export function buildAbsoluteUrl(route: string, params: Record<string, string>) {
+  const path = Object.entries(params).reduce(
+    (acc, [key, value]) => acc.replace(`$${key}`, value),
+    route
+  )
+  return `${window.location.origin}${path}`
+}

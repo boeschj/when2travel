@@ -1,72 +1,65 @@
+import type { DateRange, ChevronProps } from 'react-day-picker'
+import type { DateRangeField as DateRangeFieldType } from './types'
+
 import { useState } from 'react'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { addMonths, isBefore, startOfMonth } from 'date-fns'
-import type { DateRange } from 'react-day-picker'
+
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { DefaultDayButton, CalendarDropdown } from '@/components/calendar'
-import type { DateRangeField as DateRangeFieldType } from './types'
 
 const MAX_MONTHS_AHEAD = 24
+const SUNDAY = 0
 
 interface DateRangeFieldProps {
   field: DateRangeFieldType
 }
 
-function normalizeRange(from: Date | undefined, to: Date | undefined): DateRange {
-  if (from && to && isBefore(to, from)) {
-    return { from: to, to: from }
-  }
-  return { from, to }
-}
-
 export function DateRangeField({ field }: DateRangeFieldProps) {
-  const dateRange = field.state.value
-  const [month, setMonth] = useState<Date>(dateRange?.from ?? new Date())
+  const today = new Date()
+  const [displayedMonth, setDisplayedMonth] = useState(field.state.value?.from ?? today)
 
-  const handleSelect = (range: DateRange | undefined) => {
-    if (range) {
-      field.handleChange(normalizeRange(range.from, range.to))
+  const selectedDateRange = field.state.value
+  const isDateRangeSelected = Boolean(selectedDateRange?.from)
+  const isClearButtonHidden = !isDateRangeSelected
+  const earliestSelectableMonth = startOfMonth(today)
+  const monthAtMaxRange = addMonths(today, MAX_MONTHS_AHEAD)
+  const latestSelectableMonth = startOfMonth(monthAtMaxRange)
+
+  const clearSelection = () => field.handleChange(undefined)
+
+  const updateSelectedDateRange = (selectedRange: DateRange | undefined) => {
+    if (selectedRange) {
+      const normalizedDateRange = normalizeToChronologicalDates(selectedRange.from, selectedRange.to)
+      field.handleChange(normalizedDateRange)
     } else {
-      field.handleChange(undefined)
+      clearSelection()
     }
   }
 
-  const minMonth = startOfMonth(new Date())
-  const maxMonth = startOfMonth(addMonths(new Date(), MAX_MONTHS_AHEAD))
-
   return (
     <Card className="p-2 md:p-8">
-      <div className="flex items-center justify-between mb-4 p-4">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-primary" />
-          <span className="font-bold text-foreground text-2xl">Possible Dates</span>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => field.handleChange(undefined)}
-          className={dateRange?.from ? '' : 'invisible'}
-        >
-          Clear
-        </Button>
-      </div>
+      <DateRangeFieldHeader
+        onClear={clearSelection}
+        isClearButtonHidden={isClearButtonHidden}
+      />
 
       <Calendar
         mode="range"
-        selected={dateRange}
-        onSelect={handleSelect}
-        month={month}
-        onMonthChange={setMonth}
+        selected={selectedDateRange}
+        onSelect={updateSelectedDateRange}
+        month={displayedMonth}
+        onMonthChange={setDisplayedMonth}
         captionLayout="dropdown"
-        startMonth={minMonth}
-        endMonth={maxMonth}
-        disabled={{ before: new Date() }}
+        startMonth={earliestSelectableMonth}
+        endMonth={latestSelectableMonth}
+        disabled={{ before: today }}
         showOutsideDays
         fixedWeeks
-        weekStartsOn={0}
+        weekStartsOn={SUNDAY}
         className="w-full sm:w-104 mx-auto bg-transparent p-0"
         classNames={{
           month_caption: 'flex items-center justify-center w-full h-10',
@@ -82,12 +75,56 @@ export function DateRangeField({ field }: DateRangeFieldProps) {
         components={{
           DayButton: DefaultDayButton,
           Dropdown: CalendarDropdown,
-          Chevron: ({ orientation }) =>
-            orientation === 'left'
-              ? <Button variant="ghost" size="icon-sm" asChild><ChevronLeft className="size-5 p-1" /></Button>
-              : <Button variant="ghost" size="icon-sm" asChild><ChevronRight className="size-5 p-1" /></Button>,
+          Chevron: CalendarChevron,
         }}
       />
     </Card>
   )
+}
+
+interface DateRangeFieldHeaderProps {
+  onClear: () => void
+  isClearButtonHidden: boolean
+}
+
+function DateRangeFieldHeader({ onClear, isClearButtonHidden }: DateRangeFieldHeaderProps) {
+  return (
+    <div className="flex items-center justify-between mb-4 p-4">
+      <div className="flex items-center gap-2">
+        <CalendarIcon className="w-5 h-5 text-primary" />
+        <span className="font-bold text-foreground text-2xl">Possible Dates</span>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onClear}
+        className={cn(isClearButtonHidden && 'invisible')}
+      >
+        Clear
+      </Button>
+    </div>
+  )
+}
+
+function CalendarChevron({ orientation }: ChevronProps) {
+  const isLeftChevron = orientation === 'left'
+  const ChevronIcon = isLeftChevron ? ChevronLeft : ChevronRight
+
+  return (
+    <Button variant="ghost" size="icon-sm" asChild>
+      <ChevronIcon className="size-5 p-1" />
+    </Button>
+  )
+}
+
+function normalizeToChronologicalDates(firstSelectedDate: Date | undefined, secondSelectedDate: Date | undefined): DateRange {
+  const areBothDatesSelected = firstSelectedDate && secondSelectedDate
+  const areDatesInReverseOrder = areBothDatesSelected && isBefore(secondSelectedDate, firstSelectedDate)
+
+  if (areDatesInReverseOrder) {
+    return { from: secondSelectedDate, to: firstSelectedDate }
+  }
+
+  return { from: firstSelectedDate, to: secondSelectedDate }
 }

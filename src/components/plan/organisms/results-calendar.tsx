@@ -23,6 +23,18 @@ interface ResultsCalendarProps {
   numberOfMonths?: 1 | 2
 }
 
+interface MonthPanelProps {
+  month: Date
+  dateRange: { start: Date; end: Date }
+  isFirst: boolean
+  isLast: boolean
+  showNavigation: boolean
+  showDivider: boolean
+  onPrevious: () => void
+  onNext: () => void
+  onMonthChange: (month: Date) => void
+}
+
 export function ResultsCalendar({
   startRange,
   endRange,
@@ -45,32 +57,10 @@ export function ResultsCalendar({
     [startRange, endRange]
   )
 
-  const availabilityMap = useMemo(() => {
-    const map = new Map<string, AvailabilityData>()
-
-    const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
-    for (const date of allDates) {
-      const dateStr = format(date, 'yyyy-MM-dd')
-      map.set(dateStr, {
-        date: dateStr,
-        availableCount: 0,
-        totalCount: responses.length,
-        respondentIds: [],
-      })
-    }
-
-    responses.forEach((response) => {
-      response.availableDates.forEach((dateStr) => {
-        const data = map.get(dateStr)
-        if (data) {
-          data.availableCount += 1
-          data.respondentIds.push(response.id)
-        }
-      })
-    })
-
-    return map
-  }, [responses, dateRange])
+  const availabilityMap = useMemo(
+    () => buildAvailabilityMap(dateRange, responses),
+    [responses, dateRange]
+  )
 
   const months = useMemo(() => {
     const result = [currentMonth]
@@ -80,7 +70,7 @@ export function ResultsCalendar({
     return result
   }, [currentMonth, numberOfMonths])
 
-  const contextValue = useMemo(
+  const heatmapContext = useMemo(
     () => ({
       availabilityMap,
       selectedRespondentId,
@@ -90,49 +80,108 @@ export function ResultsCalendar({
     [availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick]
   )
 
+  const hasMultipleMonths = numberOfMonths > 1
+
   return (
-    <CalendarProvider value={contextValue}>
+    <CalendarProvider value={heatmapContext}>
       <div className={cn('flex flex-wrap justify-center gap-4 md:gap-0', className)}>
         {months.map((month, index) => {
           const isFirst = index === 0
           const isLast = index === months.length - 1
-          const showDivider = isFirst && numberOfMonths > 1
 
           return (
-            <div key={format(month, 'yyyy-MM')} className="flex">
-              <div className={cn('flex flex-col gap-4', !isFirst && 'hidden md:flex')}>
-                <CalendarNavHeader
-                  month={month}
-                  onPrevious={goToPrevious}
-                  onNext={goToNext}
-                  showPrevious={showNavigation && isFirst}
-                  showNext={showNavigation && isLast}
-                />
-
-                <Calendar
-                  month={month}
-                  onMonthChange={setCurrentMonth}
-                  showOutsideDays
-                  fixedWeeks
-                  weekStartsOn={1}
-                  disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
-                  className="[--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
-                  classNames={{
-                    nav: 'hidden',
-                    month_caption: 'hidden',
-                  }}
-                  components={{
-                    DayButton: HeatmapDayButton,
-                  }}
-                />
-              </div>
-              {showDivider && (
-                <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
-              )}
-            </div>
+            <MonthPanel
+              key={format(month, 'yyyy-MM')}
+              month={month}
+              dateRange={dateRange}
+              isFirst={isFirst}
+              isLast={isLast}
+              showNavigation={showNavigation}
+              showDivider={isFirst && hasMultipleMonths}
+              onPrevious={goToPrevious}
+              onNext={goToNext}
+              onMonthChange={setCurrentMonth}
+            />
           )
         })}
       </div>
     </CalendarProvider>
   )
+}
+
+function MonthPanel({
+  month,
+  dateRange,
+  isFirst,
+  isLast,
+  showNavigation,
+  showDivider,
+  onPrevious,
+  onNext,
+  onMonthChange,
+}: MonthPanelProps) {
+  return (
+    <div className="flex">
+      <div className={cn('flex flex-col gap-4', !isFirst && 'hidden md:flex')}>
+        <CalendarNavHeader
+          month={month}
+          onPrevious={onPrevious}
+          onNext={onNext}
+          showPrevious={showNavigation && isFirst}
+          showNext={showNavigation && isLast}
+        />
+
+        <Calendar
+          mode="single"
+          month={month}
+          onMonthChange={onMonthChange}
+          showOutsideDays
+          fixedWeeks
+          weekStartsOn={1}
+          disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
+          className="[--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
+          classNames={{
+            nav: 'hidden',
+            month_caption: 'hidden',
+          }}
+          components={{
+            DayButton: HeatmapDayButton,
+          }}
+        />
+      </div>
+      {showDivider && (
+        <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
+      )}
+    </div>
+  )
+}
+
+function buildAvailabilityMap(
+  dateRange: { start: Date; end: Date },
+  responses: Pick<PlanResponse, 'id' | 'name' | 'availableDates'>[]
+): Map<string, AvailabilityData> {
+  const map = new Map<string, AvailabilityData>()
+
+  const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
+  for (const date of allDates) {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    map.set(dateStr, {
+      date: dateStr,
+      availableCount: 0,
+      totalCount: responses.length,
+      respondentIds: [],
+    })
+  }
+
+  for (const response of responses) {
+    for (const dateStr of response.availableDates) {
+      const data = map.get(dateStr)
+      if (data) {
+        data.availableCount += 1
+        data.respondentIds.push(response.id)
+      }
+    }
+  }
+
+  return map
 }

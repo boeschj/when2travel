@@ -1,73 +1,71 @@
 import { useAtom, useAtomValue } from 'jotai'
 import { useMemo } from 'react'
+
+import type { PlanResponse } from '@/lib/types'
 import {
   planEditTokensAtom,
   responseEditTokensAtom,
   responsePlanIdsAtom,
 } from '@/lib/atoms'
-import type { PlanResponse } from '@/lib/types'
 
-// Hook to manage plan edit tokens
 export function usePlanEditTokens() {
-  const [tokens, setTokens] = useAtom(planEditTokensAtom)
+  const [planEditTokens, setPlanEditTokens] = useAtom(planEditTokensAtom)
 
   const savePlanEditToken = (planId: string, token: string) => {
-    setTokens((prev) => ({ ...prev, [planId]: token }))
+    setPlanEditTokens((prev) => ({ ...prev, [planId]: token }))
   }
 
   const getPlanEditToken = (planId: string) => {
-    return tokens[planId] ?? null
+    return planEditTokens[planId] ?? null
   }
 
   const isCreator = (planId: string) => {
-    return planId in tokens
+    return planId in planEditTokens
   }
 
   const removePlanEditToken = (planId: string) => {
-    setTokens((prev) => {
-      const { [planId]: _, ...rest } = prev
-      return rest
-    })
+    setPlanEditTokens((prev) => removeKeyFromRecord(prev, planId))
   }
 
-  return { tokens, savePlanEditToken, getPlanEditToken, isCreator, removePlanEditToken }
+  return { planEditTokens, savePlanEditToken, getPlanEditToken, isCreator, removePlanEditToken }
 }
 
-// Hook to manage response edit tokens
 export function useResponseEditTokens() {
-  const [tokens, setTokens] = useAtom(responseEditTokensAtom)
-  const [planIds, setPlanIds] = useAtom(responsePlanIdsAtom)
+  const [responseEditTokens, setResponseEditTokens] = useAtom(responseEditTokensAtom)
+  const [responsePlanIds, setResponsePlanIds] = useAtom(responsePlanIdsAtom)
 
-  const saveResponseEditToken = (responseId: string, token: string, planId: string) => {
-    setTokens((prev) => ({ ...prev, [responseId]: token }))
-    setPlanIds((prev) => ({ ...prev, [responseId]: planId }))
+  const saveResponseEditToken = ({
+    responseId,
+    token,
+    planId,
+  }: {
+    responseId: string
+    token: string
+    planId: string
+  }) => {
+    setResponseEditTokens((prev) => ({ ...prev, [responseId]: token }))
+    setResponsePlanIds((prev) => ({ ...prev, [responseId]: planId }))
   }
 
   const getResponseEditToken = (responseId: string) => {
-    return tokens[responseId] ?? null
+    return responseEditTokens[responseId] ?? null
   }
 
   const getResponsePlanId = (responseId: string) => {
-    return planIds[responseId] ?? null
+    return responsePlanIds[responseId] ?? null
   }
 
   const hasResponseToken = (responseId: string) => {
-    return responseId in tokens
+    return responseId in responseEditTokens
   }
 
   const removeResponseToken = (responseId: string) => {
-    setTokens((prev) => {
-      const { [responseId]: _, ...rest } = prev
-      return rest
-    })
-    setPlanIds((prev) => {
-      const { [responseId]: _, ...rest } = prev
-      return rest
-    })
+    setResponseEditTokens((prev) => removeKeyFromRecord(prev, responseId))
+    setResponsePlanIds((prev) => removeKeyFromRecord(prev, responseId))
   }
 
   return {
-    tokens,
+    responseEditTokens,
     saveResponseEditToken,
     getResponseEditToken,
     getResponsePlanId,
@@ -76,42 +74,38 @@ export function useResponseEditTokens() {
   }
 }
 
-// Hook to get auth context for a specific plan
 export function usePlanAuthContext(planId: string) {
-  const planTokens = useAtomValue(planEditTokensAtom)
+  const planEditTokens = useAtomValue(planEditTokensAtom)
 
-  const isCreator = planId in planTokens
-  const editToken = planTokens[planId] ?? null
+  const isCreator = planId in planEditTokens
+  const editToken = planEditTokens[planId] ?? null
 
   return { isCreator, editToken }
 }
 
-// Hook to find current user's response in a plan
 export function useCurrentUserResponse(responses: PlanResponse[] | undefined) {
-  const responseTokens = useAtomValue(responseEditTokensAtom)
+  const responseEditTokens = useAtomValue(responseEditTokensAtom)
 
   return useMemo(() => {
     if (!responses) return null
-    return responses.find((r) => r.id in responseTokens) ?? null
-  }, [responses, responseTokens])
+    return responses.find((r) => r.id in responseEditTokens) ?? null
+  }, [responses, responseEditTokens])
 }
 
-// Hook to get the most recent plan ID the user has interacted with
-export function useMostRecentPlanId(): string | null {
-  const planTokens = useAtomValue(planEditTokensAtom)
+export function useFirstKnownPlanId(): string | null {
+  const planEditTokens = useAtomValue(planEditTokensAtom)
   const responsePlanIds = useAtomValue(responsePlanIdsAtom)
 
   return useMemo(() => {
-    // Get plan IDs from created plans
-    const createdPlanIds = Object.keys(planTokens)
-
-    // Get plan IDs from responses
+    const createdPlanIds = Object.keys(planEditTokens)
     const respondedPlanIds = Object.values(responsePlanIds)
-
-    // Combine and dedupe - prefer created plans first, then responded
     const allPlanIds = [...new Set([...createdPlanIds, ...respondedPlanIds])]
 
-    // Return the first one (most recently added to the object)
     return allPlanIds[0] ?? null
-  }, [planTokens, responsePlanIds])
+  }, [planEditTokens, responsePlanIds])
+}
+
+function removeKeyFromRecord(record: Record<string, string>, key: string): Record<string, string> {
+  const { [key]: _, ...rest } = record
+  return rest
 }

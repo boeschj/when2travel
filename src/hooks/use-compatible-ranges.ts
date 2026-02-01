@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { eachDayOfInterval, parseISO, format, differenceInDays } from 'date-fns'
+
 import type { PlanWithResponses, PlanResponse, CompatibleDateRange } from '@/lib/types'
 
 export function useCompatibleRanges(plan: PlanWithResponses | undefined | null): CompatibleDateRange[] {
@@ -9,81 +10,139 @@ export function useCompatibleRanges(plan: PlanWithResponses | undefined | null):
     const totalRespondents = plan.responses.length
     const minimumTripLength = plan.numDays
 
-    const dateToAvailableCount = new Map<string, number>()
-
-    const allDatesInRange = eachDayOfInterval({
+    const allDatesInPlanRange = eachDayOfInterval({
       start: parseISO(plan.startRange),
-      end: parseISO(plan.endRange)
+      end: parseISO(plan.endRange),
     })
 
-    for (const date of allDatesInRange) {
-      dateToAvailableCount.set(format(date, 'yyyy-MM-dd'), 0)
-    }
-
-    plan.responses.forEach((response: PlanResponse) => {
-      response.availableDates.forEach((dateStr: string) => {
-        const current = dateToAvailableCount.get(dateStr)
-        if (current !== undefined) {
-          dateToAvailableCount.set(dateStr, current + 1)
-        }
-      })
+    const respondentCountByDate = buildRespondentCountByDate({
+      allDatesInPlanRange,
+      responses: plan.responses,
     })
 
-    const validRanges: CompatibleDateRange[] = []
-    let rangeStart: string | null = null
-    let rangeEnd: string | null = null
-
-    for (const date of allDatesInRange) {
-      const dateStr = format(date, 'yyyy-MM-dd')
-      const availableCount = dateToAvailableCount.get(dateStr) || 0
-      const allRespondentsAvailable = availableCount === totalRespondents
-
-      if (allRespondentsAvailable) {
-        if (!rangeStart) {
-          rangeStart = dateStr
-        }
-        rangeEnd = dateStr
-      } else {
-        if (rangeStart && rangeEnd) {
-          const rangeLengthDays = differenceInDays(parseISO(rangeEnd), parseISO(rangeStart)) + 1
-
-          if (rangeLengthDays >= minimumTripLength) {
-            validRanges.push({
-              start: rangeStart,
-              end: rangeEnd,
-              availableCount: totalRespondents,
-              totalCount: totalRespondents
-            })
-          }
-        }
-        rangeStart = null
-        rangeEnd = null
-      }
-    }
-
-    if (rangeStart && rangeEnd) {
-      const rangeLengthDays = differenceInDays(parseISO(rangeEnd), parseISO(rangeStart)) + 1
-
-      if (rangeLengthDays >= minimumTripLength) {
-        validRanges.push({
-          start: rangeStart,
-          end: rangeEnd,
-          availableCount: totalRespondents,
-          totalCount: totalRespondents
-        })
-      }
-    }
-
-    return validRanges.sort((a, b) => {
-      const aLength = differenceInDays(parseISO(a.end), parseISO(a.start)) + 1
-      const bLength = differenceInDays(parseISO(b.end), parseISO(b.start)) + 1
-
-      if (bLength !== aLength) {
-        return bLength - aLength
-      }
-
-      return a.start.localeCompare(b.start)
+    const consecutiveFullAvailabilityRanges = findConsecutiveFullAvailabilityRanges({
+      allDatesInPlanRange,
+      respondentCountByDate,
+      totalRespondents,
     })
+
+    const rangesLongEnoughForTrip = consecutiveFullAvailabilityRanges.filter((consecutiveRange) => {
+      const rangeLengthInDays = getRangeLengthInDays(consecutiveRange)
+      const isLongEnoughForTrip = rangeLengthInDays >= minimumTripLength
+      return isLongEnoughForTrip
+    })
+
+    const compatibleRanges = mapToCompatibleDateRanges({
+      consecutiveRanges: rangesLongEnoughForTrip,
+      totalRespondents,
+    })
+
+    return sortByLongestRangeFirst({ ranges: compatibleRanges })
   }, [plan])
 }
 
+function buildRespondentCountByDate({
+  allDatesInPlanRange,
+  responses,
+}: {
+  allDatesInPlanRange: Date[]
+  responses: PlanResponse[]
+}): Map<string, number> {
+  const respondentCountByDate = new Map<string, number>()
+
+  for (const date of allDatesInPlanRange) {
+    const formattedDate = format(date, 'yyyy-MM-dd')
+    respondentCountByDate.set(formattedDate, 0)
+  }
+
+  for (const response of responses) {
+    for (const availableDate of response.availableDates) {
+      const currentRespondentCount = respondentCountByDate.get(availableDate)
+      if (currentRespondentCount !== undefined) {
+        respondentCountByDate.set(availableDate, currentRespondentCount + 1)
+      }
+    }
+  }
+
+  return respondentCountByDate
+}
+
+interface ConsecutiveDateRange {
+  start: string
+  end: string
+}
+
+function findConsecutiveFullAvailabilityRanges({
+  allDatesInPlanRange,
+  respondentCountByDate,
+  totalRespondents,
+}: {
+  allDatesInPlanRange: Date[]
+  respondentCountByDate: Map<string, number>
+  totalRespondents: number
+}): ConsecutiveDateRange[] {
+  const consecutiveRanges: ConsecutiveDateRange[] = []
+  let currentRangeStart: string | null = null
+  let currentRangeEnd: string | null = null
+
+  for (const date of allDatesInPlanRange) {
+    const formattedDate = format(date, 'yyyy-MM-dd')
+    const respondentsAvailableOnDate = respondentCountByDate.get(formattedDate) ?? 0
+    const allRespondentsAvailable = respondentsAvailableOnDate === totalRespondents
+
+    if (allRespondentsAvailable) {
+      if (!currentRangeStart) {
+        currentRangeStart = formattedDate
+      }
+      currentRangeEnd = formattedDate
+    } else {
+      if (currentRangeStart && currentRangeEnd) {
+        consecutiveRanges.push({ start: currentRangeStart, end: currentRangeEnd })
+      }
+      currentRangeStart = null
+      currentRangeEnd = null
+    }
+  }
+
+  if (currentRangeStart && currentRangeEnd) {
+    consecutiveRanges.push({ start: currentRangeStart, end: currentRangeEnd })
+  }
+
+  return consecutiveRanges
+}
+
+function getRangeLengthInDays({ start, end }: ConsecutiveDateRange): number {
+  const startDate = parseISO(start)
+  const endDate = parseISO(end)
+  const daysBetween = differenceInDays(endDate, startDate)
+  const inclusiveDayCount = daysBetween + 1
+  return inclusiveDayCount
+}
+
+function mapToCompatibleDateRanges({
+  consecutiveRanges,
+  totalRespondents,
+}: {
+  consecutiveRanges: ConsecutiveDateRange[]
+  totalRespondents: number
+}): CompatibleDateRange[] {
+  return consecutiveRanges.map((consecutiveRange) => ({
+    start: consecutiveRange.start,
+    end: consecutiveRange.end,
+    availableCount: totalRespondents,
+    totalCount: totalRespondents,
+  }))
+}
+
+function sortByLongestRangeFirst({ ranges }: { ranges: CompatibleDateRange[] }): CompatibleDateRange[] {
+  return [...ranges].sort((firstRange, secondRange) => {
+    const firstRangeLength = getRangeLengthInDays(firstRange)
+    const secondRangeLength = getRangeLengthInDays(secondRange)
+
+    if (secondRangeLength !== firstRangeLength) {
+      return secondRangeLength - firstRangeLength
+    }
+
+    return firstRange.start.localeCompare(secondRange.start)
+  })
+}

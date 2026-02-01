@@ -17,39 +17,52 @@ export function CalendarNavHeader({
   showPrevious = true,
   showNext = true,
 }: CalendarNavHeaderProps) {
+  const monthLabel = format(month, 'MMMM yyyy')
+
   return (
     <div className="flex items-center w-[308px]">
-      {showPrevious ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onPrevious}
-          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="size-5" />
-        </Button>
-      ) : (
-        <div className="size-8" />
-      )}
+      <NavButton
+        direction="previous"
+        visible={showPrevious}
+        onClick={onPrevious}
+      />
 
       <h2 className="text-foreground text-lg font-bold flex-1 text-center">
-        {format(month, 'MMMM yyyy')}
+        {monthLabel}
       </h2>
 
-      {showNext ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onNext}
-          className="rounded-full hover:bg-white/10 text-foreground transition-colors"
-          aria-label="Next month"
-        >
-          <ChevronRight className="size-5" />
-        </Button>
-      ) : (
-        <div className="size-8" />
-      )}
+      <NavButton
+        direction="next"
+        visible={showNext}
+        onClick={onNext}
+      />
     </div>
+  )
+}
+
+interface NavButtonProps {
+  direction: 'previous' | 'next'
+  visible: boolean
+  onClick: () => void
+}
+
+function NavButton({ direction, visible, onClick }: NavButtonProps) {
+  if (!visible) {
+    return <div className="size-8" />
+  }
+
+  const Icon = direction === 'previous' ? ChevronLeft : ChevronRight
+  const label = direction === 'previous' ? 'Previous month' : 'Next month'
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={onClick}
+      className="rounded-full hover:bg-white/10 text-foreground transition-colors"
+      aria-label={label}
+    >
+      <Icon className="size-5" />
+    </Button>
   )
 }

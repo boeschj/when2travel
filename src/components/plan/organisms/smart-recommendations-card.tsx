@@ -18,6 +18,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useShare } from '@/hooks/use-clipboard'
 import { AlternativeSuggestionsModal } from '@/components/plan/molecules/alternative-suggestions-modal'
+
+import { RECOMMENDATION_STATUS } from '@/lib/recommendation-types'
+
 import type { RecommendationResult, RecommendationStatus, AlternativeWindow } from '@/lib/recommendation-types'
 
 interface SmartRecommendationsCardProps {
@@ -30,66 +33,6 @@ interface SmartRecommendationsCardProps {
   onEditAvailability: () => void
   onEditDuration?: () => void
   className?: string
-}
-
-/** Build Google Calendar URL for the best window dates */
-function buildGoogleCalendarUrl(planName: string, startDate: string, endDate: string): string {
-  const formatDate = (iso: string) => iso.replace(/-/g, '')
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: planName,
-    dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
-  })
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
-}
-
-/** Format date range for display */
-function formatDateRangeDisplay(start: string, end: string): string {
-  const startDate = parseISO(start)
-  const endDate = parseISO(end)
-  return `${format(startDate, 'MMM d')} – ${format(endDate, 'MMM d')}`
-}
-
-/** Get icon component for status */
-function getStatusIcon(status: RecommendationStatus) {
-  switch (status) {
-    case 'perfect':
-      return CheckCircle2
-    case 'great':
-      return ThumbsUp
-    case 'good':
-      return Users
-    case 'possible':
-      return AlertCircle
-    case 'unlikely':
-      return AlertTriangle
-  }
-}
-
-/** Get styling for status */
-function getStatusStyles(status: RecommendationStatus) {
-  switch (status) {
-    case 'perfect':
-    case 'great':
-      return {
-        iconColor: 'text-primary',
-        bgColor: 'bg-primary/20',
-        accentColor: 'text-primary',
-      }
-    case 'good':
-    case 'possible':
-      return {
-        iconColor: 'text-status-yellow',
-        bgColor: 'bg-status-yellow/20',
-        accentColor: 'text-status-yellow',
-      }
-    case 'unlikely':
-      return {
-        iconColor: 'text-status-red',
-        bgColor: 'bg-status-red/20',
-        accentColor: 'text-status-red',
-      }
-  }
 }
 
 export function SmartRecommendationsCard({
@@ -110,29 +53,32 @@ export function SmartRecommendationsCard({
   const { status, headline, bestWindow, priority, shorterTripSuggestion } = recommendation
 
   const StatusIcon = getStatusIcon(status)
-  const styles = getStatusStyles(status)
+  const statusStyles = getStatusStyles(status)
   const hasAlternatives = alternatives.length > 0
+  const isPerfect = status === RECOMMENDATION_STATUS.PERFECT
+  const needsSuggestions = !isPerfect
 
-  const isCurrentUserBlocker = currentUserResponseId && recommendation.blockerId === currentUserResponseId
-  const isCurrentUserConstrainer = currentUserResponseId && recommendation.constrainingPersonIds?.includes(currentUserResponseId)
+  const isCurrentUserBlocker = currentUserResponseId === recommendation.blockerId
+  const isCurrentUserConstrainer = !!currentUserResponseId && !!recommendation.constrainingPersonIds?.includes(currentUserResponseId)
+  const personalizedCTA = derivePersonalizedCTA({
+    isCurrentUserBlocker,
+    isCurrentUserConstrainer,
+    priority,
+    blockerShiftDirection: recommendation.blockerShiftDirection,
+  })
 
-  const getPersonalizedCTA = (): { label: string; emphasis: boolean } | null => {
-    if (isCurrentUserBlocker) {
-      if (priority === 2 && recommendation.blockerShiftDirection) {
-        const direction = recommendation.blockerShiftDirection === 'earlier' ? 'Earlier' : 'Later'
-        return { label: `Shift Your Dates ${direction}`, emphasis: true }
-      }
-      if (priority === 3) {
-        return { label: 'Update Your Dates', emphasis: true }
-      }
-    }
-    if (isCurrentUserConstrainer && priority === 5) {
-      return { label: 'Add More Dates', emphasis: true }
-    }
-    return null
-  }
+  const isDurationTooLong = priority === 4
+  const showDurationEditCTA = isDurationTooLong && !!shorterTripSuggestion && !!onEditDuration
+  const showPerfectMatchActions = isPerfect && hasResponded
+  const showAddDatesPrompt = !hasResponded && !isDurationTooLong
+  const showBlockerCTA = hasResponded && !isPerfect && !!personalizedCTA && !isDurationTooLong
+  const showGenericEditCTA = hasResponded && !isPerfect && !personalizedCTA && !isDurationTooLong
 
-  const personalizedCTA = getPersonalizedCTA()
+  const dateRangeDisplay = bestWindow && formatDateRangeDisplay(bestWindow.start, bestWindow.end)
+  const availabilityText = deriveAvailabilityText(bestWindow, isPerfect)
+
+  const showAlternativeWindows = needsSuggestions && !!recommendation.alternativeWindows?.length && !isDurationTooLong
+  const showShorterTripWindows = needsSuggestions && isDurationTooLong && !!shorterTripSuggestion
 
   const handleCheckFlights = () => {
     window.open('https://www.google.com/travel/flights', '_blank')
@@ -140,246 +86,87 @@ export function SmartRecommendationsCard({
 
   const handleAddToCalendar = () => {
     if (!bestWindow) return
-    const url = buildGoogleCalendarUrl(planName, bestWindow.start, bestWindow.end)
-    window.open(url, '_blank')
+    const calendarUrl = buildGoogleCalendarUrl(planName, bestWindow.start, bestWindow.end)
+    window.open(calendarUrl, '_blank')
   }
 
   const handleShare = () => {
-    const dateRange = bestWindow
-      ? formatDateRangeDisplay(bestWindow.start, bestWindow.end)
-      : ''
-    share({
-      title: planName,
-      text: dateRange ? `Check out our trip dates: ${dateRange}` : `Check out our trip plan!`,
-      url: window.location.href,
-    })
+    const shareText = dateRangeDisplay
+      ? `Check out our trip dates: ${dateRangeDisplay}`
+      : 'Check out our trip plan!'
+    share({ title: planName, text: shareText, url: window.location.href })
   }
 
-  const isPerfect = status === 'perfect'
-  const needsSuggestions = !isPerfect
-
-  const showDurationEditCTA = priority === 4 && shorterTripSuggestion && onEditDuration
-  const showPerfectMatchActions = isPerfect && hasResponded
-  const showAddDatesPrompt = !hasResponded && priority !== 4
-  const showBlockerCTA = hasResponded && !isPerfect && personalizedCTA && priority !== 4
-  const showGenericEditCTA = hasResponded && !isPerfect && !personalizedCTA && priority !== 4
-
-  const availabilityText = bestWindow
-    ? isPerfect
-      ? `All ${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
-      : `${bestWindow.availableCount}/${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
-    : null
+  const handleOpenSuggestions = () => setIsSuggestionsModalOpen(true)
 
   return (
     <>
-      <Card
-        variant="action"
-        className={cn('p-6 md:p-8 h-full', className)}
-      >
+      <Card variant="action" className={cn('p-6 md:p-8 h-full', className)}>
         <CardContent className="p-0 flex flex-col items-center text-center gap-4">
-          <div
-            className={cn(
-              'w-16 h-16 rounded-full flex items-center justify-center',
-              styles.bgColor
-            )}
-          >
-            <StatusIcon className={cn('w-8 h-8', styles.iconColor)} />
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">{headline}</h2>
-
+          <StatusIconBadge icon={StatusIcon} bgColor={statusStyles.bgColor} iconColor={statusStyles.iconColor} />
+          <HeadlineText text={headline} />
           <p className="text-lg text-text-secondary">Your ideal trip dates are:</p>
-
-          {bestWindow && (
-            <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
-              {formatDateRangeDisplay(bestWindow.start, bestWindow.end)}
-            </h3>
-          )}
+          {dateRangeDisplay && <DateRangeDisplay dateRange={dateRangeDisplay} />}
 
           {availabilityText && (
-            <>
-              <Separator className="w-full max-w-lg" />
-              <div className="flex items-center gap-2">
-                <StatusIcon className={cn('w-5 h-5', styles.iconColor)} />
-                <span className="text-foreground font-bold">{availabilityText}</span>
-              </div>
-              <Separator className="w-full max-w-lg" />
-            </>
+            <AvailabilitySection icon={StatusIcon} iconColor={statusStyles.iconColor} text={availabilityText} />
           )}
 
           {needsSuggestions && (
-            <div className="bg-surface-darker rounded-lg p-4 max-w-lg w-full text-left">
-              <p className="text-foreground">{recommendation.recommendation}</p>
-              {recommendation.secondary && (
-                <p className="text-text-secondary mt-2 text-sm">{recommendation.secondary}</p>
-              )}
-              {hasAlternatives && (
-                <Button
-                  variant="link"
-                  onClick={() => setIsSuggestionsModalOpen(true)}
-                  className="p-0 h-auto font-medium text-primary mt-3"
-                >
-                  See Alternatives →
-                </Button>
-              )}
-            </div>
+            <SuggestionBox
+              recommendationText={recommendation.recommendation}
+              secondaryText={recommendation.secondary}
+              hasAlternatives={hasAlternatives}
+              onSeeAlternatives={handleOpenSuggestions}
+            />
           )}
 
-          {needsSuggestions && recommendation.alternativeWindows &&
-            recommendation.alternativeWindows.length > 0 &&
-            priority !== 4 && (
-              <AlternativeWindowsList windows={recommendation.alternativeWindows} />
-            )}
+          {showAlternativeWindows && recommendation.alternativeWindows && (
+            <AlternativeWindowsList windows={recommendation.alternativeWindows} />
+          )}
 
-          {needsSuggestions && priority === 4 && shorterTripSuggestion && (
-            <div className="w-full max-w-lg">
-              <p className="text-text-secondary text-sm mb-2">
-                Perfect {shorterTripSuggestion.duration}-day windows:
-              </p>
-              <AlternativeWindowsList windows={shorterTripSuggestion.windows} />
-            </div>
+          {showShorterTripWindows && shorterTripSuggestion && (
+            <ShorterTripSection duration={shorterTripSuggestion.duration} windows={shorterTripSuggestion.windows} />
           )}
 
           <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
-            {showDurationEditCTA && (
-              <>
-                <Button
-                  onClick={onEditDuration}
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  Change to {shorterTripSuggestion.duration} Days
-                  <Pencil className="w-5 h-5 ml-2" />
-                </Button>
-                <Button
-                  onClick={onEditAvailability}
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                >
-                  Edit Availability
-                </Button>
-              </>
+            {showDurationEditCTA && shorterTripSuggestion && onEditDuration && (
+              <DurationEditActions
+                duration={shorterTripSuggestion.duration}
+                onEditDuration={onEditDuration}
+                onEditAvailability={onEditAvailability}
+              />
             )}
 
             {showPerfectMatchActions && (
-              <>
-                <Button
-                  onClick={handleCheckFlights}
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  Check Flights
-                  <Plane className="w-5 h-5 ml-2" />
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    onClick={handleAddToCalendar}
-                    variant="outline"
-                    size="lg"
-                    className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Add to Cal
-                  </Button>
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    size="lg"
-                    className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
-              </>
+              <PerfectMatchActions
+                onCheckFlights={handleCheckFlights}
+                onAddToCalendar={handleAddToCalendar}
+                onShare={handleShare}
+              />
             )}
 
             {showAddDatesPrompt && (
-              <>
-                <Button
-                  onClick={onEditAvailability}
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  Add Dates
-                  <UserPlus className="w-5 h-5 ml-2" />
-                </Button>
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-              </>
+              <AddDatesActions onEditAvailability={onEditAvailability} onShare={handleShare} />
             )}
 
-            {showBlockerCTA && (
-              <>
-                <Button
-                  onClick={onEditAvailability}
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  {personalizedCTA.label}
-                  <Pencil className="w-5 h-5 ml-2" />
-                </Button>
-                {isCreator ? (
-                  <Button
-                    onClick={onEditPlan}
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    Edit Plan
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                )}
-              </>
+            {showBlockerCTA && personalizedCTA && (
+              <BlockerActions
+                label={personalizedCTA.label}
+                isCreator={isCreator}
+                onEditAvailability={onEditAvailability}
+                onEditPlan={onEditPlan}
+                onShare={handleShare}
+              />
             )}
 
             {showGenericEditCTA && (
-              <>
-                <Button
-                  onClick={onEditAvailability}
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
-                >
-                  Edit Availability
-                  <Pencil className="w-5 h-5 ml-2" />
-                </Button>
-                {isCreator ? (
-                  <Button
-                    onClick={onEditPlan}
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    Edit Plan
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                )}
-              </>
+              <GenericEditActions
+                isCreator={isCreator}
+                onEditAvailability={onEditAvailability}
+                onEditPlan={onEditPlan}
+                onShare={handleShare}
+              />
             )}
           </div>
         </CardContent>
@@ -394,19 +181,310 @@ export function SmartRecommendationsCard({
   )
 }
 
-/** Display list of alternative windows (informational only) */
+const PRIMARY_BUTTON_CLASS = 'w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto'
+const OUTLINE_BUTTON_CLASS = 'w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3'
+
+interface StatusIconBadgeProps {
+  icon: React.ElementType
+  bgColor: string
+  iconColor: string
+}
+
+function StatusIconBadge({ icon: Icon, bgColor, iconColor }: StatusIconBadgeProps) {
+  return (
+    <div className={cn('w-16 h-16 rounded-full flex items-center justify-center', bgColor)}>
+      <Icon className={cn('w-8 h-8', iconColor)} />
+    </div>
+  )
+}
+
+function HeadlineText({ text }: { text: string }) {
+  return <h2 className="text-2xl md:text-3xl font-bold text-foreground">{text}</h2>
+}
+
+function DateRangeDisplay({ dateRange }: { dateRange: string }) {
+  return (
+    <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
+      {dateRange}
+    </h3>
+  )
+}
+
+interface AvailabilitySectionProps {
+  icon: React.ElementType
+  iconColor: string
+  text: string
+}
+
+function AvailabilitySection({ icon: Icon, iconColor, text }: AvailabilitySectionProps) {
+  return (
+    <>
+      <Separator className="w-full max-w-lg" />
+      <div className="flex items-center gap-2">
+        <Icon className={cn('w-5 h-5', iconColor)} />
+        <span className="text-foreground font-bold">{text}</span>
+      </div>
+      <Separator className="w-full max-w-lg" />
+    </>
+  )
+}
+
+interface SuggestionBoxProps {
+  recommendationText: string
+  secondaryText?: string
+  hasAlternatives: boolean
+  onSeeAlternatives: () => void
+}
+
+function SuggestionBox({ recommendationText, secondaryText, hasAlternatives, onSeeAlternatives }: SuggestionBoxProps) {
+  return (
+    <div className="bg-surface-darker rounded-lg p-4 max-w-lg w-full text-left">
+      <p className="text-foreground">{recommendationText}</p>
+      {secondaryText && <p className="text-text-secondary mt-2 text-sm">{secondaryText}</p>}
+      {hasAlternatives && (
+        <Button variant="link" onClick={onSeeAlternatives} className="p-0 h-auto font-medium text-primary mt-3">
+          See Alternatives →
+        </Button>
+      )}
+    </div>
+  )
+}
+
+interface ShorterTripSectionProps {
+  duration: number
+  windows: AlternativeWindow[]
+}
+
+function ShorterTripSection({ duration, windows }: ShorterTripSectionProps) {
+  return (
+    <div className="w-full max-w-lg">
+      <p className="text-text-secondary text-sm mb-2">Perfect {duration}-day windows:</p>
+      <AlternativeWindowsList windows={windows} />
+    </div>
+  )
+}
+
 function AlternativeWindowsList({ windows }: { windows: AlternativeWindow[] }) {
   if (windows.length === 0) return null
 
   return (
     <div className="text-sm text-text-secondary">
       <span className="font-medium">Other options: </span>
-      {windows.map((w, i) => (
-        <span key={`${w.start}-${w.end}`}>
-          {i > 0 && ', '}
-          {formatDateRangeDisplay(w.start, w.end)} ({w.percentage}%)
+      {windows.map((alternativeWindow, index) => (
+        <span key={`${alternativeWindow.start}-${alternativeWindow.end}`}>
+          {index > 0 && ', '}
+          {formatDateRangeDisplay(alternativeWindow.start, alternativeWindow.end)} ({alternativeWindow.percentage}%)
         </span>
       ))}
     </div>
   )
+}
+
+interface DurationEditActionsProps {
+  duration: number
+  onEditDuration: () => void
+  onEditAvailability: () => void
+}
+
+function DurationEditActions({ duration, onEditDuration, onEditAvailability }: DurationEditActionsProps) {
+  return (
+    <>
+      <Button onClick={onEditDuration} size="lg" className={PRIMARY_BUTTON_CLASS}>
+        Change to {duration} Days
+        <Pencil className="w-5 h-5 ml-2" />
+      </Button>
+      <Button onClick={onEditAvailability} variant="outline" size="lg" className={OUTLINE_BUTTON_CLASS}>
+        Edit Availability
+      </Button>
+    </>
+  )
+}
+
+interface PerfectMatchActionsProps {
+  onCheckFlights: () => void
+  onAddToCalendar: () => void
+  onShare: () => void
+}
+
+function PerfectMatchActions({ onCheckFlights, onAddToCalendar, onShare }: PerfectMatchActionsProps) {
+  return (
+    <>
+      <Button onClick={onCheckFlights} size="lg" className={PRIMARY_BUTTON_CLASS}>
+        Check Flights
+        <Plane className="w-5 h-5 ml-2" />
+      </Button>
+      <div className="grid grid-cols-2 gap-3">
+        <Button onClick={onAddToCalendar} variant="outline" size="lg" className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3">
+          <Calendar className="w-4 h-4 mr-2" />
+          Add to Cal
+        </Button>
+        <Button onClick={onShare} variant="outline" size="lg" className="border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3">
+          <Share2 className="w-4 h-4 mr-2" />
+          Share
+        </Button>
+      </div>
+    </>
+  )
+}
+
+function AddDatesActions({ onEditAvailability, onShare }: { onEditAvailability: () => void; onShare: () => void }) {
+  return (
+    <>
+      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+        Add Dates
+        <UserPlus className="w-5 h-5 ml-2" />
+      </Button>
+      <Button onClick={onShare} variant="outline" size="lg" className={OUTLINE_BUTTON_CLASS}>
+        <Share2 className="w-4 h-4 mr-2" />
+        Share
+      </Button>
+    </>
+  )
+}
+
+interface SecondaryActionButtonProps {
+  isCreator: boolean
+  onEditPlan: () => void
+  onShare: () => void
+}
+
+function SecondaryActionButton({ isCreator, onEditPlan, onShare }: SecondaryActionButtonProps) {
+  if (isCreator) {
+    return (
+      <Button onClick={onEditPlan} variant="outline" size="lg" className={OUTLINE_BUTTON_CLASS}>
+        Edit Plan
+      </Button>
+    )
+  }
+
+  return (
+    <Button onClick={onShare} variant="outline" size="lg" className={OUTLINE_BUTTON_CLASS}>
+      <Share2 className="w-4 h-4 mr-2" />
+      Share
+    </Button>
+  )
+}
+
+interface BlockerActionsProps {
+  label: string
+  isCreator: boolean
+  onEditAvailability: () => void
+  onEditPlan: () => void
+  onShare: () => void
+}
+
+function BlockerActions({ label, isCreator, onEditAvailability, onEditPlan, onShare }: BlockerActionsProps) {
+  return (
+    <>
+      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+        {label}
+        <Pencil className="w-5 h-5 ml-2" />
+      </Button>
+      <SecondaryActionButton isCreator={isCreator} onEditPlan={onEditPlan} onShare={onShare} />
+    </>
+  )
+}
+
+interface GenericEditActionsProps {
+  isCreator: boolean
+  onEditAvailability: () => void
+  onEditPlan: () => void
+  onShare: () => void
+}
+
+function GenericEditActions({ isCreator, onEditAvailability, onEditPlan, onShare }: GenericEditActionsProps) {
+  return (
+    <>
+      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+        Edit Availability
+        <Pencil className="w-5 h-5 ml-2" />
+      </Button>
+      <SecondaryActionButton isCreator={isCreator} onEditPlan={onEditPlan} onShare={onShare} />
+    </>
+  )
+}
+
+function buildGoogleCalendarUrl(planName: string, startDate: string, endDate: string): string {
+  const formatDateForCalendar = (iso: string) => iso.replace(/-/g, '')
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: planName,
+    dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+function formatDateRangeDisplay(start: string, end: string): string {
+  const startDate = parseISO(start)
+  const endDate = parseISO(end)
+  return `${format(startDate, 'MMM d')} – ${format(endDate, 'MMM d')}`
+}
+
+function getStatusIcon(status: RecommendationStatus) {
+  switch (status) {
+    case RECOMMENDATION_STATUS.PERFECT:
+      return CheckCircle2
+    case RECOMMENDATION_STATUS.GREAT:
+      return ThumbsUp
+    case RECOMMENDATION_STATUS.GOOD:
+      return Users
+    case RECOMMENDATION_STATUS.POSSIBLE:
+      return AlertCircle
+    case RECOMMENDATION_STATUS.UNLIKELY:
+      return AlertTriangle
+  }
+}
+
+function getStatusStyles(status: RecommendationStatus) {
+  switch (status) {
+    case RECOMMENDATION_STATUS.PERFECT:
+    case RECOMMENDATION_STATUS.GREAT:
+      return { iconColor: 'text-primary', bgColor: 'bg-primary/20', accentColor: 'text-primary' }
+    case RECOMMENDATION_STATUS.GOOD:
+    case RECOMMENDATION_STATUS.POSSIBLE:
+      return { iconColor: 'text-status-yellow', bgColor: 'bg-status-yellow/20', accentColor: 'text-status-yellow' }
+    case RECOMMENDATION_STATUS.UNLIKELY:
+      return { iconColor: 'text-status-red', bgColor: 'bg-status-red/20', accentColor: 'text-status-red' }
+  }
+}
+
+interface PersonalizedCTAInput {
+  isCurrentUserBlocker: boolean
+  isCurrentUserConstrainer: boolean
+  priority: number
+  blockerShiftDirection?: string
+}
+
+interface PersonalizedCTAResult {
+  label: string
+  emphasis: boolean
+}
+
+function derivePersonalizedCTA({ isCurrentUserBlocker, isCurrentUserConstrainer, priority, blockerShiftDirection }: PersonalizedCTAInput): PersonalizedCTAResult | null {
+  if (isCurrentUserBlocker) {
+    if (priority === 2 && blockerShiftDirection) {
+      const directionLabel = blockerShiftDirection === 'earlier' ? 'Earlier' : 'Later'
+      return { label: `Shift Your Dates ${directionLabel}`, emphasis: true }
+    }
+    if (priority === 3) {
+      return { label: 'Update Your Dates', emphasis: true }
+    }
+  }
+  if (isCurrentUserConstrainer && priority === 5) {
+    return { label: 'Add More Dates', emphasis: true }
+  }
+  return null
+}
+
+function deriveAvailabilityText(
+  bestWindow: { totalCount: number; availableCount: number } | undefined,
+  isPerfect: boolean,
+): string | null {
+  if (!bestWindow) return null
+
+  if (isPerfect) {
+    return `All ${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
+  }
+
+  return `${bestWindow.availableCount}/${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
 }

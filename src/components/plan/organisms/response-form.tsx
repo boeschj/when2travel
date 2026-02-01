@@ -88,18 +88,6 @@ export function ResponseForm({
     onResetRef?.(reset)
   }, [reset, onResetRef])
 
-  const validateName = (value: string): string | null => {
-    const trimmed = value.trim()
-    if (!trimmed) return 'Name is required'
-    if (trimmed.length < 2) return 'Name must be at least 2 characters'
-    if (trimmed.length > 50) return 'Name must be less than 50 characters'
-    const isDuplicate = existingNames.some(
-      (existingName) => existingName.toLowerCase() === trimmed.toLowerCase()
-    )
-    if (isDuplicate) return 'Someone with this name has already responded'
-    return null
-  }
-
   const handleNameChange = (value: string) => {
     setName(value)
     if (nameError) setNameError(null)
@@ -109,19 +97,21 @@ export function ResponseForm({
     e.preventDefault()
     const formData = getFormData()
 
-    const error = validateName(formData.name)
-    if (error) {
-      setNameError(error)
+    const validationError = validateName(formData.name, existingNames)
+    if (validationError) {
+      setNameError(validationError)
       return
     }
 
-    if (formData.availableDates.length === 0) {
+    const hasNoDates = formData.availableDates.length === 0
+    if (hasNoDates) {
       setPendingFormData(formData)
       setWarningType('noDates')
       return
     }
 
-    if (compatibleWindowsCount === 0) {
+    const hasNoCompatibleWindows = compatibleWindowsCount === 0
+    if (hasNoCompatibleWindows) {
       setPendingFormData(formData)
       setWarningType('noCompatibleWindows')
       return
@@ -138,10 +128,14 @@ export function ResponseForm({
     setPendingFormData(null)
   }
 
-  const handleCancelSubmit = () => {
+  const dismissWarning = () => {
     setWarningType(null)
     setPendingFormData(null)
   }
+
+  const isWarningOpen = warningType !== null
+  const warningTitle = getWarningTitle(warningType)
+  const warningDescription = getWarningDescription(warningType, numDays)
 
   return (
     <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
@@ -185,28 +179,48 @@ export function ResponseForm({
         />
       </div>
 
-      <AlertDialog open={warningType !== null} onOpenChange={(open) => !open && handleCancelSubmit()}>
+      <AlertDialog open={isWarningOpen} onOpenChange={(open) => !open && dismissWarning()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {warningType === 'noDates' && 'Wait! You have no available dates'}
-              {warningType === 'noCompatibleWindows' && 'Wait! You have no compatible time ranges'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {warningType === 'noDates' && (
-                "This will indicate you're unavailable for the entire period. Are you sure you want to continue?"
-              )}
-              {warningType === 'noCompatibleWindows' && (
-                `Your selected dates don't include any ${numDays}-day windows. Your availability may not match what the group is looking for. Are you sure you want to continue?`
-              )}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{warningTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{warningDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelSubmit}>Go back</AlertDialogCancel>
+            <AlertDialogCancel onClick={dismissWarning}>Go back</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSubmit}>Submit anyway</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </form>
   )
+}
+
+function validateName(value: string, existingNames: string[]): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return 'Name is required'
+  if (trimmed.length < 2) return 'Name must be at least 2 characters'
+  if (trimmed.length > 50) return 'Name must be less than 50 characters'
+
+  const isDuplicate = existingNames.some(
+    (existingName) => existingName.toLowerCase() === trimmed.toLowerCase()
+  )
+  if (isDuplicate) return 'Someone with this name has already responded'
+
+  return null
+}
+
+function getWarningTitle(warningType: WarningType): string {
+  if (warningType === 'noDates') return 'Wait! You have no available dates'
+  if (warningType === 'noCompatibleWindows') return 'Wait! You have no compatible time ranges'
+  return ''
+}
+
+function getWarningDescription(warningType: WarningType, numDays: number): string {
+  if (warningType === 'noDates') {
+    return "This will indicate you're unavailable for the entire period. Are you sure you want to continue?"
+  }
+  if (warningType === 'noCompatibleWindows') {
+    return `Your selected dates don't include any ${numDays}-day windows. Your availability may not match what the group is looking for. Are you sure you want to continue?`
+  }
+  return ''
 }

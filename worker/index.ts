@@ -9,11 +9,24 @@ import { responsesRoutes } from './routes/responses'
 import { plans } from './db/schema'
 import type { Bindings } from './lib/env'
 
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:8787',
+  'http://localhost:8788',
+  'https://planthetrip.huskers15.workers.dev',
+  'https://justplanthetrip.com',
+  'https://www.justplanthetrip.com',
+]
+
+const BASE_URL = 'https://justplanthetrip.com'
+
+type OgVariant = 'respond' | 'results'
+
 const app = new Hono<{ Bindings: Bindings }>()
 
 app.use('*', logger())
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:8787', 'http://localhost:8788', 'https://planthetrip.huskers15.workers.dev', 'https://justplanthetrip.com', 'https://www.justplanthetrip.com'],
+  origin: ALLOWED_ORIGINS,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }))
@@ -31,74 +44,91 @@ const api = new Hono<{ Bindings: Bindings }>()
 
 app.route('/api', api)
 
-async function injectOgMetadata(
-  c: { env: Bindings; req: { url: string } },
-  planId: string,
-  variant: 'respond' | 'results'
-) {
-  const db = drizzle(c.env.planthetrip_d1)
+function formatDateRange(startRange: string, endRange: string) {
+  const startDate = new Date(startRange)
+  const endDate = new Date(endRange)
+  const formattedStart = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const formattedEnd = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return { formattedStart, formattedEnd }
+}
+
+function buildOgTitle(planName: string, variant: OgVariant) {
+  if (variant === 'respond') {
+    return `Join ${planName} on PlanTheTrip`
+  }
+  return `${planName} - PlanTheTrip`
+}
+
+function buildOgDescription(numDays: number, formattedStart: string, formattedEnd: string, variant: OgVariant) {
+  if (variant === 'respond') {
+    return `Add your availability for the ${numDays}-day trip between ${formattedStart} and ${formattedEnd}!`
+  }
+  return `View availability for the ${numDays}-day trip between ${formattedStart} and ${formattedEnd}.`
+}
+
+function buildOgUrl(planId: string, variant: OgVariant) {
+  if (variant === 'respond') {
+    return `${BASE_URL}/plan/${planId}/respond`
+  }
+  return `${BASE_URL}/plan/${planId}`
+}
+
+function replaceMetaTags(html: string, title: string, description: string, url: string) {
+  return html
+    .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+    .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
+    .replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`)
+    .replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`)
+    .replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${title}" />`)
+    .replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${description}" />`)
+    .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
+}
+
+async function fetchIndexHtml(env: Bindings, requestUrl: string) {
+  const assetResponse = await env.ASSETS.fetch(new Request(new URL('/', requestUrl)))
+  return assetResponse.text()
+}
+
+async function fetchPlanById(env: Bindings, planId: string) {
+  const db = drizzle(env.planthetrip_d1)
   const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+  return plan
+}
 
-  const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
-  let html = await assetResponse.text()
+async function buildOgHtml(env: Bindings, requestUrl: string, planId: string, variant: OgVariant) {
+  const plan = await fetchPlanById(env, planId)
+  const html = await fetchIndexHtml(env, requestUrl)
 
-  if (plan) {
-    const startDate = new Date(plan.startRange)
-    const endDate = new Date(plan.endRange)
-    const formatStart = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const formatEnd = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-
-    const title = variant === 'respond'
-      ? `Join ${plan.name} on PlanTheTrip`
-      : `${plan.name} - PlanTheTrip`
-
-    const description = variant === 'respond'
-      ? `Add your availability for the ${plan.numDays}-day trip between ${formatStart} and ${formatEnd}!`
-      : `View availability for the ${plan.numDays}-day trip between ${formatStart} and ${formatEnd}.`
-
-    const url = variant === 'respond'
-      ? `https://justplanthetrip.com/plan/${planId}/respond`
-      : `https://justplanthetrip.com/plan/${planId}`
-
-    html = html
-      .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
-      .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
-      .replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`)
-      .replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`)
-      .replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${title}" />`)
-      .replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="${description}" />`)
-      .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
+  if (!plan) {
+    return html
   }
 
-  return html
+  const { formattedStart, formattedEnd } = formatDateRange(plan.startRange, plan.endRange)
+  const title = buildOgTitle(plan.name, variant)
+  const description = buildOgDescription(plan.numDays, formattedStart, formattedEnd, variant)
+  const url = buildOgUrl(planId, variant)
+
+  return replaceMetaTags(html, title, description, url)
+}
+
+async function servePlanPage(env: Bindings, requestUrl: string, planId: string, variant: OgVariant) {
+  try {
+    const html = await buildOgHtml(env, requestUrl, planId, variant)
+    return new Response(html, { headers: { 'Content-Type': 'text/html' } })
+  } catch {
+    const fallbackHtml = await fetchIndexHtml(env, requestUrl)
+    return new Response(fallbackHtml, { headers: { 'Content-Type': 'text/html' } })
+  }
 }
 
 app.get('/plan/:planId/respond', async (c) => {
   const planId = c.req.param('planId')
-
-  try {
-    const html = await injectOgMetadata(c, planId, 'respond')
-    return c.html(html)
-  } catch {
-    const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
-    return new Response(assetResponse.body, {
-      headers: { 'Content-Type': 'text/html' }
-    })
-  }
+  return servePlanPage(c.env, c.req.url, planId, 'respond')
 })
 
 app.get('/plan/:planId', async (c) => {
   const planId = c.req.param('planId')
-
-  try {
-    const html = await injectOgMetadata(c, planId, 'results')
-    return c.html(html)
-  } catch {
-    const assetResponse = await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)))
-    return new Response(assetResponse.body, {
-      headers: { 'Content-Type': 'text/html' }
-    })
-  }
+  return servePlanPage(c.env, c.req.url, planId, 'results')
 })
 
 app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))

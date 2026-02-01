@@ -1,8 +1,29 @@
 import type { DayButton as DayButtonType } from 'react-day-picker'
 import { cn } from '@/lib/utils'
+import { dayButtonVariants } from './day-button-variants'
 import { useDayButtonFocus } from './use-day-button-focus'
 
 type DayButtonProps = React.ComponentProps<typeof DayButtonType>
+
+const DAY_BUTTON_STATES = {
+  disabled: 'disabled',
+  selected: 'selected',
+  outside: 'outside',
+  default: 'default',
+} as const
+
+type DayButtonState = (typeof DAY_BUTTON_STATES)[keyof typeof DAY_BUTTON_STATES]
+
+function resolveDayButtonState(
+  isDisabled: boolean | undefined,
+  isSelected: boolean | undefined,
+  isOutside: boolean | undefined,
+): DayButtonState {
+  if (isDisabled) return DAY_BUTTON_STATES.disabled
+  if (isSelected) return DAY_BUTTON_STATES.selected
+  if (isOutside) return DAY_BUTTON_STATES.outside
+  return DAY_BUTTON_STATES.default
+}
 
 export function DefaultDayButton({
   className,
@@ -15,26 +36,26 @@ export function DefaultDayButton({
   const isEndpoint = modifiers.range_start || modifiers.range_end
   const isInRange = modifiers.range_middle
   const isSelected = isEndpoint || isInRange || modifiers.selected
-  const isOutside = modifiers.outside
   const isDisabled = modifiers.disabled
+  const isOutside = modifiers.outside
+  const dayNumber = day.date.getDate()
+
+  const state = resolveDayButtonState(isDisabled, isSelected, isOutside)
+
+  const buttonClassName = cn(
+    dayButtonVariants({ state, emphasis: !!isEndpoint }),
+    className
+  )
 
   return (
     <button
       ref={ref}
       type="button"
       disabled={isDisabled}
-      className={cn(
-        'size-10 md:size-12 flex items-center justify-center rounded-full text-sm font-medium transition-all',
-        isDisabled && 'text-muted-foreground/50 cursor-not-allowed',
-        isOutside && !isSelected && 'text-muted-foreground/50',
-        !isDisabled && !isOutside && !isSelected && 'bg-primary/10 text-foreground hover:bg-primary/20',
-        isSelected && 'bg-primary text-primary-foreground',
-        isEndpoint && 'font-bold shadow-[0_0_15px_rgba(70,236,19,0.4)]',
-        className
-      )}
+      className={buttonClassName}
       {...props}
     >
-      {day.date.getDate()}
+      {dayNumber}
     </button>
   )
 }

@@ -2,9 +2,12 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import { z } from 'zod'
 import { plans, planResponses } from '../db/schema'
 import { createPlanSchema, updatePlanSchema, deletePlanSchema } from '../lib/schemas'
 import type { Bindings } from '../lib/env'
+
+const availableDatesSchema = z.array(z.string())
 
 export const plansRoutes = new Hono<{ Bindings: Bindings }>()
   .post('/', zValidator('json', createPlanSchema), async (c) => {
@@ -52,13 +55,12 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
       .from(planResponses)
       .where(eq(planResponses.planId, planId))
 
-    const parsedResponses = responses.map((r) => ({
-      ...r,
-      availableDates: JSON.parse(r.availableDates) as string[],
+    const parsedResponses = responses.map((response) => ({
+      ...response,
+      availableDates: availableDatesSchema.parse(JSON.parse(response.availableDates)),
     }))
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Justification: editToken explicitly excluded from obj
-    const { editToken, ...publicPlan } = plan
+    const publicPlan = excludeEditToken(plan)
 
     return c.json({
       ...publicPlan,
@@ -81,23 +83,23 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
     }
 
     const now = new Date().toISOString()
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Justification: editToken explicitly excluded from obj
-    const { editToken, ...updateData } = body
+    const updateFields = excludeEditToken(body)
 
-    const mergedStartRange = updateData.startRange ?? plan.startRange
-    const mergedEndRange = updateData.endRange ?? plan.endRange
+    const mergedStartRange = updateFields.startRange ?? plan.startRange
+    const mergedEndRange = updateFields.endRange ?? plan.endRange
 
-    if (new Date(mergedStartRange) > new Date(mergedEndRange)) {
+    const startDateExceedsEndDate = new Date(mergedStartRange) > new Date(mergedEndRange)
+    if (startDateExceedsEndDate) {
       return c.json({ error: 'Start date must be before or equal to end date' }, 400)
     }
 
     await db
       .update(plans)
       .set({
-        ...(updateData.name && { name: updateData.name }),
-        ...(updateData.numDays && { numDays: updateData.numDays }),
-        ...(updateData.startRange && { startRange: updateData.startRange }),
-        ...(updateData.endRange && { endRange: updateData.endRange }),
+        ...(updateFields.name && { name: updateFields.name }),
+        ...(updateFields.numDays && { numDays: updateFields.numDays }),
+        ...(updateFields.startRange && { startRange: updateFields.startRange }),
+        ...(updateFields.endRange && { endRange: updateFields.endRange }),
         updatedAt: now,
       })
       .where(eq(plans.id, planId))
@@ -125,3 +127,9 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
 
     return c.json({ message: 'Plan deleted successfully' })
   })
+
+function excludeEditToken<T extends { editToken: string }>(obj: T): Omit<T, 'editToken'> {
+  const { editToken, ...rest } = obj
+  void editToken
+  return rest
+}

@@ -54,29 +54,30 @@ export function Wordmark({
   color = 'primary',
   className
 }: WordmarkProps) {
-  const content = (
-    <>
-      <Logo size={size} color={color} />
-      <span className={textVariants({ size })}>
-      PlanTheTrip
-      </span>
-    </>
-  )
+  const containerClassName = cn(wordmarkVariants({ size, color }), className)
 
   if (asLink) {
     return (
-      <Link
-        to={ROUTES.HOME}
-        className={cn(wordmarkVariants({ size, color }), className)}
-      >
-        {content}
+      <Link to={ROUTES.HOME} className={containerClassName}>
+        <WordmarkContent size={size} color={color} />
       </Link>
     )
   }
 
   return (
-    <div className={cn(wordmarkVariants({ size, color }), className)}>
-      {content}
+    <div className={containerClassName}>
+      <WordmarkContent size={size} color={color} />
     </div>
+  )
+}
+
+type WordmarkContentProps = Pick<WordmarkProps, 'size' | 'color'>
+
+function WordmarkContent({ size, color }: WordmarkContentProps) {
+  return (
+    <>
+      <Logo size={size} color={color} />
+      <span className={textVariants({ size })}>PlanTheTrip</span>
+    </>
   )
 }

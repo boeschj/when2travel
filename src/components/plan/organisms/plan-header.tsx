@@ -33,11 +33,9 @@ interface PlanHeaderProps {
     icon?: ReactNode
     onClick: () => void
   }
-  /** Show the edit/delete dropdown menu (for plan creators) */
   showMenu?: boolean
   onEdit?: () => void
   onShare?: () => void
-  /** Deletion config - pass this to enable delete functionality */
   deleteConfig?: {
     onConfirm: () => void
     isPending?: boolean
@@ -58,28 +56,25 @@ export function PlanHeader({
   onShare,
   deleteConfig,
   variant = 'default',
-  className
+  className,
 }: PlanHeaderProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const formatDateRange = () => {
-    const start = parseISO(startRange)
-    const end = parseISO(endRange)
-    return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`
-  }
 
-  const formatResultsSubtitle = () => {
-    const start = parseISO(startRange)
-    const end = parseISO(endRange)
-    return `Traveling for ${numDays} days between ${format(start, 'MMM d')} – ${format(end, 'MMM d')}`
-  }
+  const start = parseISO(startRange)
+  const end = parseISO(endRange)
+  const isDefaultVariant = variant === 'default'
 
-  const responsesCount = deleteConfig?.responsesCount
-  const hasResponses = responsesCount && responsesCount > 0
-  const baseMessage = `This action cannot be undone. This will permanently delete the plan "${name}"`
-  const responsesText = hasResponses
-    ? ` and all ${responsesCount} ${pluralize(responsesCount, 'response')}`
-    : ''
-  const deleteConfirmationMessage = `${baseMessage}${responsesText}.`
+  const formattedStart = format(start, 'MMM d')
+  const formattedEnd = format(end, 'MMM d')
+  const dateRange = `${formattedStart} - ${format(end, 'MMM d, yyyy')}`
+  const subtitle = `Traveling for ${numDays} days between ${formattedStart} – ${formattedEnd}`
+
+  const deleteConfirmationMessage = buildDeleteMessage(name, deleteConfig?.responsesCount)
+
+  let deleteButtonLabel = 'Delete'
+  if (deleteConfig?.isPending) {
+    deleteButtonLabel = 'Deleting...'
+  }
 
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-4 md:pb-6', className)}>
@@ -88,79 +83,36 @@ export function PlanHeader({
           <h1 className="text-white text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">
             {name}
           </h1>
-          {onShare && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onShare}
-              aria-label="Share trip"
-              className="size-10 text-muted-foreground hover:text-foreground translate-y-1 focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
-              <Share2 className="size-5" />
-            </Button>
-          )}
+          {onShare && <ShareButton onClick={onShare} />}
           {showMenu && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-10 text-muted-foreground hover:text-foreground translate-y-1 focus-visible:ring-0 focus-visible:ring-offset-0">
-                  <MoreVertical className="size-6" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {onEdit && (
-                  <DropdownMenuItem onClick={onEdit}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit Plan
-                  </DropdownMenuItem>
-                )}
-                {deleteConfig && (
-                  <DropdownMenuItem
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Plan
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <HeaderMenu
+              onEdit={onEdit}
+              onDelete={deleteConfig && (() => setIsDeleteDialogOpen(true))}
+            />
           )}
-
           {deleteConfig && (
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {deleteConfirmationMessage}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deleteConfig.onConfirm()}
-                    disabled={deleteConfig.isPending}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {deleteConfig.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <DeleteDialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+              message={deleteConfirmationMessage}
+              buttonLabel={deleteButtonLabel}
+              isPending={deleteConfig.isPending}
+              onConfirm={deleteConfig.onConfirm}
+            />
           )}
         </div>
         <div className="flex items-center gap-2 text-text-secondary text-base md:text-lg font-normal leading-normal mt-1">
-          {variant === 'default' ? (
+          {isDefaultVariant && (
             <>
               <Calendar className="w-5 h-5" />
               <p>
-                {formatDateRange()}{' '}
+                {dateRange}{' '}
                 <span className="text-white font-bold ml-1">({numDays} days)</span>
               </p>
             </>
-          ) : (
-            <p>{formatResultsSubtitle()}</p>
           )}
+          {!isDefaultVariant && <p>{subtitle}</p>}
+
         </div>
       </div>
 
@@ -176,4 +128,95 @@ export function PlanHeader({
       )}
     </div>
   )
+}
+
+function ShareButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-label="Share trip"
+      className="size-10 text-muted-foreground hover:text-foreground translate-y-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+    >
+      <Share2 className="size-5" />
+    </Button>
+  )
+}
+
+interface HeaderMenuProps {
+  onEdit?: () => void
+  onDelete?: (() => void) | false
+}
+
+function HeaderMenu({ onEdit, onDelete }: HeaderMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 text-muted-foreground hover:text-foreground translate-y-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+        >
+          <MoreVertical className="size-6" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {onEdit && (
+          <DropdownMenuItem onClick={onEdit}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Plan
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <DropdownMenuItem
+            onClick={onDelete}
+            className="bg-destructive text-white focus:bg-destructive/90 focus:text-white"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Plan
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+interface DeleteDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  message: string
+  buttonLabel: string
+  isPending?: boolean
+  onConfirm: () => void
+}
+
+function DeleteDialog({ open, onOpenChange, message, buttonLabel, isPending, onConfirm }: DeleteDialogProps) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
+          <AlertDialogDescription>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {buttonLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+function buildDeleteMessage(name: string, responsesCount?: number) {
+  const baseMessage = `This action cannot be undone. This will permanently delete the plan "${name}"`
+  const hasResponses = responsesCount !== undefined && responsesCount > 0
+  if (!hasResponses) return `${baseMessage}.`
+  return `${baseMessage} and all ${responsesCount} ${pluralize(responsesCount, 'response')}.`
 }

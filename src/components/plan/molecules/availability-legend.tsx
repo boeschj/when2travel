@@ -1,33 +1,16 @@
 import { cn } from '@/lib/utils'
 import { AvailabilityBadge } from '../atoms/availability-badge'
 
+const ALL_STATUSES = ['unavailable', 'partial', 'high', 'available'] as const
+
+type AvailabilityStatus = (typeof ALL_STATUSES)[number]
+
 interface AvailabilityLegendProps {
   showAvailable?: boolean
   showHigh?: boolean
   showPartial?: boolean
   showUnavailable?: boolean
   className?: string
-}
-
-type AvailabilityStatus = 'available' | 'high' | 'partial' | 'unavailable'
-
-interface StatusConfig {
-  status: AvailabilityStatus
-  show: boolean
-}
-
-function getStatusConfigs(
-  showAvailable: boolean,
-  showHigh: boolean,
-  showPartial: boolean,
-  showUnavailable: boolean
-): StatusConfig[] {
-  return [
-    { status: 'unavailable', show: showUnavailable },
-    { status: 'partial', show: showPartial },
-    { status: 'high', show: showHigh },
-    { status: 'available', show: showAvailable },
-  ]
 }
 
 export function AvailabilityLegend({
@@ -37,12 +20,13 @@ export function AvailabilityLegend({
   showUnavailable = true,
   className,
 }: AvailabilityLegendProps) {
-  const statusConfigs = getStatusConfigs(
-    showAvailable,
-    showHigh,
-    showPartial,
-    showUnavailable
-  )
+  const visibilityByStatus: Record<AvailabilityStatus, boolean> = {
+    available: showAvailable,
+    high: showHigh,
+    partial: showPartial,
+    unavailable: showUnavailable,
+  }
+  const visibleStatuses = ALL_STATUSES.filter((status) => visibilityByStatus[status])
   const containerClassName = cn(
     'flex items-center gap-3 text-xs font-medium flex-wrap',
     className
@@ -50,12 +34,9 @@ export function AvailabilityLegend({
 
   return (
     <div className={containerClassName}>
-      {statusConfigs.map(
-        (config) =>
-          config.show && (
-            <AvailabilityBadge key={config.status} status={config.status} />
-          )
-      )}
+      {visibleStatuses.map((status) => (
+        <AvailabilityBadge key={status} status={status} />
+      ))}
     </div>
   )
 }
@@ -69,7 +50,7 @@ interface LegendItemConfig {
   label: string
 }
 
-const resultsLegendItems: LegendItemConfig[] = [
+const RESULTS_LEGEND_ITEMS: LegendItemConfig[] = [
   {
     dotClassName: 'bg-status-red shadow-[0_0_4px_rgba(239,68,68,0.5)]',
     label: 'Busy',
@@ -90,14 +71,12 @@ interface LegendItemProps {
 }
 
 function LegendItem({ dotClassName, label }: LegendItemProps) {
-  const itemClassName = 'flex items-center gap-2'
   const dotClassNameFull = cn('w-3 h-3 rounded-full', dotClassName)
-  const labelClassName = 'text-text-secondary'
 
   return (
-    <div className={itemClassName}>
+    <div className="flex items-center gap-2">
       <div className={dotClassNameFull} />
-      <span className={labelClassName}>{label}</span>
+      <span className="text-text-secondary">{label}</span>
     </div>
   )
 }
@@ -110,8 +89,8 @@ export function ResultsLegend({ className }: ResultsLegendProps) {
 
   return (
     <div className={containerClassName}>
-      {resultsLegendItems.map((item) => (
-        <LegendItem key={item.label} dotClassName={item.dotClassName} label={item.label} />
+      {RESULTS_LEGEND_ITEMS.map((item) => (
+        <LegendItem key={item.label} {...item} />
       ))}
     </div>
   )

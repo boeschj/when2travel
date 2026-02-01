@@ -13,70 +13,98 @@ interface ErrorScreenProps {
 
 export function ErrorScreen({
   title = 'Something went wrong',
-  message = 'We couldn\'t load this page. Please try again.',
+  message = "We couldn't load this page. Please try again.",
   onRetry,
   variant = 'default',
 }: ErrorScreenProps) {
   if (variant === 'not-found') {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-20">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-          <span className="text-[20rem] md:text-[30rem] font-black text-muted/10 leading-none">
-            404
-          </span>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center text-center max-w-lg">
-          <div className="relative mb-8">
-            <div className="w-64 h-44 rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-border/20">
-              <img
-                src="/images/hero-3.webp"
-                alt="Misty forest landscape"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <div className="relative">
-                <MapPin className="w-12 h-12 text-primary fill-primary" />
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-background" />
-              </div>
-            </div>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4">
-            {title}
-          </h1>
-
-          <p className="text-lg text-muted-foreground mb-8">
-            {message}
-          </p>
-
-          <Button asChild size="lg" className="gap-2">
-            <Link to={ROUTES.TRIPS}>
-              <Home className="w-5 h-5" />
-              Back to Home Base
-            </Link>
-          </Button>
-        </div>
-      </div>
-    )
+    return <NotFoundScreen title={title} message={message} />
   }
 
+  return <DefaultErrorScreen title={title} message={message} onRetry={onRetry} />
+}
+
+function NotFoundScreen({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-20">
+      <BackgroundText />
+      <div className="relative z-10 flex flex-col items-center text-center max-w-lg">
+        <HeroImage />
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4">
+          {title}
+        </h1>
+        <p className="text-lg text-muted-foreground mb-8">{message}</p>
+        <Button asChild size="lg" className="gap-2">
+          <Link to={ROUTES.TRIPS}>
+            <Home className="w-5 h-5" />
+            Back to Home Base
+          </Link>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function DefaultErrorScreen({
+  title,
+  message,
+  onRetry,
+}: {
+  title: string
+  message: string
+  onRetry?: () => void
+}) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6">
       <Logo size="large" color="muted" />
-      <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex items-center gap-2 text-destructive">
-          <AlertCircle className="size-5" />
-          <span className="text-xl font-semibold">{title}</span>
-        </div>
-        <p className="text-muted-foreground max-w-md">{message}</p>
-      </div>
+      <ErrorMessage title={title} message={message} />
       {onRetry && (
         <Button onClick={onRetry} variant="outline">
           Try Again
         </Button>
       )}
+    </div>
+  )
+}
+
+function ErrorMessage({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 text-center">
+      <div className="flex items-center gap-2 text-destructive">
+        <AlertCircle className="size-5" />
+        <span className="text-xl font-semibold">{title}</span>
+      </div>
+      <p className="text-muted-foreground max-w-md">{message}</p>
+    </div>
+  )
+}
+
+function BackgroundText() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+      <span className="text-[20rem] md:text-[30rem] font-black text-muted/10 leading-none">
+        404
+      </span>
+    </div>
+  )
+}
+
+function HeroImage() {
+  return (
+    <div className="relative mb-8">
+      <div className="w-64 h-44 rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-border/20">
+        <img
+          src="/images/hero-3.webp"
+          alt="Misty forest landscape"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+        <div className="relative">
+          <MapPin className="w-12 h-12 text-primary fill-primary" />
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-background" />
+        </div>
+      </div>
     </div>
   )
 }

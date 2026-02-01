@@ -17,6 +17,79 @@ const HEATMAP_STOPS = [
   { threshold: 0.0, color: '#ef4444', textColor: '#ffffff', glow: false },
 ] as const
 
+export function HeatmapDayButton({
+  className,
+  day,
+  modifiers,
+  ...props
+}: DayButtonProps) {
+  const ref = useDayButtonFocus(modifiers.focused)
+  const { availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick } =
+    useCalendarContext()
+
+  const dateStr = format(day.date, 'yyyy-MM-dd')
+  const data = availabilityMap?.get(dateStr)
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    props.onClick?.(e)
+    onDateClick?.(day.date)
+  }
+
+  if (modifiers.disabled || modifiers.outside || !data) {
+    return <DisabledDayButton className={className} day={day} modifiers={modifiers} {...props} />
+  }
+
+  const hasRespondentFilter = !!selectedRespondentId
+  const isRespondentAvailable = hasRespondentFilter && data.respondentIds.includes(selectedRespondentId)
+
+  const style = hasRespondentFilter
+    ? getRespondentStyle(isRespondentAvailable, selectedRespondentColor)
+    : getHeatmapStyle(data.availableCount, data.totalCount)
+
+  const tooltipText = `${data.availableCount}/${data.totalCount} people available`
+  const ariaLabel = `${format(day.date, 'MMMM d')} - ${tooltipText}`
+  const dayNumber = day.date.getDate()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          ref={ref}
+          type="button"
+          className={cn(
+            'flex min-h-11 min-w-11 items-center justify-center',
+            className
+          )}
+          aria-label={ariaLabel}
+          {...props}
+          onClick={handleClick}
+        >
+          <HeatmapIndicator style={style} dayNumber={dayNumber} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="font-semibold">{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+interface HeatmapIndicatorProps {
+  style: React.CSSProperties
+  dayNumber: number
+}
+
+function HeatmapIndicator({ style, dayNumber }: HeatmapIndicatorProps) {
+  return (
+    <span
+      className="flex size-10 items-center justify-center rounded-full text-sm font-bold"
+      style={style}
+    >
+      {dayNumber}
+    </span>
+  )
+}
+
 function getHeatmapStyle(availableCount: number, totalCount: number): React.CSSProperties {
   if (totalCount === 0) {
     return { backgroundColor: 'var(--color-border)', color: 'var(--color-foreground)' }
@@ -53,64 +126,4 @@ function getRespondentStyle(
     color: 'var(--color-primary-foreground)',
     boxShadow: '0 0 10px rgba(70,236,19,0.4)',
   }
-}
-
-export function HeatmapDayButton({
-  className,
-  day,
-  modifiers,
-  ...props
-}: DayButtonProps) {
-  const ref = useDayButtonFocus(modifiers.focused)
-  const { availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick } =
-    useCalendarContext()
-
-  const dateStr = format(day.date, 'yyyy-MM-dd')
-  const data = availabilityMap?.get(dateStr)
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    props.onClick?.(e)
-    onDateClick?.(day.date)
-  }
-
-  if (modifiers.disabled || modifiers.outside || !data) {
-    return <DisabledDayButton className={className} day={day} modifiers={modifiers} {...props} />
-  }
-
-  const hasRespondentFilter = !!selectedRespondentId
-  const isRespondentAvailable = hasRespondentFilter && data.respondentIds.includes(selectedRespondentId)
-
-  const style = hasRespondentFilter
-    ? getRespondentStyle(isRespondentAvailable, selectedRespondentColor)
-    : getHeatmapStyle(data.availableCount, data.totalCount)
-
-  const tooltipText = `${data.availableCount}/${data.totalCount} people available`
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          ref={ref}
-          type="button"
-          className={cn(
-            'flex min-h-11 min-w-11 items-center justify-center',
-            className
-          )}
-          aria-label={`${format(day.date, 'MMMM d')} - ${tooltipText}`}
-          {...props}
-          onClick={handleClick}
-        >
-          <span
-            className="flex size-10 items-center justify-center rounded-full text-sm font-bold"
-            style={style}
-          >
-            {day.date.getDate()}
-          </span>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="font-semibold">{tooltipText}</p>
-      </TooltipContent>
-    </Tooltip>
-  )
 }

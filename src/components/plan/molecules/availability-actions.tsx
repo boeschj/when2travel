@@ -13,8 +13,6 @@ import { formatDateRangeDisplay, cn, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 import type { LucideIcon } from 'lucide-react'
 
-/** ManageDatesDropdown - Dropdown for viewing and managing selected date ranges */
-
 interface DateRangeCheckboxItemProps {
   range: DateRange
   checked: boolean
@@ -172,8 +170,6 @@ function ManageDatesDropdown({
   )
 }
 
-/** QuickActionsDropdown - Dropdown for bulk availability actions */
-
 const QUICK_ACTIONS = [
   {
     status: 'available' as const,
@@ -239,8 +235,6 @@ function QuickActionsDropdown({ onMarkAllAs }: QuickActionsDropdownProps) {
     </DropdownMenu>
   )
 }
-
-/** AvailabilityActions - Main export combining manage and quick action dropdowns */
 
 interface AvailabilityActionsProps {
   availableRanges: DateRange[]

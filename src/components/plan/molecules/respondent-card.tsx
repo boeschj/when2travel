@@ -18,45 +18,51 @@ export function RespondentCard({
   onClick,
   className
 }: RespondentCardProps) {
-  const getAvailabilityText = () => {
-    if (availableDates.length === 0) return 'No availability set'
-    if (availableDates.length === 1) {
-      return format(parseISO(availableDates[0]), 'MMM d')
-    }
+  const isClickable = !!onClick
+  const availabilityText = formatAvailabilityText(availableDates)
+  const displayName = isCurrentUser ? `${name} (You)` : name
 
-    const sortedDates = [...availableDates].sort()
-    const earliestDate = sortedDates[0]
-    const latestDate = sortedDates[sortedDates.length - 1]
+  const containerClassName = cn(
+    'flex items-center gap-3 p-3 rounded-lg transition-colors',
+    isClickable && 'cursor-pointer hover:bg-white/5 group',
+    isCurrentUser && 'bg-white/5 border border-border/50',
+    className
+  )
 
-    return `Available ${format(parseISO(earliestDate), 'MMM d')}-${format(parseISO(latestDate), 'd')}`
-  }
+  const nameClassName = cn(
+    'text-white text-sm font-semibold truncate',
+    isClickable && 'group-hover:text-primary transition-colors'
+  )
 
   return (
     <div
-      className={cn(
-        'flex items-center gap-3 p-3 rounded-lg transition-colors',
-        onClick && 'cursor-pointer hover:bg-white/5 group',
-        isCurrentUser && 'bg-white/5 border border-border/50',
-        className
-      )}
+      className={containerClassName}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
     >
-      <UserAvatar name={name} isCurrentUser={isCurrentUser} colorId={id} />
+      <UserAvatar name={name} colorId={id} />
       <div className="flex flex-col flex-1 min-w-0">
-        <span
-          className={cn(
-            'text-white text-sm font-semibold truncate',
-            onClick && 'group-hover:text-primary transition-colors'
-          )}
-        >
-          {name} {isCurrentUser && '(You)'}
-        </span>
+        <span className={nameClassName}>{displayName}</span>
         <span className="text-text-secondary text-xs truncate">
-          {getAvailabilityText()}
+          {availabilityText}
         </span>
       </div>
     </div>
   )
+}
+
+function formatAvailabilityText(availableDates: string[]): string {
+  const hasNoDates = availableDates.length === 0
+  if (hasNoDates) return 'No availability set'
+
+  const sortedDates = [...availableDates].sort()
+  const earliestFormatted = format(parseISO(sortedDates[0]), 'MMM d')
+
+  const hasSingleDate = sortedDates.length === 1
+  if (hasSingleDate) return earliestFormatted
+
+  const latestFormatted = format(parseISO(sortedDates[sortedDates.length - 1]), 'd')
+
+  return `Available ${earliestFormatted}-${latestFormatted}`
 }

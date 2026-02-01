@@ -13,8 +13,8 @@ const HEATMAP_STOPS = [
   { threshold: 0.8, color: '#a3e635', textColor: '#0a1208', glow: false },
   { threshold: 0.6, color: '#facc15', textColor: '#0a1208', glow: false },
   { threshold: 0.4, color: '#f97316', textColor: '#0a1208', glow: false },
-  { threshold: 0.2, color: '#ea580c', textColor: '#ffffff', glow: false },
-  { threshold: 0.0, color: '#ef4444', textColor: '#ffffff', glow: false },
+  { threshold: 0.2, color: '#ea580c', textColor: '#0a1208', glow: false },
+  { threshold: 0.0, color: '#ef4444', textColor: '#0a1208', glow: false },
 ] as const
 
 export function HeatmapDayButton({

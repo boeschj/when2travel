@@ -1,23 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { NotFound } from '@/components/shared/not-found'
 import { routeTree } from './routeTree.gen'
 import { PostHogProvider } from 'posthog-js/react'
 import { queryClient } from './lib/query-client'
 import './index.css'
 
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual'
-}
-
 const router = createRouter({
   routeTree,
   context: { queryClient },
-  scrollRestoration: false,
-})
-
-router.subscribe('onResolved', () => {
-  window.scrollTo(0, 0)
+  scrollRestoration: true,
+  defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: NotFound,
+  defaultStructuralSharing: true,
 })
 
 declare module '@tanstack/react-router' {

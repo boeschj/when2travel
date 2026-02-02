@@ -2,11 +2,11 @@ import { format } from 'date-fns'
 import { Check, X, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Badge } from '@/components/ui/badge'
 import { UserAvatar } from './user-avatar'
 
@@ -46,8 +46,8 @@ export function DateAvailabilityDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-surface-dark border-border max-w-sm">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="bg-surface-dark border-border max-w-sm">
         <ModalHeader
           formattedDate={formattedDate}
           availabilityLabel={availabilityLabel}
@@ -57,8 +57,8 @@ export function DateAvailabilityDialog({
           participants={participants}
           onParticipantClick={handleParticipantClick}
         />
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }
 
@@ -70,15 +70,15 @@ interface ModalHeaderProps {
 
 function ModalHeader({ formattedDate, availabilityLabel, allAvailable }: ModalHeaderProps) {
   return (
-    <DialogHeader>
+    <ResponsiveDialogHeader>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-surface-darker flex items-center justify-center">
           <CalendarDays className="w-5 h-5 text-text-secondary" />
         </div>
         <div>
-          <DialogTitle className="text-xl font-bold text-white">
+          <ResponsiveDialogTitle className="text-xl font-bold text-white">
             {formattedDate}
-          </DialogTitle>
+          </ResponsiveDialogTitle>
           <Badge
             className={cn(
               'mt-1',
@@ -90,7 +90,7 @@ function ModalHeader({ formattedDate, availabilityLabel, allAvailable }: ModalHe
           </Badge>
         </div>
       </div>
-    </DialogHeader>
+    </ResponsiveDialogHeader>
   )
 }
 

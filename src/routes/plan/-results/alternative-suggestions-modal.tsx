@@ -1,10 +1,10 @@
 import { Lightbulb } from 'lucide-react'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Badge } from '@/components/ui/badge'
 import type { Recommendation } from './recommendation-types'
 import { getPriorityLabel } from './recommendation-types'
@@ -21,25 +21,25 @@ export function AlternativeSuggestionsModal({
   alternatives,
 }: AlternativeSuggestionsModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
         <ModalHeader />
         <SuggestionsList alternatives={alternatives} />
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }
 
 function ModalHeader() {
   return (
-    <DialogHeader className="shrink-0">
+    <ResponsiveDialogHeader className="shrink-0">
       <div className="flex items-center gap-3">
         <ModalIcon />
-        <DialogTitle className="text-2xl font-bold text-foreground">
+        <ResponsiveDialogTitle className="text-2xl font-bold text-foreground">
           Other Suggestions
-        </DialogTitle>
+        </ResponsiveDialogTitle>
       </div>
-    </DialogHeader>
+    </ResponsiveDialogHeader>
   )
 }
 

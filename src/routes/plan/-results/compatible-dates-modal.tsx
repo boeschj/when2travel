@@ -2,11 +2,11 @@ import { format, parseISO, differenceInDays } from 'date-fns'
 import { ThumbsUp, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { CompatibleDateRange } from '@/lib/types'
@@ -32,8 +32,8 @@ export function CompatibleDatesModal({
   const hasRanges = compatibleRanges.length > 0
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
         <ModalHeader />
         <div className="flex-1 overflow-y-auto space-y-3 pr-2 -mr-2">
           {hasRanges && (
@@ -44,23 +44,23 @@ export function CompatibleDatesModal({
           )}
           {!hasRanges && <EmptyState />}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }
 
 function ModalHeader() {
   return (
-    <DialogHeader className="shrink-0">
+    <ResponsiveDialogHeader className="shrink-0">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-surface-darker flex items-center justify-center">
           <ThumbsUp className="w-5 h-5 text-text-secondary" />
         </div>
-        <DialogTitle className="text-2xl font-bold text-foreground">
+        <ResponsiveDialogTitle className="text-2xl font-bold text-foreground">
           Compatible Date Ranges
-        </DialogTitle>
+        </ResponsiveDialogTitle>
       </div>
-    </DialogHeader>
+    </ResponsiveDialogHeader>
   )
 }
 

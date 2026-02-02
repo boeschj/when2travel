@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Users, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
-import { client } from '@/lib/api'
+import { useDeletePlan } from '@/lib/mutations'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { planKeys } from '@/lib/queries'
@@ -33,38 +33,21 @@ export const Route = createFileRoute(ROUTE_IDS.PLAN)({
   pendingComponent: () => null,
 })
 
-const $deletePlan = client.plans[':id'].$delete
-
 function PlanResultsPage() {
   const { planId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
   const { hasResponseToken } = useResponseEditTokens()
-  const { isCreator, editToken } = usePlanAuthContext(planId)
+  const { isCreator } = usePlanAuthContext(planId)
   const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null)
   const [popoverDate, setPopoverDate] = useState<Date | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
 
-  const deletePlanMutation = useMutation({
-    mutationFn: async () => {
-      if (!editToken) throw new Error('No edit token')
-      const res = await $deletePlan({
-        param: { id: planId },
-        json: { editToken }
-      })
-      if (!res.ok) {
-        const errorBody = await res.json().catch(() => ({ error: 'Failed to delete plan' }))
-        throw new Error('error' in errorBody ? errorBody.error : 'Failed to delete plan')
-      }
-      return res.json()
-    },
+  const deletePlanMutation = useDeletePlan({
     onSuccess: () => {
       toast.success('Plan deleted successfully')
       navigate({ to: ROUTES.TRIPS })
     },
-    onError: (mutationError) => {
-      toast.error(mutationError.message || 'Failed to delete plan')
-    }
   })
 
   const compatibleRanges = useCompatibleRanges(plan)
@@ -113,7 +96,7 @@ function PlanResultsPage() {
 
   const deleteConfig = buildDeleteConfig({
     isCreator,
-    onConfirm: () => deletePlanMutation.mutate(),
+    onConfirm: () => deletePlanMutation.mutate(planId),
     isPending: deletePlanMutation.isPending,
     responsesCount: respondents.length,
   })

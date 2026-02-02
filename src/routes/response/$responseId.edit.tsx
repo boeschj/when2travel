@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { client } from '@/lib/api'
+import { useDeleteResponse } from '@/lib/mutations'
+import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys, responseKeys } from '@/lib/queries'
 import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
@@ -65,7 +66,7 @@ function EditResponsePage() {
   const { returnUrl } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
-  const { getResponseEditToken, getResponsePlanId, removeResponseToken } = useResponseEditTokens()
+  const { getResponseEditToken, getResponsePlanId } = useResponseEditTokens()
   const [isDirty, setIsDirty] = useState(false)
   const [resetFormFn, setResetFormFn] = useState<(() => void) | null>(null)
 
@@ -84,7 +85,6 @@ function EditResponsePage() {
       returnUrl={returnUrl}
       navigate={navigate}
       queryClient={queryClient}
-      removeResponseToken={removeResponseToken}
       isDirty={isDirty}
       setIsDirty={setIsDirty}
       resetFormFn={resetFormFn}
@@ -100,7 +100,6 @@ interface EditResponseContentProps {
   returnUrl: string | undefined
   navigate: ReturnType<typeof useNavigate>
   queryClient: ReturnType<typeof useQueryClient>
-  removeResponseToken: (id: string) => void
   isDirty: boolean
   setIsDirty: (dirty: boolean) => void
   resetFormFn: (() => void) | null
@@ -114,7 +113,6 @@ function EditResponseContent({
   returnUrl,
   navigate,
   queryClient,
-  removeResponseToken,
   isDirty,
   setIsDirty,
   resetFormFn,
@@ -132,11 +130,7 @@ function EditResponseContent({
           editToken,
         },
       })
-
-      if (!res.ok) {
-        throw new Error('Failed to update response')
-      }
-
+      if (!res.ok) throw await parseErrorResponse(res, 'Failed to update response')
       return res.json()
     },
     onMutate: async (newData) => {
@@ -158,7 +152,7 @@ function EditResponseContent({
 
       return { previousPlan }
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       resetFormFn?.()
       toast.success('Your availability has been updated!')
       setTimeout(() => {
@@ -172,7 +166,7 @@ function EditResponseContent({
         }
       }, 0)
     },
-    onError: (err: Error, _newData, context) => {
+    onError: (err, _newData, context) => {
       if (context?.previousPlan) {
         queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, context.previousPlan)
       }
@@ -183,27 +177,10 @@ function EditResponseContent({
     },
   })
 
-  const deleteResponseMutation = useMutation({
-    mutationFn: async () => {
-      const res = await client.responses[':id'].$delete({
-        param: { id: responseId },
-        json: { editToken },
-      })
-
-      if (!res.ok) {
-        throw new Error('Failed to delete response')
-      }
-
-      return res.json()
-    },
-    onSuccess: async () => {
-      removeResponseToken(responseId)
+  const deleteResponseMutation = useDeleteResponse({
+    onSuccess: () => {
       toast.success('Your response has been deleted')
-      await queryClient.refetchQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
       navigate({ to: returnUrl ?? ROUTES.TRIPS })
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to delete response')
     },
   })
 
@@ -213,7 +190,7 @@ function EditResponseContent({
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete your response?')) {
-      deleteResponseMutation.mutate()
+      deleteResponseMutation.mutate({ responseId, planId: data.plan.id })
     }
   }
 

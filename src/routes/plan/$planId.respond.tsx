@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { client } from '@/lib/api'
+import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { toast } from 'sonner'
@@ -48,25 +48,20 @@ function MarkAvailabilityPage() {
           availableDates: formData.availableDates,
         },
       })
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: 'Failed to submit availability' }))
-        throw new Error('error' in errorBody ? errorBody.error : 'Failed to submit availability')
-      }
-
+      if (!response.ok) throw await parseErrorResponse(response, 'Failed to submit availability')
       return response.json()
     },
-    onSuccess: async (responseData) => {
+    onSuccess: (responseData) => {
       saveResponseEditToken({ responseId: responseData.id, token: responseData.editToken, planId })
-      await queryClient.refetchQueries({ queryKey: planKeys.detail(planId).queryKey })
+      queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
       const destination = returnUrl ?? ROUTES.PLAN
       const navigationOptions = returnUrl ? { to: destination } : { to: destination, params: { planId } }
       navigate(navigationOptions)
     },
-    onError: (mutationError: Error) => {
-      toast.error(mutationError.message || 'Failed to submit availability. Please try again.')
+    onError: (error) => {
+      toast.error(error.message || 'Failed to submit availability. Please try again.')
     },
   })
 

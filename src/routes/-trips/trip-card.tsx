@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, MoreVertical, Trash2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -24,10 +23,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { client } from '@/lib/api'
-import { planKeys } from '@/lib/queries'
+import { useDeletePlan, useDeleteResponse } from '@/lib/mutations'
 import { ROUTES } from '@/lib/routes'
-import { usePlanEditTokens, useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
+import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { TRIP_ROLES } from '@/lib/constants'
 
 import type { PlanWithResponses } from '@/lib/types'
@@ -40,67 +38,22 @@ interface TripCardProps {
 
 export function TripCard({ plan, role }: TripCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const queryClient = useQueryClient()
-  const { getPlanEditToken, removePlanEditToken } = usePlanEditTokens()
-  const { removeResponseToken, getResponseEditToken } = useResponseEditTokens()
   const userResponse = useCurrentUserResponse(plan.responses)
 
-  const deletePlanMutation = useMutation({
-    mutationFn: async () => {
-      const editToken = getPlanEditToken(plan.id)
-      if (!editToken) throw new Error('No edit permission')
-
-      const res = await client.plans[':id'].$delete({
-        param: { id: plan.id },
-        json: { editToken },
-      })
-
-      if (!res.ok) throw new Error('Failed to delete plan')
-      return res.json()
-    },
-    onSuccess: () => {
-      removePlanEditToken(plan.id)
-      queryClient.invalidateQueries({ queryKey: planKeys.detail(plan.id).queryKey })
-      toast.success('Trip deleted successfully')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to delete trip')
-    },
+  const deletePlanMutation = useDeletePlan({
+    onSuccess: () => toast.success('Trip deleted successfully'),
   })
 
-  const deleteResponseMutation = useMutation({
-    mutationFn: async () => {
-      if (!userResponse) throw new Error('No response found')
-
-      const editToken = getResponseEditToken(userResponse.id)
-      if (!editToken) throw new Error('No edit permission')
-
-      const res = await client.responses[':id'].$delete({
-        param: { id: userResponse.id },
-        json: { editToken },
-      })
-
-      if (!res.ok) throw new Error('Failed to leave trip')
-      return res.json()
-    },
-    onSuccess: () => {
-      if (userResponse) {
-        removeResponseToken(userResponse.id)
-      }
-      queryClient.invalidateQueries({ queryKey: planKeys.detail(plan.id).queryKey })
-      toast.success('You have left the trip')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to leave trip')
-    },
+  const deleteResponseMutation = useDeleteResponse({
+    onSuccess: () => toast.success('You have left the trip'),
   })
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(false)
     if (isCreator) {
-      deletePlanMutation.mutate()
-    } else {
-      deleteResponseMutation.mutate()
+      deletePlanMutation.mutate(plan.id)
+    } else if (userResponse) {
+      deleteResponseMutation.mutate({ responseId: userResponse.id, planId: plan.id })
     }
   }
 

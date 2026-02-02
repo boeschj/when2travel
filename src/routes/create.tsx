@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
-import { client } from '@/lib/api'
+import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ApiError } from '@/lib/errors'
 import type { InferRequestType, InferResponseType } from 'hono/client'
@@ -40,10 +40,6 @@ type CreatePlanInput = InferRequestType<typeof $createPlan>['json']
 type CreatePlanResponse = InferResponseType<typeof $createPlan>
 type UpdatePlanInput = InferRequestType<typeof $updatePlan>['json']
 type UpdatePlanResponse = InferResponseType<typeof $updatePlan>
-
-type ErrorResponse = {
-	error: string
-}
 
 const searchSchema = z.object({
   planId: z.string().optional(),
@@ -129,11 +125,7 @@ function EditModeContent({
   const updatePlanMutation = useMutation({
     mutationFn: async (input: UpdatePlanInput): Promise<UpdatePlanResponse> => {
       const response = await $updatePlan({ param: { id: planId }, json: input })
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: 'Failed to update plan' }))
-        const message = extractErrorMessage(errorBody, 'Failed to update plan')
-        throw new Error(message)
-      }
+      if (!response.ok) throw await parseErrorResponse(response, 'Failed to update plan')
       return response.json()
     },
     onMutate: async (newData) => {
@@ -250,11 +242,7 @@ function CreateModeContent({ navigate, savePlanEditToken }: CreateModeContentPro
   const createPlanMutation = useMutation({
     mutationFn: async (input: CreatePlanInput): Promise<CreatePlanResponse> => {
       const response = await $createPlan({ json: input })
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: 'Failed to create plan' }))
-        const message = extractErrorMessage(errorBody, 'Failed to create plan')
-        throw new Error(message)
-      }
+      if (!response.ok) throw await parseErrorResponse(response, 'Failed to create plan')
       return response.json()
     },
     onSuccess: (createdPlan) => {
@@ -456,18 +444,3 @@ function validateFormValues(values: FormValues): { name: string; numDays: number
   }
 }
 
-function extractErrorMessage(errorBody: unknown, fallback: string): string {
-  if (isErrorResponse(errorBody)) {
-    return errorBody.error
-  }
-  return fallback
-}
-
-function isErrorResponse(value: unknown): value is ErrorResponse {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'error' in value &&
-    typeof (value as Record<string, unknown>).error === 'string'
-  )
-}

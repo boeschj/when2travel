@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { ROUTE_IDS } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
+import { ErrorScreen } from '@/components/shared/error-screen'
 import StorageBanner from './-trips/storage-banner'
 import { TripCard } from './-trips/trip-card'
 import { TripCardSkeleton } from './-trips/trip-card-skeleton'
@@ -9,11 +10,23 @@ import { CreateTripCard } from './-trips/create-trip-card'
 import { EmptyState } from './-trips/empty-state'
 import { useUserTrips } from './-trips/use-user-trips'
 
-import type { UserTrip } from './-trips/use-user-trips'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
 export const Route = createFileRoute(ROUTE_IDS.TRIPS)({
   component: TripsPage,
+  pendingComponent: () => null,
+  errorComponent: TripsErrorComponent,
 })
+
+function TripsErrorComponent({ error, reset }: ErrorComponentProps) {
+  return (
+    <ErrorScreen
+      title="Something went wrong"
+      message={error.message || "We couldn't load your trips. Please try again."}
+      onRetry={reset}
+    />
+  )
+}
 
 const FADE_UP_ANIMATION = {
   initial: { opacity: 0, y: 20 },
@@ -21,13 +34,13 @@ const FADE_UP_ANIMATION = {
 }
 
 function TripsPage() {
-  const { trips, isLoading, hasTrips, error } = useUserTrips()
+  const { trips, isLoading, error } = useUserTrips()
 
   if (error) {
     throw error
   }
 
-  const showEmptyState = !hasTrips && !isLoading
+  const showEmptyState = trips.length === 0 && !isLoading
   const showSkeletons = isLoading && trips.length === 0
 
   return (
@@ -44,7 +57,9 @@ function TripsPage() {
             <TripGrid>
               <CreateTripCard />
               {showSkeletons && <LoadingSkeletons />}
-              {!showSkeletons && trips.map((trip) => <TripItem key={trip.planId} trip={trip} />)}
+              {!showSkeletons && trips.map((trip) => (
+                <TripCard key={trip.planId} plan={trip.plan} role={trip.role} />
+              ))}
             </TripGrid>
           )}
         </div>
@@ -101,16 +116,4 @@ function LoadingSkeletons() {
       <TripCardSkeleton />
     </>
   )
-}
-
-function TripItem({ trip }: { trip: UserTrip }) {
-  if (trip.isLoading) {
-    return <TripCardSkeleton />
-  }
-
-  if (!trip.plan) {
-    return null
-  }
-
-  return <TripCard plan={trip.plan} role={trip.role} />
 }

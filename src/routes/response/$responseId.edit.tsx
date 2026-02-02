@@ -25,7 +25,7 @@ import { AppHeader } from '@/components/shared/app-header'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { NotFound } from '@/components/shared/not-found'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
-import { getStorageRecord, STORAGE_KEYS } from '@/lib/atoms'
+import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
@@ -63,7 +63,7 @@ export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
 function EditResponsePage() {
   const { responseId } = Route.useParams()
   const { returnUrl } = Route.useSearch()
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { getResponseEditToken, getResponsePlanId, removeResponseToken } = useResponseEditTokens()
   const [isDirty, setIsDirty] = useState(false)

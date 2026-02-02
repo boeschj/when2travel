@@ -33,7 +33,7 @@ export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
 function MarkAvailabilityPage() {
   const { planId } = Route.useParams()
   const { returnUrl } = Route.useSearch()
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
   const { data: plan } = useSuspenseQuery(planKeys.detail(planId))

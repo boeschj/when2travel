@@ -37,7 +37,7 @@ const $deletePlan = client.plans[':id'].$delete
 
 function PlanResultsPage() {
   const { planId } = Route.useParams()
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const { hasResponseToken } = useResponseEditTokens()
   const { isCreator, editToken } = usePlanAuthContext(planId)
   const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null)

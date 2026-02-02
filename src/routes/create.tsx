@@ -72,7 +72,7 @@ export const Route = createFileRoute(ROUTES.CREATE)({
 })
 
 function CreatePlanPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { savePlanEditToken, getPlanEditToken } = usePlanEditTokens()
   const { planId, returnUrl } = Route.useSearch()

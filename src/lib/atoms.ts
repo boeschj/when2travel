@@ -1,37 +1,53 @@
-import { atomWithStorage } from 'jotai/utils'
-import { z } from 'zod'
+import { atom } from 'jotai'
 
-const stringRecordSchema = z.record(z.string(), z.string()).catch({})
+import type { RecordStorageKey, StorageValue } from '@/lib/storage'
+import { createStorageAtom, STORAGE_KEYS } from '@/lib/storage'
 
-export function getStorageRecord(key: string): z.infer<typeof stringRecordSchema> {
-  const raw = localStorage.getItem(key)
-  if (!raw) return {}
-  const parsed = z.string().transform((val) => JSON.parse(val)).pipe(stringRecordSchema).safeParse(raw)
-  return parsed.success ? parsed.data : {}
+const EMPTY_RECORD: Record<string, string> = {}
+
+export const planEditTokensAtom = createStorageAtom(STORAGE_KEYS.planEditTokens, EMPTY_RECORD)
+export const responseEditTokensAtom = createStorageAtom(STORAGE_KEYS.responseEditTokens, EMPTY_RECORD)
+export const responsePlanIdsAtom = createStorageAtom(STORAGE_KEYS.responsePlanIds, EMPTY_RECORD)
+export const tripsBannerDismissedAtom = createStorageAtom(STORAGE_KEYS.tripsBannerDismissed, false)
+
+export const createdPlanIdsAtom = atom((get) => {
+  const planEditTokens = get(planEditTokensAtom)
+  const planIds = Object.keys(planEditTokens)
+  const createdPlanIds = new Set(planIds)
+  return createdPlanIds
+})
+
+export const allPlanIdsAtom = atom((get) => {
+  const createdPlanIds = get(createdPlanIdsAtom)
+  const responsePlanIds = get(responsePlanIdsAtom)
+  const respondedPlanIds = Object.values(responsePlanIds)
+  const uniquePlanIds = new Set([...createdPlanIds, ...respondedPlanIds])
+  const planIdsAsArray = [...uniquePlanIds]
+  return planIdsAsArray
+})
+
+export const cleanupDeletedPlansAtom = atom(null, (get, set, deletedPlanIds: string[]) => {
+  set(planEditTokensAtom, (prev) => omitKeys(prev, deletedPlanIds))
+
+  const responsePlanIds = get(responsePlanIdsAtom)
+  const orphanedResponseIds = getKeysByValues(responsePlanIds, deletedPlanIds)
+
+  if (orphanedResponseIds.length > 0) {
+    set(responsePlanIdsAtom, (prev) => omitKeys(prev, orphanedResponseIds))
+    set(responseEditTokensAtom, (prev) => omitKeys(prev, orphanedResponseIds))
+  }
+})
+
+type RecordStorageValue = StorageValue<RecordStorageKey>
+
+function omitKeys(record: RecordStorageValue, keysToRemove: string[]): RecordStorageValue {
+  const result = { ...record }
+  for (const key of keysToRemove) delete result[key]
+  return result
 }
 
-export const STORAGE_KEYS = {
-  planEditTokens: 'planEditTokens',
-  responseEditTokens: 'responseEditTokens',
-  responsePlanIds: 'responsePlanIds',
-} as const
-
-export const planEditTokensAtom = atomWithStorage<Record<string, string>>(
-  STORAGE_KEYS.planEditTokens,
-  {}
-)
-
-export const responseEditTokensAtom = atomWithStorage<Record<string, string>>(
-  STORAGE_KEYS.responseEditTokens,
-  {}
-)
-
-export const responsePlanIdsAtom = atomWithStorage<Record<string, string>>(
-  STORAGE_KEYS.responsePlanIds,
-  {}
-)
-
-export const tripsBannerDismissedAtom = atomWithStorage<boolean>(
-  'tripsBannerDismissed',
-  false
-)
+function getKeysByValues(record: RecordStorageValue, valuesToMatch: string[]) {
+  const entries = Object.entries(record)
+  const matchingEntries = entries.filter(([, value]) => valuesToMatch.includes(value))
+  return matchingEntries.map(([key]) => key)
+}

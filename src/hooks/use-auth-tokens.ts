@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 
 import type { PlanResponse } from '@/lib/types'
 import {
+  allPlanIdsAtom,
   planEditTokensAtom,
   responseEditTokensAtom,
   responsePlanIdsAtom,
@@ -93,16 +94,8 @@ export function useCurrentUserResponse(responses: PlanResponse[] | undefined) {
 }
 
 export function useFirstKnownPlanId(): string | null {
-  const planEditTokens = useAtomValue(planEditTokensAtom)
-  const responsePlanIds = useAtomValue(responsePlanIdsAtom)
-
-  return useMemo(() => {
-    const createdPlanIds = Object.keys(planEditTokens)
-    const respondedPlanIds = Object.values(responsePlanIds)
-    const allPlanIds = [...new Set([...createdPlanIds, ...respondedPlanIds])]
-
-    return allPlanIds[0] ?? null
-  }, [planEditTokens, responsePlanIds])
+  const allPlanIds = useAtomValue(allPlanIdsAtom)
+  return allPlanIds[0] ?? null
 }
 
 function removeKeyFromRecord(record: Record<string, string>, key: string): Record<string, string> {

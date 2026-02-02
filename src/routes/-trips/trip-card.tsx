@@ -28,11 +28,14 @@ import { client } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ROUTES } from '@/lib/routes'
 import { usePlanEditTokens, useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
+import { TRIP_ROLES } from '@/lib/constants'
+
 import type { PlanWithResponses } from '@/lib/types'
+import type { TripRole } from '@/lib/constants'
 
 interface TripCardProps {
   plan: PlanWithResponses
-  role: 'creator' | 'respondent'
+  role: TripRole
 }
 
 export function TripCard({ plan, role }: TripCardProps) {
@@ -101,7 +104,7 @@ export function TripCard({ plan, role }: TripCardProps) {
     }
   }
 
-  const isCreator = role === 'creator'
+  const isCreator = role === TRIP_ROLES.CREATOR
   const isPending = deletePlanMutation.isPending || deleteResponseMutation.isPending
   const responses = plan.responses ?? []
   const responseCount = responses.length

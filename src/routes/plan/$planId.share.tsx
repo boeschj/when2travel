@@ -18,7 +18,7 @@ export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
 
 function ShareTripPage() {
   const { planId } = Route.useParams()
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
   const userResponse = useCurrentUserResponse(plan?.responses)
 

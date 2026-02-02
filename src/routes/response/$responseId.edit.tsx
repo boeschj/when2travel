@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
+import type React from 'react'
+import { useState, useRef } from 'react'
+import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeleteResponse } from '@/lib/mutations'
 import { client, parseErrorResponse } from '@/lib/api'
@@ -8,18 +9,8 @@ import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { NavigationBlocker } from '@/components/navigation-blocker'
 import type { ResponseFormData, PlanWithResponses } from '@/lib/types'
-import { ROUTES } from '@/lib/routes'
 import { z } from 'zod'
 import { CalendarDays } from 'lucide-react'
 import { AppHeader } from '@/components/shared/app-header'
@@ -34,7 +25,7 @@ const searchSchema = z.object({
   returnUrl: z.string().optional(),
 })
 
-export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
+export const Route = createFileRoute('/response/$responseId/edit')({
   loader: async ({ context: { queryClient }, params: { responseId } }) => {
     const editTokens = getStorageRecord(STORAGE_KEYS.responseEditTokens)
     const planIds = getStorageRecord(STORAGE_KEYS.responsePlanIds)
@@ -50,6 +41,9 @@ export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
       throw error
     }
   },
+  head: () => ({
+    meta: [{ title: 'Edit Availability | PlanTheTrip' }],
+  }),
   component: EditResponsePage,
   notFoundComponent: NotFound,
   errorComponent: EditResponseErrorComponent,
@@ -64,7 +58,8 @@ function EditResponsePage() {
   const queryClient = useQueryClient()
   const { getResponseEditToken, getResponsePlanId } = useResponseEditTokens()
   const [isDirty, setIsDirty] = useState(false)
-  const [resetFormFn, setResetFormFn] = useState<(() => void) | null>(null)
+  // HACK: Look for ways to replace this during refactor
+  const resetFormRef = useRef<(() => void) | null>(null)
 
   const editToken = getResponseEditToken(responseId)
   const storedPlanId = getResponsePlanId(responseId)
@@ -83,8 +78,7 @@ function EditResponsePage() {
       queryClient={queryClient}
       isDirty={isDirty}
       setIsDirty={setIsDirty}
-      resetFormFn={resetFormFn}
-      setResetFormFn={setResetFormFn}
+      resetFormRef={resetFormRef}
     />
   )
 }
@@ -98,8 +92,7 @@ interface EditResponseContentProps {
   queryClient: ReturnType<typeof useQueryClient>
   isDirty: boolean
   setIsDirty: (dirty: boolean) => void
-  resetFormFn: (() => void) | null
-  setResetFormFn: (fn: (() => void) | null) => void
+  resetFormRef: React.RefObject<(() => void) | null>
 }
 
 function EditResponseContent({
@@ -111,8 +104,7 @@ function EditResponseContent({
   queryClient,
   isDirty,
   setIsDirty,
-  resetFormFn,
-  setResetFormFn,
+  resetFormRef,
 }: EditResponseContentProps) {
   const { data } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId))
 
@@ -149,14 +141,14 @@ function EditResponseContent({
       return { previousPlan }
     },
     onSuccess: () => {
-      resetFormFn?.()
+      resetFormRef.current?.()
       toast.success('Your availability has been updated!')
       setTimeout(() => {
         if (returnUrl) {
           navigate({ to: returnUrl })
         } else {
           navigate({
-            to: ROUTES.PLAN,
+            to: '/plan/$planId',
             params: { planId: data.plan.id },
           })
         }
@@ -176,7 +168,7 @@ function EditResponseContent({
   const deleteResponseMutation = useDeleteResponse({
     onSuccess: () => {
       toast.success('Your response has been deleted')
-      navigate({ to: returnUrl ?? ROUTES.TRIPS })
+      navigate({ to: returnUrl ?? '/trips' })
     },
   })
 
@@ -195,7 +187,7 @@ function EditResponseContent({
   }
 
   const handleResetRef = (reset: () => void) => {
-    setResetFormFn(() => reset)
+    resetFormRef.current = reset
   }
 
   const { plan, response } = data
@@ -233,8 +225,8 @@ function EditResponseContent({
       </main>
 
       <NavigationBlocker
-        shouldBlock={isDirty}
-        onDiscard={() => resetFormFn?.()}
+        shouldBlock={isDirty && !updateResponseMutation.isPending && !updateResponseMutation.isSuccess && !deleteResponseMutation.isPending}
+        onDiscard={() => resetFormRef.current?.()}
       />
     </div>
   )
@@ -244,7 +236,7 @@ function EditResponseErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Failed to load response"
-      message={error.message || 'Please try navigating from the plan page.'}
+      message="Please try navigating from the plan page."
       onRetry={reset}
     />
   )
@@ -269,31 +261,6 @@ function PageHeading({ planName }: { planName: string }) {
   )
 }
 
-function NavigationBlocker({ shouldBlock, onDiscard }: { shouldBlock: boolean; onDiscard: () => void }) {
-  const { proceed, reset, status } = useBlocker({ shouldBlockFn: () => shouldBlock, withResolver: true })
-
-  const handleDiscard = () => {
-    onDiscard()
-    proceed?.()
-  }
-
-  return (
-    <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-          <AlertDialogDescription>
-            You have unsaved changes. If you leave now, your edits will be discarded.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => reset?.()}>Go Back</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDiscard}>Discard Changes</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
 
 function NoPermissionScreen() {
   return (

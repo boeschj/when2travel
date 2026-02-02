@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { ROUTE_IDS } from '@/lib/routes'
 import { AppHeader } from '@/components/shared/app-header'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import StorageBanner from './-trips/storage-banner'
@@ -12,7 +11,10 @@ import { useUserTrips } from './-trips/use-user-trips'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
-export const Route = createFileRoute(ROUTE_IDS.TRIPS)({
+export const Route = createFileRoute('/trips')({
+  head: () => ({
+    meta: [{ title: 'Your Trips | PlanTheTrip' }],
+  }),
   component: TripsPage,
   pendingComponent: () => null,
   errorComponent: TripsErrorComponent,
@@ -22,7 +24,7 @@ function TripsErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We couldn't load your trips. Please try again."}
+      message="We couldn't load your trips. Please try again."
       onRetry={reset}
     />
   )

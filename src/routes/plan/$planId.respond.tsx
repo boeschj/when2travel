@@ -1,19 +1,20 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState, useRef } from 'react'
+import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { toast } from 'sonner'
 import type { ResponseFormData } from '@/lib/types'
-import { ROUTES } from '@/lib/routes'
 import { z } from 'zod'
 import { BackgroundEffects } from '@/components/layout/background-effects'
 import { PageLayout, FormSection } from '@/components/layout/form-layout'
-import { useResponseEditTokens, useCurrentUserResponse } from '@/hooks/use-auth-tokens'
-import { LoadingScreen } from '@/components/shared/loading-screen'
+import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
+import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { format, parseISO } from 'date-fns'
 import { pluralize } from '@/lib/utils'
+import { NavigationBlocker } from '@/components/navigation-blocker'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
@@ -23,7 +24,18 @@ const searchSchema = z.object({
   returnUrl: z.string().optional(),
 })
 
-export const Route = createFileRoute(ROUTES.PLAN_RESPOND)({
+export const Route = createFileRoute('/plan/$planId/respond')({
+  head: () => ({
+    meta: [{ title: 'Add Your Availability | PlanTheTrip' }],
+  }),
+  beforeLoad: ({ params }) => {
+    const responsePlanIds = getStorageRecord(STORAGE_KEYS.responsePlanIds)
+    const hasExistingResponse = Object.values(responsePlanIds).includes(params.planId)
+
+    if (hasExistingResponse) {
+      throw redirect({ to: '/plan/$planId', params: { planId: params.planId }, replace: true })
+    }
+  },
   component: MarkAvailabilityPage,
   errorComponent: RespondErrorComponent,
   pendingComponent: () => null,
@@ -37,8 +49,9 @@ function MarkAvailabilityPage() {
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
   const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
-  const existingResponse = useCurrentUserResponse(plan?.responses)
-
+  const [isDirty, setIsDirty] = useState(false)
+  // HACK: Look for ways to replace this during refactor
+  const resetFormRef = useRef<(() => void) | null>(null)
   const createResponseMutation = useMutation({
     mutationFn: async (formData: ResponseFormData) => {
       const response = await $createResponse({
@@ -56,23 +69,30 @@ function MarkAvailabilityPage() {
       queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
-      const destination = returnUrl ?? ROUTES.PLAN
-      const navigationOptions = returnUrl ? { to: destination } : { to: destination, params: { planId } }
-      navigate(navigationOptions)
+      if (returnUrl) {
+        navigate({ to: returnUrl })
+      } else {
+        navigate({ to: '/plan/$planId', params: { planId } })
+      }
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to submit availability. Please try again.')
     },
   })
 
-  if (existingResponse) {
-    navigate({ to: ROUTES.PLAN, params: { planId }, replace: true })
-    return <LoadingScreen />
-  }
+  const hasUnsavedChanges = isDirty && !createResponseMutation.isPending && !createResponseMutation.isSuccess
 
   const formattedStartDate = format(parseISO(plan.startRange), 'MMM d')
   const formattedEndDate = format(parseISO(plan.endRange), 'MMM d, yyyy')
   const durationLabel = `${plan.numDays} ${pluralize(plan.numDays, 'day')}`
+  const handleDirtyChange = (dirty: boolean) => {
+    setIsDirty(dirty)
+  }
+
+  const handleResetRef = (reset: () => void) => {
+    resetFormRef.current = reset
+  }
+
   const existingRespondentNames = plan.responses?.map((r) => r.name) ?? []
 
   return (
@@ -91,6 +111,10 @@ function MarkAvailabilityPage() {
           </FormSection>
 
           <FormSection delay={0.1}>
+            <NavigationBlocker
+              shouldBlock={hasUnsavedChanges}
+              onDiscard={() => resetFormRef.current?.()}
+            />
             <ResponseForm
               startRange={plan.startRange}
               endRange={plan.endRange}
@@ -98,6 +122,8 @@ function MarkAvailabilityPage() {
               existingNames={existingRespondentNames}
               onSubmit={(data) => createResponseMutation.mutate(data)}
               isSubmitting={createResponseMutation.isPending}
+              onDirtyChange={handleDirtyChange}
+              onResetRef={handleResetRef}
             />
           </FormSection>
         </div>
@@ -110,7 +136,7 @@ function RespondErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We couldn't load this page. Please try again."}
+      message="We couldn't load this page. Please try again."
       onRetry={reset}
     />
   )

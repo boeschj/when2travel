@@ -1,4 +1,8 @@
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import {
+  atomWithStorage,
+  createJSONStorage,
+  unstable_withStorageValidator as withStorageValidator,
+} from 'jotai/utils'
 import { z } from 'zod'
 
 const STORAGE_SCHEMAS = {
@@ -36,13 +40,12 @@ export function createStorageAtom<K extends StorageKey>(
   key: K,
   defaultValue: StorageValue<K>,
 ) {
-  const storage = createJSONStorage<StorageValue<K>>(() => localStorage)
-  storage.getItem = (storageKey, initialValue) => {
-    const parsed = parseStorageValue(key, localStorage.getItem(storageKey))
-    return parsed ?? initialValue
-  }
+  const isValid = (value: unknown): value is StorageValue<K> =>
+    STORAGE_SCHEMAS[key].safeParse(value).success
 
-  return atomWithStorage<StorageValue<K>>(key, defaultValue, storage)
+  const storage = withStorageValidator(isValid)(createJSONStorage())
+
+  return atomWithStorage(key, defaultValue, storage, { getOnInit: true })
 }
 
 export type RecordStorageKey = {

@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
-import { ROUTES } from '@/lib/routes'
 import Logo from './logo'
 
 const wordmarkVariants = cva(
@@ -58,7 +57,7 @@ export function Wordmark({
 
   if (asLink) {
     return (
-      <AppLink to={ROUTES.HOME} className={containerClassName}>
+      <AppLink to="/" className={containerClassName}>
         <WordmarkContent size={size} color={color} />
       </AppLink>
     )

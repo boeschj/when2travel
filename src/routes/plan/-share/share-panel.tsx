@@ -1,4 +1,4 @@
-import { ROUTES, buildAbsoluteUrl } from '@/lib/routes'
+import { buildAbsoluteUrl } from '@/lib/routes'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -189,5 +189,5 @@ function StatusIndicator({ label, description, pulse }: StatusIndicatorProps) {
 }
 
 function buildShareLink(planId: string) {
-  return buildAbsoluteUrl(ROUTES.PLAN_RESPOND, { planId })
+  return buildAbsoluteUrl('/plan/$planId/respond', { planId })
 }

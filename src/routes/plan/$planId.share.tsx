@@ -4,13 +4,15 @@ import { planKeys } from '@/lib/queries'
 import { SharePanel } from './-share/share-panel'
 import { motion } from 'motion/react'
 import { format, parseISO } from 'date-fns'
-import { ROUTES } from '@/lib/routes'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
-export const Route = createFileRoute(ROUTES.PLAN_SHARE)({
+export const Route = createFileRoute('/plan/$planId/share')({
+  head: () => ({
+    meta: [{ title: 'Share Trip | PlanTheTrip' }],
+  }),
   component: ShareTripPage,
   errorComponent: ShareErrorComponent,
   pendingComponent: () => null,
@@ -27,7 +29,7 @@ function ShareTripPage() {
 
   const navigateToAddAvailability = () => {
     navigate({
-      to: ROUTES.PLAN_RESPOND,
+      to: '/plan/$planId/respond',
       params: { planId },
     })
   }
@@ -35,7 +37,7 @@ function ShareTripPage() {
   const navigateToEditAvailability = () => {
     if (!userResponse) return
     navigate({
-      to: ROUTES.RESPONSE_EDIT,
+      to: '/response/$responseId/edit',
       params: { responseId: userResponse.id },
     })
   }
@@ -72,7 +74,7 @@ function ShareErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We couldn't load this page. Please try again."}
+      message="We couldn't load this page. Please try again."
       onRetry={reset}
     />
   )

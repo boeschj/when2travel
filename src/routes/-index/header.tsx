@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { Button } from '@/components/ui/button'
 import { Wordmark } from '@/components/shared/wordmark'
-import { ROUTES } from '@/lib/routes'
 import { useFirstKnownPlanId } from '@/hooks/use-auth-tokens'
 
 export function Header() {
@@ -56,7 +55,7 @@ function HowItWorksLink() {
 }
 
 function TripActionButton({ hasExistingPlan }: { hasExistingPlan: boolean }) {
-  const route = hasExistingPlan ? ROUTES.TRIPS : ROUTES.CREATE
+  const route = hasExistingPlan ? '/trips' : '/create'
   const label = hasExistingPlan ? 'My Trips' : 'New Trip'
 
   return (

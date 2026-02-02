@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useBlocker, notFound } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { client, parseErrorResponse } from '@/lib/api'
@@ -7,7 +7,6 @@ import { ApiError } from '@/lib/errors'
 import type { InferRequestType, InferResponseType } from 'hono/client'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
-import { ROUTES } from '@/lib/routes'
 import { toast } from 'sonner'
 import { DateRangeField } from './-create/date-range-field'
 import { DurationPicker } from './-create/duration-picker'
@@ -18,16 +17,7 @@ import { AppHeader } from '@/components/shared/app-header'
 import { PageLayout, FormContainer, FormSection } from '@/components/layout/form-layout'
 import { ErrorScreen } from '@/components/shared/error-screen'
 import { NotFound } from '@/components/shared/not-found'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { NavigationBlocker } from '@/components/navigation-blocker'
 import { z } from 'zod'
 import { usePlanEditTokens } from '@/hooks/use-auth-tokens'
 
@@ -46,7 +36,7 @@ const searchSchema = z.object({
   returnUrl: z.string().optional(),
 })
 
-export const Route = createFileRoute(ROUTES.CREATE)({
+export const Route = createFileRoute('/create')({
   loader: async ({ context: { queryClient }, location }) => {
     const { planId } = searchSchema.parse(location.search)
     if (!planId) return
@@ -58,6 +48,9 @@ export const Route = createFileRoute(ROUTES.CREATE)({
       throw error
     }
   },
+  head: () => ({
+    meta: [{ title: 'Create a Trip | PlanTheTrip' }],
+  }),
   component: CreatePlanPage,
   notFoundComponent: NotFound,
   errorComponent: CreateErrorComponent,
@@ -246,7 +239,7 @@ function CreateModeContent({ navigate, savePlanEditToken }: CreateModeContentPro
     onSuccess: (createdPlan) => {
       savePlanEditToken(createdPlan.id, createdPlan.editToken)
       toast.success('Plan created successfully!')
-      navigate({ to: ROUTES.PLAN_SHARE, params: { planId: createdPlan.id } })
+      navigate({ to: '/plan/$planId/share', params: { planId: createdPlan.id } })
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create plan. Please try again.')
@@ -323,44 +316,12 @@ function CreateErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We couldn't load this page. Please try again."}
+      message="We couldn't load this page. Please try again."
       onRetry={reset}
     />
   )
 }
 
-interface NavigationBlockerProps {
-  shouldBlock: boolean
-  onDiscard: () => void
-}
-
-function NavigationBlocker({ shouldBlock, onDiscard }: NavigationBlockerProps) {
-  const { proceed, reset, status } = useBlocker({ shouldBlockFn: () => shouldBlock, withResolver: true })
-
-  const isBlocked = status === 'blocked'
-
-  const handleDiscard = () => {
-    onDiscard()
-    proceed?.()
-  }
-
-  return (
-    <AlertDialog open={isBlocked} onOpenChange={(open) => !open && reset?.()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-          <AlertDialogDescription>
-            You have unsaved changes. If you leave now, your edits will be discarded.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => reset?.()}>Go Back</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDiscard}>Discard Changes</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
 
 interface PageHeadingProps {
   isEditMode: boolean

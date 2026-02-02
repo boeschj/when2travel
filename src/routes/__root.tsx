@@ -1,4 +1,4 @@
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, HeadContent, Outlet } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
@@ -22,6 +22,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         enableSystem={false}
         disableTransitionOnChange
       >
+        <HeadContent />
         <Outlet />
         <Toaster />
       </ThemeProvider>
@@ -35,7 +36,7 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We encountered an unexpected error. Please try again."}
+      message="We encountered an unexpected error. Please try again."
       onRetry={reset}
     />
   )

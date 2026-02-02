@@ -19,7 +19,7 @@ import { useCompatibleRanges } from './-results/use-compatible-ranges'
 import { useSmartRecommendation } from './-results/use-smart-recommendation'
 import { useCurrentUserResponse, useResponseEditTokens, usePlanAuthContext } from '@/hooks/use-auth-tokens'
 import { getRespondentColor } from './-results/user-avatar'
-import { ROUTES, ROUTE_IDS, buildAbsoluteUrl } from '@/lib/routes'
+import { buildAbsoluteUrl } from '@/lib/routes'
 import { copyToClipboard } from '@/hooks/use-clipboard'
 
 import type { PlanResponse } from '@/lib/types'
@@ -27,7 +27,7 @@ import type { CompatibleDateRange } from '@/lib/types'
 import type { RecommendationResult } from './-results/recommendation-types'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
-export const Route = createFileRoute(ROUTE_IDS.PLAN)({
+export const Route = createFileRoute('/plan/$planId/')({
   component: PlanResultsPage,
   errorComponent: PlanErrorComponent,
   pendingComponent: () => null,
@@ -46,7 +46,7 @@ function PlanResultsPage() {
   const deletePlanMutation = useDeletePlan({
     onSuccess: () => {
       toast.success('Plan deleted successfully')
-      navigate({ to: ROUTES.TRIPS })
+      navigate({ to: '/trips' })
     },
   })
 
@@ -70,21 +70,21 @@ function PlanResultsPage() {
     const returnUrl = window.location.pathname
     if (currentUserResponse) {
       navigate({
-        to: ROUTES.RESPONSE_EDIT,
+        to: '/response/$responseId/edit',
         params: { responseId: currentUserResponse.id },
         search: { returnUrl }
       })
       return
     }
     navigate({
-      to: ROUTES.PLAN_RESPOND,
+      to: '/plan/$planId/respond',
       params: { planId },
       search: { returnUrl }
     })
   }
 
   function handleEditPlan() {
-    navigate({ to: ROUTES.CREATE, search: { planId, returnUrl: window.location.pathname } })
+    navigate({ to: '/create', search: { planId, returnUrl: window.location.pathname } })
   }
 
   function handleDateClick(date: Date) {
@@ -160,7 +160,7 @@ function PlanErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"
-      message={error.message || "We're having trouble loading this trip. Please try again in a moment."}
+      message="We're having trouble loading this trip. Please try again in a moment."
       onRetry={reset}
     />
   )
@@ -358,5 +358,5 @@ function getParticipantsForDate(
 }
 
 function buildShareUrl(planId: string): string {
-  return buildAbsoluteUrl(ROUTES.PLAN_RESPOND, { planId })
+  return buildAbsoluteUrl('/plan/$planId/respond', { planId })
 }

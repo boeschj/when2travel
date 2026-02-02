@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useDeletePlan, useDeleteResponse } from '@/lib/mutations'
-import { ROUTES } from '@/lib/routes'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { TRIP_ROLES } from '@/lib/constants'
 
@@ -100,7 +99,7 @@ export function TripCard({ plan, role }: TripCardProps) {
 
       <CardFooter className="gap-3 pb-6">
         <Button asChild className="flex-1">
-          <AppLink to={ROUTES.PLAN} params={{ planId: plan.id }}>
+          <AppLink to="/plan/$planId" params={{ planId: plan.id }}>
             View Trip
           </AppLink>
         </Button>
@@ -206,7 +205,7 @@ function SecondaryAction({
   if (isCreator) {
     return (
       <Button variant="outline" asChild>
-        <AppLink to={ROUTES.CREATE} search={{ planId, returnUrl: ROUTES.TRIPS }}>
+        <AppLink to="/create" search={{ planId, returnUrl: '/trips' }}>
           Edit Trip
         </AppLink>
       </Button>
@@ -218,9 +217,9 @@ function SecondaryAction({
   return (
     <Button variant="outline" asChild>
       <AppLink
-        to={ROUTES.RESPONSE_EDIT}
+        to="/response/$responseId/edit"
         params={{ responseId: userResponse.id }}
-        search={{ returnUrl: ROUTES.TRIPS }}
+        search={{ returnUrl: '/trips' }}
       >
         Edit Availability
       </AppLink>

@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { ArrowRight, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/routes'
 import { useFirstKnownPlanId } from '@/hooks/use-auth-tokens'
 
 const HERO_IMAGES: string[] = [
@@ -16,7 +15,7 @@ const PRIMARY_CTA_GLOW =
 export function Hero() {
   const mostRecentPlanId = useFirstKnownPlanId()
 
-  const primaryCtaRoute = mostRecentPlanId ? ROUTES.TRIPS : ROUTES.CREATE
+  const primaryCtaRoute = mostRecentPlanId ? '/trips' : '/create'
   const primaryCtaLabel = mostRecentPlanId ? 'My Trips' : 'Start Planning'
 
   return (

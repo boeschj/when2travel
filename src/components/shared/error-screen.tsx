@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { AlertCircle, Home, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/routes'
 import Logo from './logo'
 
 interface ErrorScreenProps {
@@ -35,7 +34,7 @@ function NotFoundScreen({ title, message }: { title: string; message: string }) 
         </h1>
         <p className="text-lg text-muted-foreground mb-8">{message}</p>
         <Button asChild size="lg" className="gap-2">
-          <AppLink to={ROUTES.TRIPS}>
+          <AppLink to="/trips">
             <Home className="w-5 h-5" />
             Back to Home Base
           </AppLink>

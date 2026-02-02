@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ROUTES } from '@/lib/routes'
 import { BackgroundGradients } from './-index/background-gradients'
 import { Header } from './-index/header'
 import { Hero } from './-index/hero'
@@ -7,7 +6,7 @@ import { FeaturesSection } from './-index/features-section'
 import { CtaSection } from './-index/cta-section'
 import { Footer } from './-index/footer'
 
-export const Route = createFileRoute(ROUTES.HOME)({
+export const Route = createFileRoute('/')({
   component: LandingPage,
 })
 

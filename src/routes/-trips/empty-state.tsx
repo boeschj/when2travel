@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { Compass } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/routes'
 
 export function EmptyState() {
   return (
@@ -16,7 +15,7 @@ export function EmptyState() {
         Start planning your next group trip or join one that's been shared with you.
       </p>
       <Button asChild size="lg">
-        <AppLink to={ROUTES.CREATE}>
+        <AppLink to="/create">
           Create Your First Trip
         </AppLink>
       </Button>

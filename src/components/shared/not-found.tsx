@@ -1,7 +1,6 @@
 import { AppLink } from '@/components/shared/app-link'
 import { Home, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/routes'
 
 export function NotFound() {
   return (
@@ -61,7 +60,7 @@ function LocationPin() {
 function HomeButton() {
   return (
     <Button asChild size="lg" className="gap-2">
-      <AppLink to={ROUTES.TRIPS}>
+      <AppLink to="/trips">
         <Home className="w-5 h-5" />
         Back to Home Base
       </AppLink>

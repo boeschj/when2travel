@@ -1,3 +1,4 @@
+import { linkOptions } from '@tanstack/react-router'
 import { AppLink } from '@/components/shared/app-link'
 import { Menu } from 'lucide-react'
 import { Wordmark } from '@/components/shared/wordmark'
@@ -8,8 +9,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useNavigation, type NavItem } from '@/hooks/use-navigation'
 import { cn } from '@/lib/utils'
+
+import type { LinkOptions } from '@tanstack/react-router'
+
+type NavItem = {
+  label: string
+  linkProps: LinkOptions
+  variant: 'link' | 'button'
+}
 
 interface AppHeaderProps {
   planId?: string
@@ -22,7 +30,7 @@ export default function AppHeader({
   variant = 'default',
   className,
 }: AppHeaderProps) {
-  const navItems = useNavigation({ planId })
+  const navItems = buildNavItems(planId)
 
   const isDefault = variant === 'default'
   const outerStyles = cn(
@@ -50,30 +58,33 @@ export default function AppHeader({
 export { AppHeader }
 
 function NavLink({ item }: { item: NavItem }) {
-  const linkStyles = cn(
-    'text-sm font-medium transition-colors',
-    item.isActive && 'text-primary',
-    !item.isActive && 'text-muted-foreground hover:text-primary'
-  )
-
   return (
-    <AppLink {...item.linkProps} className={linkStyles}>
+    <AppLink
+      {...item.linkProps}
+      className="text-sm font-medium transition-colors text-muted-foreground hover:text-primary"
+      activeProps={{ className: 'text-sm font-medium transition-colors text-primary' }}
+      activeOptions={{ exact: true }}
+    >
       {item.label}
     </AppLink>
   )
 }
 
 function NavButton({ item }: { item: NavItem }) {
-  const buttonVariant = item.isActive ? 'default' : 'outline'
-  const buttonStyles = cn(
-    !item.isActive && 'border-border hover:border-primary hover:text-primary'
-  )
-
   return (
-    <AppLink {...item.linkProps}>
-      <Button size="sm" variant={buttonVariant} className={buttonStyles}>
-        {item.label}
-      </Button>
+    <AppLink
+      {...item.linkProps}
+      activeOptions={{ exact: true }}
+    >
+      {({ isActive }) => (
+        <Button
+          size="sm"
+          variant={isActive ? 'default' : 'outline'}
+          className={cn(!isActive && 'border-border hover:border-primary hover:text-primary')}
+        >
+          {item.label}
+        </Button>
+      )}
     </AppLink>
   )
 }
@@ -128,16 +139,49 @@ function MobileNav({ items }: { items: NavItem[] }) {
 }
 
 function MobileNavLink({ item }: { item: NavItem }) {
-  const linkStyles = cn(
-    'w-full cursor-pointer',
-    item.isActive && 'text-primary font-medium'
-  )
-
   return (
     <DropdownMenuItem asChild>
-      <AppLink {...item.linkProps} className={linkStyles}>
+      <AppLink
+        {...item.linkProps}
+        className="w-full cursor-pointer"
+        activeProps={{ className: 'w-full cursor-pointer text-primary font-medium' }}
+        activeOptions={{ exact: true }}
+      >
         {item.label}
       </AppLink>
     </DropdownMenuItem>
   )
+}
+
+function buildNavItems(planId?: string): NavItem[] {
+  const items: NavItem[] = [
+    {
+      label: 'Create Plan',
+      linkProps: linkOptions({ to: '/create' }),
+      variant: 'link',
+    },
+  ]
+
+  if (planId) {
+    items.push(
+      {
+        label: 'View Plan',
+        linkProps: linkOptions({ to: '/plan/$planId', params: { planId } }),
+        variant: 'link',
+      },
+      {
+        label: 'Share Plan',
+        linkProps: linkOptions({ to: '/plan/$planId/share', params: { planId } }),
+        variant: 'link',
+      },
+    )
+  }
+
+  items.push({
+    label: 'My Trips',
+    linkProps: linkOptions({ to: '/trips' }),
+    variant: 'button',
+  })
+
+  return items
 }

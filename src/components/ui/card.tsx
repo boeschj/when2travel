@@ -10,7 +10,7 @@ const cardVariants = cva(
       variant: {
         default: "bg-card text-card-foreground border-border/5 shadow-2xl shadow-black/20",
         secondary: "bg-muted/60 backdrop-blur border shadow-2xl shadow-black/20",
-        action: "relative bg-surface-dark border-primary/40 shadow-[0_0_20px_rgba(70,236,19,0.15)] rounded-2xl overflow-hidden",
+        action: "relative bg-surface-dark border-primary/40 shadow-glow-muted rounded-2xl overflow-hidden",
       },
     },
     defaultVariants: {

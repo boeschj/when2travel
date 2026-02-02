@@ -7,10 +7,10 @@ interface AvailabilityBadgeProps {
 }
 
 const statusStyles = {
-  available: 'bg-primary shadow-[0_0_8px_rgba(70,236,19,0.5)]',
-  high: 'bg-calendar-high shadow-[0_0_4px_rgba(45,140,62,0.5)]',
-  partial: 'bg-calendar-partial shadow-[0_0_4px_rgba(90,122,61,0.3)]',
-  unavailable: 'bg-calendar-unavailable shadow-[0_0_2px_rgba(74,90,53,0.2)]',
+  available: 'bg-primary shadow-glow-sm',
+  high: 'bg-calendar-high shadow-glow-calendar-high',
+  partial: 'bg-calendar-partial shadow-glow-calendar-partial',
+  unavailable: 'bg-calendar-unavailable shadow-glow-calendar-unavailable',
 }
 
 const defaultLabels = {

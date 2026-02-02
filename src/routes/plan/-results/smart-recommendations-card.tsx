@@ -181,7 +181,6 @@ export function SmartRecommendationsCard({
   )
 }
 
-const PRIMARY_BUTTON_CLASS = 'w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto'
 const OUTLINE_BUTTON_CLASS = 'w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3'
 
 interface StatusIconBadgeProps {
@@ -289,7 +288,7 @@ interface DurationEditActionsProps {
 function DurationEditActions({ duration, onEditDuration, onEditAvailability }: DurationEditActionsProps) {
   return (
     <>
-      <Button onClick={onEditDuration} size="lg" className={PRIMARY_BUTTON_CLASS}>
+      <Button onClick={onEditDuration} size="cta">
         Change to {duration} Days
         <Pencil className="w-5 h-5 ml-2" />
       </Button>
@@ -309,7 +308,7 @@ interface PerfectMatchActionsProps {
 function PerfectMatchActions({ onCheckFlights, onAddToCalendar, onShare }: PerfectMatchActionsProps) {
   return (
     <>
-      <Button onClick={onCheckFlights} size="lg" className={PRIMARY_BUTTON_CLASS}>
+      <Button onClick={onCheckFlights} size="cta">
         Check Flights
         <Plane className="w-5 h-5 ml-2" />
       </Button>
@@ -330,7 +329,7 @@ function PerfectMatchActions({ onCheckFlights, onAddToCalendar, onShare }: Perfe
 function AddDatesActions({ onEditAvailability, onShare }: { onEditAvailability: () => void; onShare: () => void }) {
   return (
     <>
-      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+      <Button onClick={onEditAvailability} size="cta">
         Add Dates
         <UserPlus className="w-5 h-5 ml-2" />
       </Button>
@@ -376,7 +375,7 @@ interface BlockerActionsProps {
 function BlockerActions({ label, isCreator, onEditAvailability, onEditPlan, onShare }: BlockerActionsProps) {
   return (
     <>
-      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+      <Button onClick={onEditAvailability} size="cta">
         {label}
         <Pencil className="w-5 h-5 ml-2" />
       </Button>
@@ -395,7 +394,7 @@ interface GenericEditActionsProps {
 function GenericEditActions({ isCreator, onEditAvailability, onEditPlan, onShare }: GenericEditActionsProps) {
   return (
     <>
-      <Button onClick={onEditAvailability} size="lg" className={PRIMARY_BUTTON_CLASS}>
+      <Button onClick={onEditAvailability} size="cta">
         Edit Availability
         <Pencil className="w-5 h-5 ml-2" />
       </Button>

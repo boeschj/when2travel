@@ -188,8 +188,7 @@ function NoRespondentsState({ onAddAvailability, onShare }: NoRespondentsStatePr
         <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
           <Button
             onClick={onAddAvailability}
-            size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+            size="cta"
           >
             Add Dates
             <UserPlus className="w-5 h-5 ml-2" />

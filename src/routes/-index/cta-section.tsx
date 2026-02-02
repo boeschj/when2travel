@@ -69,7 +69,7 @@ function CtaButton() {
     <AppLink to="/create">
       <Button
         size="xl"
-        className="min-w-[220px] shadow-[0_0_40px_rgba(70,236,19,0.3)] hover:shadow-[0_0_60px_rgba(70,236,19,0.5)] hover:-translate-y-1"
+        className="min-w-[220px] shadow-glow-lg hover:shadow-glow-xl hover:-translate-y-1"
       >
         Start Planning Now
       </Button>

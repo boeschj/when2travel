@@ -110,8 +110,6 @@ function DateRangeLabel({
   )
 }
 
-const ACTION_BUTTON_CLASS =
-  'w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto'
 
 function SaveChangesButton({
   isPending,
@@ -136,7 +134,7 @@ function SaveChangesButton({
           <Button
             type="submit"
             disabled={isDisabled}
-            className={ACTION_BUTTON_CLASS}
+            size="cta"
           >
             <SaveChangesIcon isPending={isPending} />
             Save Changes
@@ -159,7 +157,7 @@ function CreatePlanButton({ isPending }: { isPending: boolean }) {
   if (isPending) {
     return (
       <motion.div className="w-full">
-        <Button type="submit" disabled className={ACTION_BUTTON_CLASS}>
+        <Button type="submit" disabled size="cta">
           Creating Plan...
         </Button>
       </motion.div>
@@ -172,7 +170,7 @@ function CreatePlanButton({ isPending }: { isPending: boolean }) {
       whileHover={hoverAnimation}
       whileTap={tapAnimation}
     >
-      <Button type="submit" className={ACTION_BUTTON_CLASS}>
+      <Button type="submit" size="cta">
         Next: Invite Friends
         <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
       </Button>

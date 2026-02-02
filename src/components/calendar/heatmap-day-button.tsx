@@ -101,7 +101,7 @@ function getHeatmapStyle(availableCount: number, totalCount: number): React.CSSP
   return {
     backgroundColor: stop.color,
     color: stop.textColor,
-    boxShadow: stop.glow ? '0 0 10px rgba(70, 236, 19, 0.4)' : undefined,
+    boxShadow: stop.glow ? 'var(--shadow-glow-10)' : undefined,
   }
 }
 
@@ -124,6 +124,6 @@ function getRespondentStyle(
   return {
     backgroundColor: 'var(--color-primary)',
     color: 'var(--color-primary-foreground)',
-    boxShadow: '0 0 10px rgba(70,236,19,0.4)',
+    boxShadow: 'var(--shadow-glow-10)',
   }
 }

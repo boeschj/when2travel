@@ -9,8 +9,6 @@ const HERO_IMAGES: string[] = [
   '/images/hero-3.webp',
 ]
 
-const PRIMARY_CTA_GLOW =
-  'shadow-[0_0_40px_rgba(70,236,19,0.3)] hover:shadow-[0_0_60px_rgba(70,236,19,0.5)] hover:-translate-y-1'
 
 export function Hero() {
   const mostRecentPlanId = useFirstKnownPlanId()
@@ -109,7 +107,7 @@ function HeroActions({ primaryCtaRoute, primaryCtaLabel }: HeroActionsProps) {
       <AppLink to={primaryCtaRoute} className="w-full sm:w-auto">
         <Button
           size="xl"
-          className={`w-full sm:w-auto ${PRIMARY_CTA_GLOW}`}
+          className="w-full sm:w-auto shadow-glow-lg hover:shadow-glow-xl hover:-translate-y-1"
         >
           <span>{primaryCtaLabel}</span>
           <ArrowRight className="size-5" aria-hidden="true" />

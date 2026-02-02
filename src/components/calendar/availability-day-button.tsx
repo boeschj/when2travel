@@ -35,7 +35,7 @@ export function AvailabilityDayButton({
     isDisabled && 'text-muted-foreground/50 cursor-not-allowed',
     isOutside && !isSelected && 'text-muted-foreground/50',
     isDefaultState && 'bg-primary/10 text-foreground hover:bg-primary/20',
-    isHighlighted && 'bg-primary text-primary-foreground font-bold shadow-[0_0_15px_rgba(70,236,19,0.4)]',
+    isHighlighted && 'bg-primary text-primary-foreground font-bold shadow-glow',
     className
   )
 

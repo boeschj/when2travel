@@ -156,7 +156,7 @@ function AvailabilitySection({
       />
       <Button
         onClick={onAddAvailability}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-lg py-4 rounded-full transition-all shadow-[0_0_20px_rgba(70,236,19,0.3)] h-auto"
+        size="cta"
       >
         <CalendarPlus className="size-5 mr-2" />
         Add My Availability

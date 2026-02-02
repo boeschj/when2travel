@@ -110,10 +110,28 @@
   --color-calendar-partial: #5a7a3d;
   --color-calendar-unavailable: #4a5a35;
   --color-calendar-disabled: #1a2c16;
+
+  /* Glow shadows */
+  --shadow-glow-xs: 0 0 4px rgba(70, 236, 19, 0.5);
+  --shadow-glow-sm: 0 0 8px rgba(70, 236, 19, 0.5);
+  --shadow-glow: 0 0 15px rgba(70, 236, 19, 0.4);
+  --shadow-glow-md: 0 0 20px rgba(70, 236, 19, 0.3);
+  --shadow-glow-lg: 0 0 40px rgba(70, 236, 19, 0.3);
+  --shadow-glow-xl: 0 0 60px rgba(70, 236, 19, 0.5);
+  --shadow-glow-subtle: 0 0 10px rgba(70, 236, 19, 0.1);
+  --shadow-glow-muted: 0 0 15px rgba(70, 236, 19, 0.15);
+  --shadow-glow-soft: 0 0 15px rgba(70, 236, 19, 0.2);
+  --shadow-glow-destructive: 0 0 15px rgba(239, 68, 68, 0.2);
+  --shadow-glow-warning: 0 0 15px rgba(245, 158, 11, 0.2);
+  --shadow-glow-status-red: 0 0 4px rgba(239, 68, 68, 0.5);
+  --shadow-glow-status-yellow: 0 0 4px rgba(234, 179, 8, 0.5);
+  --shadow-glow-calendar-high: 0 0 4px rgba(45, 140, 62, 0.5);
+  --shadow-glow-calendar-partial: 0 0 4px rgba(90, 122, 61, 0.3);
+  --shadow-glow-calendar-unavailable: 0 0 2px rgba(74, 90, 53, 0.2);
+  --shadow-glow-10: 0 0 10px rgba(70, 236, 19, 0.4);
 }
 
-/* Grid pattern for background */
-.bg-grid-pattern {
+@utility bg-grid-pattern {
   background-size: 40px 40px;
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -141,13 +159,12 @@
   }
 }
 
-.scrollbar-hide {
+@utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Custom toast animation - slide in from right */

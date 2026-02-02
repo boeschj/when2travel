@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 hover:shadow-[0_0_15px_rgba(70,236,19,0.4)]", //CLAUDE: extract this to a custom color variable
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 hover:shadow-glow",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 hover:scale-105 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -28,6 +28,7 @@ const buttonVariants = cva(
         icon: "size-11",
         "icon-sm": "size-9",
         "icon-lg": "size-12",
+        cta: "h-auto w-full px-6 py-4 text-lg font-extrabold shadow-glow-md",
       },
     },
     defaultVariants: {

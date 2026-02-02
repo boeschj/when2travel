@@ -52,15 +52,15 @@ interface LegendItemConfig {
 
 const RESULTS_LEGEND_ITEMS: LegendItemConfig[] = [
   {
-    dotClassName: 'bg-status-red shadow-[0_0_4px_rgba(239,68,68,0.5)]',
+    dotClassName: 'bg-status-red shadow-glow-status-red',
     label: 'Busy',
   },
   {
-    dotClassName: 'bg-status-yellow shadow-[0_0_4px_rgba(234,179,8,0.5)]',
+    dotClassName: 'bg-status-yellow shadow-glow-status-yellow',
     label: 'Partial',
   },
   {
-    dotClassName: 'bg-primary shadow-[0_0_8px_rgba(70,236,19,0.5)]',
+    dotClassName: 'bg-primary shadow-glow-sm',
     label: 'All Free',
   },
 ]

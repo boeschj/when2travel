@@ -11,7 +11,7 @@ export const dayButtonVariants = cva(
         disabled: 'text-muted-foreground/50 cursor-not-allowed',
       },
       emphasis: {
-        true: 'font-bold shadow-[0_0_15px_rgba(70,236,19,0.4)]',
+        true: 'font-bold shadow-glow',
         false: '',
       },
     },

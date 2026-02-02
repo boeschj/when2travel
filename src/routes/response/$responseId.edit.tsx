@@ -30,8 +30,6 @@ import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
 
-type LoaderResult = { hasPermission: false } | { hasPermission: true }
-
 const searchSchema = z.object({
   returnUrl: z.string().optional(),
 })
@@ -43,7 +41,7 @@ export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
     const editToken = editTokens[responseId]
     const storedPlanId = planIds[responseId]
 
-    if (!editToken || !storedPlanId) return { hasPermission: false } satisfies LoaderResult
+    if (!editToken || !storedPlanId) return
 
     try {
       await queryClient.ensureQueryData(responseKeys.withPlan(responseId, storedPlanId))
@@ -51,8 +49,6 @@ export const Route = createFileRoute(ROUTES.RESPONSE_EDIT)({
       if (error instanceof ApiError && error.isNotFound) throw notFound()
       throw error
     }
-
-    return { hasPermission: true } satisfies LoaderResult
   },
   component: EditResponsePage,
   notFoundComponent: NotFound,

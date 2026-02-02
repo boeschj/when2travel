@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { AlertCircle, Home, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
@@ -35,10 +35,10 @@ function NotFoundScreen({ title, message }: { title: string; message: string }) 
         </h1>
         <p className="text-lg text-muted-foreground mb-8">{message}</p>
         <Button asChild size="lg" className="gap-2">
-          <Link to={ROUTES.TRIPS}>
+          <AppLink to={ROUTES.TRIPS}>
             <Home className="w-5 h-5" />
             Back to Home Base
-          </Link>
+          </AppLink>
         </Button>
       </div>
     </div>

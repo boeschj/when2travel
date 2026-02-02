@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { ArrowRight, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
@@ -107,7 +107,7 @@ interface HeroActionsProps {
 function HeroActions({ primaryCtaRoute, primaryCtaLabel }: HeroActionsProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-5 pt-6 w-full justify-center">
-      <Link to={primaryCtaRoute} className="w-full sm:w-auto">
+      <AppLink to={primaryCtaRoute} className="w-full sm:w-auto">
         <Button
           size="xl"
           className={`w-full sm:w-auto ${PRIMARY_CTA_GLOW}`}
@@ -115,7 +115,7 @@ function HeroActions({ primaryCtaRoute, primaryCtaLabel }: HeroActionsProps) {
           <span>{primaryCtaLabel}</span>
           <ArrowRight className="size-5" aria-hidden="true" />
         </Button>
-      </Link>
+      </AppLink>
       <Button
         variant="outline"
         size="xl"

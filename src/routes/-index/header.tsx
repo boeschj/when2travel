@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Button } from '@/components/ui/button'
 import { Wordmark } from '@/components/shared/wordmark'
 import { ROUTES } from '@/lib/routes'
@@ -60,7 +60,7 @@ function TripActionButton({ hasExistingPlan }: { hasExistingPlan: boolean }) {
   const label = hasExistingPlan ? 'My Trips' : 'New Trip'
 
   return (
-    <Link to={route}>
+    <AppLink to={route}>
       <Button
         size="sm"
         variant="outline"
@@ -68,6 +68,6 @@ function TripActionButton({ hasExistingPlan }: { hasExistingPlan: boolean }) {
       >
         {label}
       </Button>
-    </Link>
+    </AppLink>
   )
 }

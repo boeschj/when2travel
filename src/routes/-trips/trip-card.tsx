@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Calendar, MoreVertical, Trash2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -100,9 +100,9 @@ export function TripCard({ plan, role }: TripCardProps) {
 
       <CardFooter className="gap-3 pb-6">
         <Button asChild className="flex-1">
-          <Link to={ROUTES.PLAN} params={{ planId: plan.id }}>
+          <AppLink to={ROUTES.PLAN} params={{ planId: plan.id }}>
             View Trip
-          </Link>
+          </AppLink>
         </Button>
         <SecondaryAction
           isCreator={isCreator}
@@ -206,9 +206,9 @@ function SecondaryAction({
   if (isCreator) {
     return (
       <Button variant="outline" asChild>
-        <Link to={ROUTES.CREATE} search={{ planId, returnUrl: ROUTES.TRIPS }}>
+        <AppLink to={ROUTES.CREATE} search={{ planId, returnUrl: ROUTES.TRIPS }}>
           Edit Trip
-        </Link>
+        </AppLink>
       </Button>
     )
   }
@@ -217,13 +217,13 @@ function SecondaryAction({
 
   return (
     <Button variant="outline" asChild>
-      <Link
+      <AppLink
         to={ROUTES.RESPONSE_EDIT}
         params={{ responseId: userResponse.id }}
         search={{ returnUrl: ROUTES.TRIPS }}
       >
         Edit Availability
-      </Link>
+      </AppLink>
     </Button>
   )
 }

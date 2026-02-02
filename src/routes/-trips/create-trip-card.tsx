@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Plus, Share2 } from 'lucide-react'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,16 +18,16 @@ export function CreateTripCard() {
       </CardContent>
       <CardFooter className="gap-3 pb-6">
         <Button asChild className="flex-1">
-          <Link to={ROUTES.CREATE}>
+          <AppLink to={ROUTES.CREATE}>
             <Plus className="h-4 w-4 mr-2" />
             New Trip
-          </Link>
+          </AppLink>
         </Button>
         <Button variant="outline" asChild>
-          <Link to={ROUTES.HOME}>
+          <AppLink to={ROUTES.HOME}>
             <Share2 className="h-4 w-4 mr-2" />
             Invite
-          </Link>
+          </AppLink>
         </Button>
       </CardFooter>
     </Card>

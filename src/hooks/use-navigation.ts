@@ -1,10 +1,11 @@
-import { useRouterState } from '@tanstack/react-router'
+import { useRouterState, linkOptions } from '@tanstack/react-router'
 import { ROUTES } from '@/lib/routes'
+
+import type { LinkOptions } from '@tanstack/react-router'
 
 export type NavItem = {
   label: string
-  to: string
-  params?: Record<string, string>
+  linkProps: LinkOptions
   isActive: boolean
   variant: 'link' | 'button'
 }
@@ -20,7 +21,7 @@ export function useNavigation({ planId }: NavigationContext) {
   const items: NavItem[] = [
     {
       label: 'Create Plan',
-      to: ROUTES.CREATE,
+      linkProps: linkOptions({ to: ROUTES.CREATE }),
       isActive: matchesCurrentPath(currentPath, ROUTES.CREATE),
       variant: 'link',
     },
@@ -30,15 +31,13 @@ export function useNavigation({ planId }: NavigationContext) {
     items.push(
       {
         label: 'View Plan',
-        to: ROUTES.PLAN,
-        params: { planId },
+        linkProps: linkOptions({ to: ROUTES.PLAN, params: { planId } }),
         isActive: matchesCurrentPath(currentPath, ROUTES.PLAN, { planId }),
         variant: 'link',
       },
       {
         label: 'Share Plan',
-        to: ROUTES.PLAN_SHARE,
-        params: { planId },
+        linkProps: linkOptions({ to: ROUTES.PLAN_SHARE, params: { planId } }),
         isActive: matchesCurrentPath(currentPath, ROUTES.PLAN_SHARE, { planId }),
         variant: 'link',
       },
@@ -47,7 +46,7 @@ export function useNavigation({ planId }: NavigationContext) {
 
   items.push({
     label: 'My Trips',
-    to: ROUTES.TRIPS,
+    linkProps: linkOptions({ to: ROUTES.TRIPS }),
     isActive: matchesCurrentPath(currentPath, ROUTES.TRIPS),
     variant: 'button',
   })

@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Compass } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
@@ -16,9 +16,9 @@ export function EmptyState() {
         Start planning your next group trip or join one that's been shared with you.
       </p>
       <Button asChild size="lg">
-        <Link to={ROUTES.CREATE}>
+        <AppLink to={ROUTES.CREATE}>
           Create Your First Trip
-        </Link>
+        </AppLink>
       </Button>
     </div>
   )

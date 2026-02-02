@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Home, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/routes'
@@ -61,10 +61,10 @@ function LocationPin() {
 function HomeButton() {
   return (
     <Button asChild size="lg" className="gap-2">
-      <Link to={ROUTES.TRIPS}>
+      <AppLink to={ROUTES.TRIPS}>
         <Home className="w-5 h-5" />
         Back to Home Base
-      </Link>
+      </AppLink>
     </Button>
   )
 }

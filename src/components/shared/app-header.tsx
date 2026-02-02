@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { Menu } from 'lucide-react'
 import { Wordmark } from '@/components/shared/wordmark'
 import { Button } from '@/components/ui/button'
@@ -49,18 +49,7 @@ export default function AppHeader({
 
 export { AppHeader }
 
-function buildLinkProps(item: NavItem) {
-  const props: { to: string; params?: Record<string, string> } = {
-    to: item.to,
-  }
-  if (item.params) {
-    props.params = item.params
-  }
-  return props
-}
-
 function NavLink({ item }: { item: NavItem }) {
-  const linkProps = buildLinkProps(item)
   const linkStyles = cn(
     'text-sm font-medium transition-colors',
     item.isActive && 'text-primary',
@@ -68,26 +57,24 @@ function NavLink({ item }: { item: NavItem }) {
   )
 
   return (
-    <Link {...linkProps} className={linkStyles}>
+    <AppLink {...item.linkProps} className={linkStyles}>
       {item.label}
-    </Link>
+    </AppLink>
   )
 }
 
 function NavButton({ item }: { item: NavItem }) {
-  const linkProps = buildLinkProps(item)
-
   const buttonVariant = item.isActive ? 'default' : 'outline'
   const buttonStyles = cn(
     !item.isActive && 'border-border hover:border-primary hover:text-primary'
   )
 
   return (
-    <Link {...linkProps}>
+    <AppLink {...item.linkProps}>
       <Button size="sm" variant={buttonVariant} className={buttonStyles}>
         {item.label}
       </Button>
-    </Link>
+    </AppLink>
   )
 }
 
@@ -141,7 +128,6 @@ function MobileNav({ items }: { items: NavItem[] }) {
 }
 
 function MobileNavLink({ item }: { item: NavItem }) {
-  const linkProps = buildLinkProps(item)
   const linkStyles = cn(
     'w-full cursor-pointer',
     item.isActive && 'text-primary font-medium'
@@ -149,9 +135,9 @@ function MobileNavLink({ item }: { item: NavItem }) {
 
   return (
     <DropdownMenuItem asChild>
-      <Link {...linkProps} className={linkStyles}>
+      <AppLink {...item.linkProps} className={linkStyles}>
         {item.label}
-      </Link>
+      </AppLink>
     </DropdownMenuItem>
   )
 }

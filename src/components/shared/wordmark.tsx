@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { AppLink } from '@/components/shared/app-link'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/routes'
@@ -58,9 +58,9 @@ export function Wordmark({
 
   if (asLink) {
     return (
-      <Link to={ROUTES.HOME} className={containerClassName}>
+      <AppLink to={ROUTES.HOME} className={containerClassName}>
         <WordmarkContent size={size} color={color} />
-      </Link>
+      </AppLink>
     )
   }
 

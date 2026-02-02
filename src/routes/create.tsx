@@ -49,12 +49,10 @@ const searchSchema = z.object({
 export const Route = createFileRoute(ROUTES.CREATE)({
   loader: async ({ context: { queryClient }, location }) => {
     const { planId } = searchSchema.parse(location.search)
-
-    if (!planId) return { mode: 'create' as const }
+    if (!planId) return
 
     try {
-      const plan = await queryClient.ensureQueryData(planKeys.detail(planId))
-      return { mode: 'edit' as const, plan }
+      await queryClient.ensureQueryData(planKeys.detail(planId))
     } catch (error) {
       if (error instanceof ApiError && error.isNotFound) throw notFound()
       throw error

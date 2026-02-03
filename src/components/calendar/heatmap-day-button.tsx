@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useCalendarContext } from './calendar-context'
 import { useDayButtonFocus } from './use-day-button-focus'
-import { DisabledDayButton } from './disabled-day-button'
+import { DayButton } from './day-button'
 
 type DayButtonProps = React.ComponentProps<typeof DayButtonType>
 
@@ -36,7 +36,7 @@ export function HeatmapDayButton({
   }
 
   if (modifiers.disabled || modifiers.outside || !data) {
-    return <DisabledDayButton className={className} day={day} modifiers={modifiers} {...props} />
+    return <DayButton mode="display" className={className} day={day} modifiers={modifiers} {...props} />
   }
 
   const hasRespondentFilter = !!selectedRespondentId

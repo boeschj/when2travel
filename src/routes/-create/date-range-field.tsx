@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
-import { DefaultDayButton } from '@/components/calendar/default-day-button'
+import { DayButton } from '@/components/calendar/day-button'
 import { CalendarDropdown } from '@/components/calendar/calendar-dropdown'
 import { useFormFieldContext } from '@/components/ui/tanstack-form'
 
@@ -72,7 +72,7 @@ export function DateRangeField() {
           button_next: 'p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed',
         }}
         components={{
-          DayButton: DefaultDayButton,
+          DayButton,
           Dropdown: CalendarDropdown,
           Chevron: CalendarChevron,
         }}

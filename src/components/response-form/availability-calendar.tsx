@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { parseISO, startOfMonth, addMonths, isSameMonth } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import { CalendarProvider } from '@/components/calendar/calendar-context'
-import { AvailabilityDayButton } from '@/components/calendar/availability-day-button'
+import { DayButton } from '@/components/calendar/day-button'
 import { useMonthNavigation } from '@/components/calendar/use-month-navigation'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
@@ -103,7 +103,7 @@ export function AvailabilityCalendar({
         className={cn('bg-transparent p-0', className)}
         classNames={calendarClassNames}
         components={{
-          DayButton: AvailabilityDayButton,
+          DayButton: (props) => <DayButton mode="multiselect" {...props} />,
         }}
       />
     </CalendarProvider>

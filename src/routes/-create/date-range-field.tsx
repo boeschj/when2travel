@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
-import { DefaultDayButton, CalendarDropdown } from '@/components/calendar'
+import { DefaultDayButton } from '@/components/calendar/default-day-button'
+import { CalendarDropdown } from '@/components/calendar/calendar-dropdown'
 import { useFormFieldContext } from '@/components/ui/tanstack-form'
 
 const MAX_MONTHS_AHEAD = 24

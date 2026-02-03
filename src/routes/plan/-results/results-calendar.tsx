@@ -2,13 +2,10 @@ import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { format, parseISO, addMonths, eachDayOfInterval } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
-import {
-  CalendarProvider,
-  CalendarNavHeader,
-  HeatmapDayButton,
-  useMonthNavigation,
-  type AvailabilityData,
-} from '@/components/calendar'
+import { CalendarProvider, type AvailabilityData } from '@/components/calendar/calendar-context'
+import { CalendarNavHeader } from '@/components/calendar/calendar-nav-header'
+import { HeatmapDayButton } from '@/components/calendar/heatmap-day-button'
+import { useMonthNavigation } from '@/components/calendar/use-month-navigation'
 import type { PlanResponse } from '@/lib/types'
 
 interface ResultsCalendarProps {

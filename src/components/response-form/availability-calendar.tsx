@@ -2,11 +2,9 @@ import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { parseISO, startOfMonth, addMonths, isSameMonth } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
-import {
-  CalendarProvider,
-  AvailabilityDayButton,
-  useMonthNavigation,
-} from '@/components/calendar'
+import { CalendarProvider } from '@/components/calendar/calendar-context'
+import { AvailabilityDayButton } from '@/components/calendar/availability-day-button'
+import { useMonthNavigation } from '@/components/calendar/use-month-navigation'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
 interface AvailabilityCalendarProps {

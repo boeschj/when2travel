@@ -156,7 +156,7 @@ function PlanResultsPage() {
   )
 }
 
-function PlanErrorComponent({ error, reset }: ErrorComponentProps) {
+function PlanErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"

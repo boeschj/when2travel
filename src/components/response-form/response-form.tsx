@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { useResponseFormState } from './use-response-form-state'
+import { useDateInteraction } from './use-date-interaction'
 import { NameInputCard } from './name-input-card'
 import { SelectDatesCard } from './select-dates-card'
 import { ManageDatesCard } from './manage-dates-card'
@@ -14,162 +14,151 @@ import {
   AlertDialogAction,
   AlertDialogCancel
 } from '@/components/ui/alert-dialog'
-import type { ResponseFormData, PlanWithResponses } from '@/lib/types'
+import type { PlanWithResponses } from '@/lib/types'
+import { withForm, useFormFieldContext } from '@/components/ui/tanstack-form'
 
-type WarningType = 'noDates' | 'noCompatibleWindows' | null
+export interface ResponseFormValues {
+  name: string
+  selectedDates: string[]
+}
+
+const responseFormDefaults: ResponseFormValues = {
+  name: '',
+  selectedDates: [],
+}
 
 interface ResponseFormProps {
   startRange: PlanWithResponses['startRange']
   endRange: PlanWithResponses['endRange']
   numDays: number
-  initialName?: string
-  initialDates?: string[]
   existingNames?: string[]
-  onSubmit: (data: ResponseFormData) => void
   isSubmitting?: boolean
   isEditMode?: boolean
-  onDirtyChange?: (isDirty: boolean) => void
-  onResetRef?: (reset: () => void) => void
   onDelete?: () => void
   isDeleting?: boolean
   className?: string
 }
 
-export function ResponseForm({
-  startRange,
-  endRange,
-  numDays,
-  initialName = '',
-  initialDates = [],
-  existingNames = [],
-  onSubmit,
-  isSubmitting,
-  isEditMode = false,
-  onDirtyChange,
-  onResetRef,
-  onDelete,
-  isDeleting,
-  className
-}: ResponseFormProps) {
+export const ResponseForm = withForm({
+  defaultValues: responseFormDefaults,
+  props: {} as ResponseFormProps,
+  render: function ResponseFormRender({ form, startRange, endRange, numDays, existingNames = [], isSubmitting, isEditMode = false, onDelete, isDeleting, className }) {
+    const [showNoDatesWarning, setShowNoDatesWarning] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      const nameErrors = await form.validateField('name', 'submit')
+      if (nameErrors.length > 0) return
+
+      const selectedDates = form.getFieldValue('selectedDates')
+      const hasNoDates = selectedDates.length === 0
+      if (hasNoDates) {
+        setShowNoDatesWarning(true)
+        return
+      }
+
+      form.handleSubmit()
+    }
+
+    const handleWarningConfirm = () => {
+      form.handleSubmit()
+      setShowNoDatesWarning(false)
+    }
+
+    const handleWarningDismiss = () => setShowNoDatesWarning(false)
+
+    return (
+      <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
+        <form.AppField name="selectedDates">
+          {() => (
+            <DateInteractionSection
+              startRange={startRange}
+              endRange={endRange}
+              numDays={numDays}
+            />
+          )}
+        </form.AppField>
+
+        <form.AppField
+          name="name"
+          validators={{
+            onSubmit: ({ value }) => validateName(value, existingNames),
+          }}
+        >
+          {(field) => {
+            const hasVisibleError = field.state.meta.isTouched && !field.state.meta.isValid
+            let errorMessage: string | undefined = undefined
+            if (hasVisibleError) {
+              errorMessage = String(field.state.meta.errors[0])
+            }
+
+            return (
+              <NameInputCard
+                name={field.state.value}
+                onNameChange={field.handleChange}
+                isSubmitting={isSubmitting}
+                isEditMode={isEditMode}
+                hasChanges={form.state.isDirty}
+                error={errorMessage}
+                onDelete={onDelete}
+                isDeleting={isDeleting}
+              />
+            )
+          }}
+        </form.AppField>
+
+        <NoDatesWarningDialog
+          isOpen={showNoDatesWarning}
+          onConfirm={handleWarningConfirm}
+          onDismiss={handleWarningDismiss}
+        />
+      </form>
+    )
+  },
+})
+
+interface DateInteractionSectionProps {
+  startRange: string
+  endRange: string
+  numDays: number
+}
+
+function DateInteractionSection({ startRange, endRange, numDays }: DateInteractionSectionProps) {
+  const field = useFormFieldContext<string[]>()
+
   const {
-    name,
-    setName,
-    selectedDates,
+    selectedDatesSet,
     selectedRangeIds,
     rangeStart,
     availableRanges,
     unavailableRanges,
     compatibleWindowsCount,
     hasSelectedRanges,
-    isDirty,
     handleDateClick,
     toggleRangeSelection,
     deleteSelectedRanges,
     markAllAs,
-    getFormData,
-    reset
-  } = useResponseFormState({
+  } = useDateInteraction({
     startRange,
     endRange,
     numDays,
-    initialName,
-    initialDates
+    selectedDates: field.state.value,
+    onDatesChange: field.handleChange,
   })
 
-  const [nameError, setNameError] = useState<string | null>(null)
-  const [warningType, setWarningType] = useState<WarningType>(null)
-  const [pendingFormData, setPendingFormData] = useState<ResponseFormData | null>(null)
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty)
-  }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-    onResetRef?.(reset)
-  }, [reset, onResetRef])
-
-  const handleNameChange = (value: string) => {
-    setName(value)
-    if (nameError) setNameError(null)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const formData = getFormData()
-
-    const validationError = validateName(formData.name, existingNames)
-    if (validationError) {
-      setNameError(validationError)
-      return
-    }
-
-    const hasNoDates = formData.availableDates.length === 0
-    if (hasNoDates) {
-      setPendingFormData(formData)
-      setWarningType('noDates')
-      return
-    }
-
-    const hasNoCompatibleWindows = compatibleWindowsCount === 0
-    if (hasNoCompatibleWindows) {
-      setPendingFormData(formData)
-      setWarningType('noCompatibleWindows')
-      return
-    }
-
-    onSubmit(formData)
-  }
-
-  const handleConfirmSubmit = () => {
-    if (pendingFormData) {
-      onSubmit(pendingFormData)
-    }
-    setWarningType(null)
-    setPendingFormData(null)
-  }
-
-  const dismissWarning = () => {
-    setWarningType(null)
-    setPendingFormData(null)
-  }
-
-  const isWarningOpen = warningType !== null
-  const warningTitle = getWarningTitle(warningType)
-  const warningDescription = getWarningDescription(warningType, numDays)
-
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
-      <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
-        <div className="flex flex-col gap-6">
-          <SelectDatesCard
-            startRange={startRange}
-            endRange={endRange}
-            selectedDates={Array.from(selectedDates)}
-            compatibleWindowsCount={compatibleWindowsCount}
-            rangeStart={rangeStart}
-            onDateClick={handleDateClick}
-            onMarkAllAs={markAllAs}
-            availableRanges={availableRanges}
-            unavailableRanges={unavailableRanges}
-            selectedRangeIds={selectedRangeIds}
-            hasSelectedRanges={hasSelectedRanges}
-            onToggleRangeSelection={toggleRangeSelection}
-            onDeleteSelected={deleteSelectedRanges}
-          />
-
-          <NameInputCard
-            name={name}
-            onNameChange={handleNameChange}
-            isSubmitting={isSubmitting}
-            isEditMode={isEditMode}
-            hasChanges={isDirty}
-            error={nameError ?? undefined}
-            onDelete={onDelete}
-            isDeleting={isDeleting}
-          />
-        </div>
-
-        <ManageDatesCard
+    <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
+      <div className="flex flex-col gap-6">
+        <SelectDatesCard
+          startRange={startRange}
+          endRange={endRange}
+          selectedDates={Array.from(selectedDatesSet)}
+          compatibleWindowsCount={compatibleWindowsCount}
+          rangeStart={rangeStart}
+          onDateClick={handleDateClick}
+          onMarkAllAs={markAllAs}
           availableRanges={availableRanges}
           unavailableRanges={unavailableRanges}
           selectedRangeIds={selectedRangeIds}
@@ -179,23 +168,44 @@ export function ResponseForm({
         />
       </div>
 
-      <AlertDialog open={isWarningOpen} onOpenChange={(open) => !open && dismissWarning()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{warningTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{warningDescription}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={dismissWarning}>Go back</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>Submit anyway</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </form>
+      <ManageDatesCard
+        availableRanges={availableRanges}
+        unavailableRanges={unavailableRanges}
+        selectedRangeIds={selectedRangeIds}
+        hasSelectedRanges={hasSelectedRanges}
+        onToggleRangeSelection={toggleRangeSelection}
+        onDeleteSelected={deleteSelectedRanges}
+      />
+    </div>
   )
 }
 
-function validateName(value: string, existingNames: string[]): string | null {
+interface NoDatesWarningDialogProps {
+  isOpen: boolean
+  onConfirm: () => void
+  onDismiss: () => void
+}
+
+function NoDatesWarningDialog({ isOpen, onConfirm, onDismiss }: NoDatesWarningDialogProps) {
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Wait! You have no available dates</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will indicate you're unavailable for the entire period. Are you sure you want to continue?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onDismiss}>Go back</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Submit anyway</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+function validateName(value: string, existingNames: string[]): string | undefined {
   const trimmed = value.trim()
   if (!trimmed) return 'Name is required'
   if (trimmed.length < 2) return 'Name must be at least 2 characters'
@@ -206,21 +216,5 @@ function validateName(value: string, existingNames: string[]): string | null {
   )
   if (isDuplicate) return 'Someone with this name has already responded'
 
-  return null
-}
-
-function getWarningTitle(warningType: WarningType): string {
-  if (warningType === 'noDates') return 'Wait! You have no available dates'
-  if (warningType === 'noCompatibleWindows') return 'Wait! You have no compatible time ranges'
-  return ''
-}
-
-function getWarningDescription(warningType: WarningType, numDays: number): string {
-  if (warningType === 'noDates') {
-    return "This will indicate you're unavailable for the entire period. Are you sure you want to continue?"
-  }
-  if (warningType === 'noCompatibleWindows') {
-    return `Your selected dates don't include any ${numDays}-day windows. Your availability may not match what the group is looking for. Are you sure you want to continue?`
-  }
-  return ''
+  return undefined
 }

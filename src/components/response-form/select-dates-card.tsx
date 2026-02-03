@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { AvailabilityCalendar } from './availability-calendar'
 import { AvailabilityActions } from './availability-actions'
-import { cn, pluralize } from '@/lib/utils'
+import { pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
+import type { DateStatus } from './use-date-interaction'
 
 interface SelectDatesCardProps {
   startRange: string
@@ -14,7 +15,7 @@ interface SelectDatesCardProps {
   compatibleWindowsCount: number
   rangeStart: Date | null
   onDateClick: (date: Date) => void
-  onMarkAllAs: (status: 'available' | 'unavailable') => void
+  onMarkAllAs: (status: DateStatus) => void
   availableRanges: DateRange[]
   unavailableRanges: DateRange[]
   selectedRangeIds: Set<string>
@@ -105,7 +106,7 @@ function CompatibleWindowsBadge({ count }: CompatibleWindowsBadgeProps) {
   }
 
   return (
-    <Badge className={cn(badgeVariantClassName)}>
+    <Badge className={badgeVariantClassName}>
       {count} compatible {windowLabel}
     </Badge>
   )

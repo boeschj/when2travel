@@ -32,7 +32,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   errorComponent: RootErrorComponent,
 })
 
-function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+function RootErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"

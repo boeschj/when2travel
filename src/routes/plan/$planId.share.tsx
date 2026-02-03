@@ -70,7 +70,7 @@ function ShareTripPage() {
   )
 }
 
-function ShareErrorComponent({ error, reset }: ErrorComponentProps) {
+function ShareErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"

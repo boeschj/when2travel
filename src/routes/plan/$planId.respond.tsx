@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react'
 import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ResponseForm } from '@/components/response-form/response-form'
+import type { ResponseFormValues } from '@/components/response-form/response-form'
 import { toast } from 'sonner'
-import type { ResponseFormData } from '@/lib/types'
+import { useAppForm } from '@/components/ui/tanstack-form'
 import { z } from 'zod'
 import { BackgroundEffects } from '@/components/layout/background-effects'
 import { PageLayout, FormSection } from '@/components/layout/form-layout'
@@ -49,16 +49,14 @@ function MarkAvailabilityPage() {
   const queryClient = useQueryClient()
   const { saveResponseEditToken } = useResponseEditTokens()
   const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
-  const [isDirty, setIsDirty] = useState(false)
-  // HACK: Look for ways to replace this during refactor
-  const resetFormRef = useRef<(() => void) | null>(null)
+
   const createResponseMutation = useMutation({
-    mutationFn: async (formData: ResponseFormData) => {
+    mutationFn: async ({ name, selectedDates }: { name: string; selectedDates: string[] }) => {
       const response = await $createResponse({
         json: {
           planId,
-          name: formData.name,
-          availableDates: formData.availableDates,
+          name: name.trim(),
+          availableDates: [...selectedDates].sort(),
         },
       })
       if (!response.ok) throw await parseErrorResponse(response, 'Failed to submit availability')
@@ -69,29 +67,31 @@ function MarkAvailabilityPage() {
       queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
       toast.success('Your availability has been submitted!')
 
-      if (returnUrl) {
-        navigate({ to: returnUrl })
-      } else {
-        navigate({ to: '/plan/$planId', params: { planId } })
-      }
+      const destination = returnUrl || `/plan/${planId}`
+      navigate({ to: destination })
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to submit availability. Please try again.')
     },
   })
 
-  const hasUnsavedChanges = isDirty && !createResponseMutation.isPending && !createResponseMutation.isSuccess
+  const responseFormDefaults: ResponseFormValues = {
+    name: '',
+    selectedDates: [],
+  }
+
+  const form = useAppForm({
+    defaultValues: responseFormDefaults,
+    onSubmit: ({ value }) => {
+      createResponseMutation.mutate(value)
+    },
+  })
+
+  const hasUnsavedChanges = form.state.isDirty && !createResponseMutation.isPending && !createResponseMutation.isSuccess
 
   const formattedStartDate = format(parseISO(plan.startRange), 'MMM d')
   const formattedEndDate = format(parseISO(plan.endRange), 'MMM d, yyyy')
   const durationLabel = `${plan.numDays} ${pluralize(plan.numDays, 'day')}`
-  const handleDirtyChange = (dirty: boolean) => {
-    setIsDirty(dirty)
-  }
-
-  const handleResetRef = (reset: () => void) => {
-    resetFormRef.current = reset
-  }
 
   const existingRespondentNames = plan.responses?.map((r) => r.name) ?? []
 
@@ -113,18 +113,18 @@ function MarkAvailabilityPage() {
           <FormSection delay={0.1}>
             <NavigationBlocker
               shouldBlock={hasUnsavedChanges}
-              onDiscard={() => resetFormRef.current?.()}
+              onDiscard={() => form.reset()}
             />
-            <ResponseForm
-              startRange={plan.startRange}
-              endRange={plan.endRange}
-              numDays={plan.numDays}
-              existingNames={existingRespondentNames}
-              onSubmit={(data) => createResponseMutation.mutate(data)}
-              isSubmitting={createResponseMutation.isPending}
-              onDirtyChange={handleDirtyChange}
-              onResetRef={handleResetRef}
-            />
+            <form.AppForm>
+              <ResponseForm
+                form={form}
+                startRange={plan.startRange}
+                endRange={plan.endRange}
+                numDays={plan.numDays}
+                existingNames={existingRespondentNames}
+                isSubmitting={createResponseMutation.isPending}
+              />
+            </form.AppForm>
           </FormSection>
         </div>
       </main>
@@ -132,7 +132,7 @@ function MarkAvailabilityPage() {
   )
 }
 
-function RespondErrorComponent({ error, reset }: ErrorComponentProps) {
+function RespondErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"

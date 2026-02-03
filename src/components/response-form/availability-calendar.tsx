@@ -62,8 +62,8 @@ export function AvailabilityCalendar({
   const selectedDatesSet = useMemo(() => new Set(selectedDates), [selectedDates])
 
   const isEntireRangeWithinOneMonth = isSameMonth(dateRange.start, dateRange.end)
-  const shouldCollapsToSingleMonth = isMobile && isEntireRangeWithinOneMonth
-  const effectiveMonths = shouldCollapsToSingleMonth ? 1 : numberOfMonths
+  const shouldCollapseToSingleMonth = isMobile && isEntireRangeWithinOneMonth
+  const effectiveMonths = shouldCollapseToSingleMonth ? 1 : numberOfMonths
 
   const availabilityContext = useMemo(
     () => ({

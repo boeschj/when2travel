@@ -1,9 +1,10 @@
 import { Clock, Minus, Plus } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { pluralize } from '@/lib/utils'
-import type { NumDaysField } from './types'
+import { useFormFieldContext } from '@/components/ui/tanstack-form'
 
 const MIN_TRIP_LENGTH_DAYS = 1
 const MAX_TRIP_LENGTH_DAYS = 60
@@ -11,11 +12,8 @@ const MAX_TRIP_LENGTH_DAYS = 60
 const STEPPER_BUTTON_CLASS =
   'size-12 rounded-full bg-foreground/5 border border-foreground/10 text-foreground hover:bg-primary hover:text-foreground hover:border-primary transition-all duration-200 group'
 
-interface DurationPickerProps {
-  field: NumDaysField
-}
-
-export function DurationPicker({ field }: DurationPickerProps) {
+export function DurationPicker() {
+  const field = useFormFieldContext<number>()
   const currentValue = field.state.value
 
   const handleDecrement = () => {
@@ -53,7 +51,7 @@ function SectionHeader() {
 }
 
 interface StepperButtonProps {
-  icon: typeof Plus
+  icon: LucideIcon
   onClick: () => void
 }
 

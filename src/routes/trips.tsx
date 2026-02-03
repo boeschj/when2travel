@@ -20,7 +20,7 @@ export const Route = createFileRoute('/trips')({
   errorComponent: TripsErrorComponent,
 })
 
-function TripsErrorComponent({ error, reset }: ErrorComponentProps) {
+function TripsErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Something went wrong"

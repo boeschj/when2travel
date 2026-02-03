@@ -125,7 +125,7 @@ function StepNumber({ value }: { value: number }) {
 function FeatureIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div
-      className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-transparent flex items-center justify-center text-primary shadow-glow-muted group-hover:scale-110 transition-transform duration-300"
+      className="w-14 h-14 rounded-2xl bg-linear-to-br from-primary/20 to-transparent flex items-center justify-center text-primary shadow-glow-muted group-hover:scale-110 transition-transform duration-300"
       aria-hidden="true"
     >
       <Icon className="size-7" />

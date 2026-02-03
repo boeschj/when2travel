@@ -1,5 +1,3 @@
-import type React from 'react'
-import { useState, useRef } from 'react'
 import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeleteResponse } from '@/lib/mutations'
@@ -7,10 +5,10 @@ import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys, responseKeys } from '@/lib/queries'
 import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
+import { useAppForm } from '@/components/ui/tanstack-form'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { NavigationBlocker } from '@/components/navigation-blocker'
-import type { ResponseFormData, PlanWithResponses } from '@/lib/types'
 import { z } from 'zod'
 import { CalendarDays } from 'lucide-react'
 import { AppHeader } from '@/components/shared/app-header'
@@ -20,6 +18,7 @@ import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
 import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import type { PlanWithResponses } from '@/lib/types'
 
 const searchSchema = z.object({
   returnUrl: z.string().optional(),
@@ -54,12 +53,7 @@ export const Route = createFileRoute('/response/$responseId/edit')({
 function EditResponsePage() {
   const { responseId } = Route.useParams()
   const { returnUrl } = Route.useSearch()
-  const navigate = useNavigate({ from: Route.fullPath })
-  const queryClient = useQueryClient()
   const { getResponseEditToken, getResponsePlanId } = useResponseEditTokens()
-  const [isDirty, setIsDirty] = useState(false)
-  // HACK: Look for ways to replace this during refactor
-  const resetFormRef = useRef<(() => void) | null>(null)
 
   const editToken = getResponseEditToken(responseId)
   const storedPlanId = getResponsePlanId(responseId)
@@ -74,11 +68,6 @@ function EditResponsePage() {
       editToken={editToken}
       storedPlanId={storedPlanId}
       returnUrl={returnUrl}
-      navigate={navigate}
-      queryClient={queryClient}
-      isDirty={isDirty}
-      setIsDirty={setIsDirty}
-      resetFormRef={resetFormRef}
     />
   )
 }
@@ -88,11 +77,6 @@ interface EditResponseContentProps {
   editToken: string
   storedPlanId: string
   returnUrl: string | undefined
-  navigate: ReturnType<typeof useNavigate>
-  queryClient: ReturnType<typeof useQueryClient>
-  isDirty: boolean
-  setIsDirty: (dirty: boolean) => void
-  resetFormRef: React.RefObject<(() => void) | null>
 }
 
 function EditResponseContent({
@@ -100,98 +84,93 @@ function EditResponseContent({
   editToken,
   storedPlanId,
   returnUrl,
-  navigate,
-  queryClient,
-  isDirty,
-  setIsDirty,
-  resetFormRef,
 }: EditResponseContentProps) {
-  const { data } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId))
+  const navigate = useNavigate({ from: Route.fullPath })
+  const queryClient = useQueryClient()
+  const { plan, response } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId)).data
+
+  const planDetailQueryKey = planKeys.detail(plan.id).queryKey
+  const otherRespondentNames = plan.responses
+    ?.filter((existingResponse) => existingResponse.id !== responseId)
+    .map((existingResponse) => existingResponse.name) ?? []
+
+  const form = useAppForm({
+    defaultValues: {
+      name: response.name,
+      selectedDates: response.availableDates,
+    },
+    onSubmit: ({ value }) => {
+      updateResponseMutation.mutate(value)
+    },
+  })
 
   const updateResponseMutation = useMutation({
-    mutationFn: async (formData: ResponseFormData) => {
+    mutationFn: async ({ name, selectedDates }: { name: string; selectedDates: string[] }) => {
       const res = await client.responses[':id'].$put({
         param: { id: responseId },
         json: {
-          name: formData.name,
-          availableDates: formData.availableDates,
+          name: name.trim(),
+          availableDates: [...selectedDates].sort(),
           editToken,
         },
       })
       if (!res.ok) throw await parseErrorResponse(res, 'Failed to update response')
       return res.json()
     },
-    onMutate: async (newData) => {
-      await queryClient.cancelQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
+    onMutate: async (updatedValues) => {
+      await queryClient.cancelQueries({ queryKey: planDetailQueryKey })
 
-      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey)
+      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planDetailQueryKey)
 
-      queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          responses: old.responses?.map((r) =>
-            r.id === responseId
-              ? { ...r, name: newData.name, availableDates: newData.availableDates }
-              : r
-          ),
-        }
+      queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, (cachedPlan) => {
+        const hasCachedPlan = cachedPlan !== undefined
+        if (!hasCachedPlan) return cachedPlan
+
+        const sortedDates = [...updatedValues.selectedDates].sort()
+        const updatedResponses = cachedPlan.responses?.map((existingResponse) => {
+          if (existingResponse.id !== responseId) return existingResponse
+          return { ...existingResponse, name: updatedValues.name, availableDates: sortedDates }
+        })
+
+        return { ...cachedPlan, responses: updatedResponses }
       })
 
       return { previousPlan }
     },
     onSuccess: () => {
-      resetFormRef.current?.()
+      form.reset(form.state.values)
       toast.success('Your availability has been updated!')
+      const destination = returnUrl || `/plan/${plan.id}`
       setTimeout(() => {
-        if (returnUrl) {
-          navigate({ to: returnUrl })
-        } else {
-          navigate({
-            to: '/plan/$planId',
-            params: { planId: data.plan.id },
-          })
-        }
-      }, 0)
+        navigate({ to: destination })
+      }, 0) //HACK: Delay navigation away until one render cycle to prevent the navblocker from incorrectly triggering
     },
-    onError: (err, _newData, context) => {
+    onError: (err, _updatedValues, context) => {
       if (context?.previousPlan) {
-        queryClient.setQueryData<PlanWithResponses>(planKeys.detail(data.plan.id).queryKey, context.previousPlan)
+        queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, context.previousPlan)
       }
       toast.error(err.message || 'Failed to update availability')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: planKeys.detail(data.plan.id).queryKey })
+      queryClient.invalidateQueries({ queryKey: planDetailQueryKey })
     },
   })
 
   const deleteResponseMutation = useDeleteResponse({
     onSuccess: () => {
       toast.success('Your response has been deleted')
-      navigate({ to: returnUrl ?? '/trips' })
+      navigate({ to: returnUrl || '/trips' })
     },
   })
 
-  const handleSubmit = (formData: ResponseFormData) => {
-    updateResponseMutation.mutate(formData)
-  }
-
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete your response?')) {
-      deleteResponseMutation.mutate({ responseId, planId: data.plan.id })
+      deleteResponseMutation.mutate({ responseId, planId: plan.id })
     }
   }
 
-  const handleDirtyChange = (dirty: boolean) => {
-    setIsDirty(dirty)
-  }
-
-  const handleResetRef = (reset: () => void) => {
-    resetFormRef.current = reset
-  }
-
-  const { plan, response } = data
-  const otherRespondentNames = plan.responses?.filter((r) => r.id !== responseId).map((r) => r.name) ?? []
+  const isNavigationSafe = updateResponseMutation.isPending || updateResponseMutation.isSuccess || deleteResponseMutation.isPending
+  const shouldBlockNavigation = form.state.isDirty && !isNavigationSafe
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
@@ -205,34 +184,32 @@ function EditResponseContent({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <ResponseForm
-              startRange={plan.startRange}
-              endRange={plan.endRange}
-              numDays={plan.numDays}
-              initialName={response.name}
-              initialDates={response.availableDates}
-              existingNames={otherRespondentNames}
-              onSubmit={handleSubmit}
-              isSubmitting={updateResponseMutation.isPending}
-              isEditMode
-              onDirtyChange={handleDirtyChange}
-              onResetRef={handleResetRef}
-              onDelete={handleDelete}
-              isDeleting={deleteResponseMutation.isPending}
-            />
+            <form.AppForm>
+              <ResponseForm
+                form={form}
+                startRange={plan.startRange}
+                endRange={plan.endRange}
+                numDays={plan.numDays}
+                existingNames={otherRespondentNames}
+                isSubmitting={updateResponseMutation.isPending}
+                isEditMode
+                onDelete={handleDelete}
+                isDeleting={deleteResponseMutation.isPending}
+              />
+            </form.AppForm>
           </motion.div>
         </div>
       </main>
 
       <NavigationBlocker
-        shouldBlock={isDirty && !updateResponseMutation.isPending && !updateResponseMutation.isSuccess && !deleteResponseMutation.isPending}
-        onDiscard={() => resetFormRef.current?.()}
+        shouldBlock={shouldBlockNavigation}
+        onDiscard={() => form.reset()}
       />
     </div>
   )
 }
 
-function EditResponseErrorComponent({ error, reset }: ErrorComponentProps) {
+function EditResponseErrorComponent({ reset }: ErrorComponentProps) {
   return (
     <ErrorScreen
       title="Failed to load response"
@@ -260,7 +237,6 @@ function PageHeading({ planName }: { planName: string }) {
     </motion.div>
   )
 }
-
 
 function NoPermissionScreen() {
   return (

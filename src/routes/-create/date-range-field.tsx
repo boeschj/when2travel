@@ -1,5 +1,4 @@
 import type { DateRange, ChevronProps } from 'react-day-picker'
-import type { DateRangeField as DateRangeFieldType } from './types'
 
 import { useState } from 'react'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -10,19 +9,18 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { DefaultDayButton, CalendarDropdown } from '@/components/calendar'
+import { useFormFieldContext } from '@/components/ui/tanstack-form'
 
 const MAX_MONTHS_AHEAD = 24
 const SUNDAY = 0
 
-interface DateRangeFieldProps {
-  field: DateRangeFieldType
-}
-
-export function DateRangeField({ field }: DateRangeFieldProps) {
+export function DateRangeField() {
+  const field = useFormFieldContext<DateRange | undefined>()
   const today = new Date()
-  const [displayedMonth, setDisplayedMonth] = useState(field.state.value?.from ?? today)
-
   const selectedDateRange = field.state.value
+  const initialMonth = selectedDateRange?.from ?? today
+  const [displayedMonth, setDisplayedMonth] = useState(initialMonth)
+
   const isDateRangeSelected = Boolean(selectedDateRange?.from)
   const isClearButtonHidden = !isDateRangeSelected
   const earliestSelectableMonth = startOfMonth(today)
@@ -107,9 +105,13 @@ function DateRangeFieldHeader({ onClear, isClearButtonHidden }: DateRangeFieldHe
   )
 }
 
-function CalendarChevron({ orientation }: ChevronProps) {
-  const isLeftChevron = orientation === 'left'
-  const ChevronIcon = isLeftChevron ? ChevronLeft : ChevronRight
+const CHEVRON_ICONS = {
+  left: ChevronLeft,
+  right: ChevronRight,
+} as const
+
+function CalendarChevron({ orientation = 'left' }: ChevronProps) {
+  const ChevronIcon = CHEVRON_ICONS[orientation]
 
   return (
     <Button variant="ghost" size="icon-sm" asChild>

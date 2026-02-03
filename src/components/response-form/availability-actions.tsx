@@ -12,6 +12,8 @@ import { ChevronDown, CheckCircle, Ban, CalendarDays, Trash2 } from 'lucide-reac
 import { formatDateRangeDisplay, cn, pluralize } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 import type { LucideIcon } from 'lucide-react'
+import type { DateStatus } from './use-date-interaction'
+import { DATE_STATUS } from './use-date-interaction'
 
 interface DateRangeCheckboxItemProps {
   range: DateRange
@@ -172,13 +174,13 @@ function ManageDatesDropdown({
 
 const QUICK_ACTIONS = [
   {
-    status: 'available' as const,
+    status: DATE_STATUS.available,
     icon: CheckCircle,
     label: 'Mark all available',
     iconClassName: 'text-primary'
   },
   {
-    status: 'unavailable' as const,
+    status: DATE_STATUS.unavailable,
     icon: Ban,
     label: 'Mark all unavailable',
     iconClassName: ''
@@ -186,11 +188,11 @@ const QUICK_ACTIONS = [
 ] as const
 
 interface QuickActionMenuItemProps {
-  status: 'available' | 'unavailable'
+  status: DateStatus
   icon: LucideIcon
   label: string
   iconClassName: string
-  onMarkAllAs: (status: 'available' | 'unavailable') => void
+  onMarkAllAs: (status: DateStatus) => void
 }
 
 function QuickActionMenuItem({
@@ -211,7 +213,7 @@ function QuickActionMenuItem({
 }
 
 interface QuickActionsDropdownProps {
-  onMarkAllAs: (status: 'available' | 'unavailable') => void
+  onMarkAllAs: (status: DateStatus) => void
 }
 
 function QuickActionsDropdown({ onMarkAllAs }: QuickActionsDropdownProps) {
@@ -244,7 +246,7 @@ interface AvailabilityActionsProps {
   hasAnyRanges: boolean
   onToggleRangeSelection: (rangeId: string) => void
   onDeleteSelected: () => void
-  onMarkAllAs: (status: 'available' | 'unavailable') => void
+  onMarkAllAs: (status: DateStatus) => void
 }
 
 export function AvailabilityActions({

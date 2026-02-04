@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { AppLink } from '@/components/shared/app-link'
 import { Calendar, MoreVertical, Trash2 } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
-import { cn, pluralize } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,6 +25,7 @@ import {
 import { useDeletePlan, useDeleteResponse } from '@/lib/mutations'
 import { useCurrentUserResponse } from '@/hooks/use-auth-tokens'
 import { TRIP_ROLES } from '@/lib/constants'
+import { formatDateRange, buildDeleteLabelConfig } from './trip-card-utils'
 
 import type { PlanWithResponses } from '@/lib/types'
 import type { TripRole } from '@/lib/constants'
@@ -62,25 +62,18 @@ export function TripCard({ plan, role }: TripCardProps) {
   const responseCount = responses.length
   const dateRange = formatDateRange(plan.startRange, plan.endRange)
 
-  let roleBadgeLabel: string
-  let deleteLabel: string
-  let dialogTitle: string
-  let dialogDescription: string
-  let confirmLabel: string
-
-  if (isCreator) {
-    roleBadgeLabel = 'CREATOR'
-    deleteLabel = 'Delete Trip'
-    dialogTitle = 'Delete this trip?'
-    dialogDescription = `This action cannot be undone. This will permanently delete "${plan.name}" and all ${responseCount} ${pluralize(responseCount, 'response')}.`
-    confirmLabel = isPending ? 'Deleting...' : 'Delete'
-  } else {
-    roleBadgeLabel = 'RESPONDENT'
-    deleteLabel = 'Leave Trip'
-    dialogTitle = 'Leave this trip?'
-    dialogDescription = `This will remove your availability from "${plan.name}". You can rejoin later if you have the link.`
-    confirmLabel = isPending ? 'Leaving...' : 'Leave'
-  }
+  const {
+    roleBadgeLabel,
+    deleteLabel,
+    dialogTitle,
+    dialogDescription,
+    confirmLabel,
+  } = buildDeleteLabelConfig({
+    role,
+    planName: plan.name,
+    responseCount,
+    isPending,
+  })
 
   return (
     <Card className="hover:border-primary/30 transition-colors relative h-full">
@@ -266,9 +259,3 @@ function DeleteConfirmDialog({
   )
 }
 
-function formatDateRange(startRange: string | null, endRange: string | null) {
-  if (!startRange || !endRange) return 'Dates TBD'
-  const start = parseISO(startRange)
-  const end = parseISO(endRange)
-  return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
-}

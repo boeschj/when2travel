@@ -24,8 +24,7 @@ export function SharePanel({
   className
 }: SharePanelProps) {
   const shareLink = buildShareLink(planId)
-
-  const showAvailabilitySection = onAddAvailability || onViewAvailability
+  const showAvailabilitySection = Boolean(onAddAvailability || onViewAvailability)
 
   return (
     <div className="flex flex-col gap-6 h-full w-full">
@@ -82,7 +81,12 @@ function ShareInviteSection({ shareLink, planName }: ShareInviteSectionProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <SectionHeader />
+      <div className="flex items-center gap-3 text-foreground">
+        <div className="p-2 bg-primary/10 rounded-full text-primary">
+          <Share2 className="size-5" />
+        </div>
+        <h3 className="text-xl font-bold">Share Invite Link</h3>
+      </div>
 
       <p className="text-muted-foreground text-sm leading-relaxed">
         Copy this unique link to send to your group. Anyone with the link can vote on dates.
@@ -106,17 +110,6 @@ function ShareInviteSection({ shareLink, planName }: ShareInviteSectionProps) {
   )
 }
 
-function SectionHeader() {
-  return (
-    <div className="flex items-center gap-3 text-foreground">
-      <div className="p-2 bg-primary/10 rounded-full text-primary">
-        <Share2 className="size-5" />
-      </div>
-      <h3 className="text-xl font-bold">Share Invite Link</h3>
-    </div>
-  )
-}
-
 interface AvailabilitySectionProps {
   hasUserResponse?: boolean
   onAddAvailability?: () => void
@@ -128,13 +121,32 @@ function AvailabilitySection({
   onAddAvailability,
   onViewAvailability
 }: AvailabilitySectionProps) {
-  if (hasUserResponse) {
-    return (
-      <div className="flex flex-col gap-4">
-        <StatusIndicator
-          label="You've added your availability"
-          description="View or edit your submitted dates anytime."
+  const statusLabel = hasUserResponse
+    ? "You've added your availability"
+    : "Action Required"
+
+  const statusDescription = hasUserResponse
+    ? "View or edit your submitted dates anytime."
+    : "Don't forget to enter your own dates to get the ball rolling!"
+
+  const showPulse = !hasUserResponse
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start gap-3">
+        <div
+          className={cn(
+            'mt-1 size-2 rounded-full bg-primary shrink-0',
+            showPulse && 'animate-pulse'
+          )}
         />
+        <div>
+          <p className="text-foreground font-bold text-sm">{statusLabel}</p>
+          <p className="text-muted-foreground text-xs mt-1">{statusDescription}</p>
+        </div>
+      </div>
+
+      {hasUserResponse ? (
         <Button
           onClick={onViewAvailability}
           variant="secondary"
@@ -143,47 +155,12 @@ function AvailabilitySection({
           <Eye className="size-5 mr-2" />
           View My Availability
         </Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <StatusIndicator
-        label="Action Required"
-        description="Don't forget to enter your own dates to get the ball rolling!"
-        pulse
-      />
-      <Button
-        onClick={onAddAvailability}
-        size="cta"
-      >
-        <CalendarPlus className="size-5 mr-2" />
-        Add My Availability
-      </Button>
-    </div>
-  )
-}
-
-interface StatusIndicatorProps {
-  label: string
-  description: string
-  pulse?: boolean
-}
-
-function StatusIndicator({ label, description, pulse }: StatusIndicatorProps) {
-  return (
-    <div className="flex items-start gap-3">
-      <div
-        className={cn(
-          'mt-1 size-2 rounded-full bg-primary shrink-0',
-          pulse && 'animate-pulse'
-        )}
-      />
-      <div>
-        <p className="text-foreground font-bold text-sm">{label}</p>
-        <p className="text-muted-foreground text-xs mt-1">{description}</p>
-      </div>
+      ) : (
+        <Button onClick={onAddAvailability} size="cta">
+          <CalendarPlus className="size-5 mr-2" />
+          Add My Availability
+        </Button>
+      )}
     </div>
   )
 }

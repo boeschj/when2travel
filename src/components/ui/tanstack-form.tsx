@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { useId, createContext, useContext } from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import {
@@ -114,4 +113,12 @@ const { useAppForm, withForm } = createFormHook({
   formContext,
 })
 
-export { useAppForm, withForm, useFieldContext, useFormFieldContext, useFormContext }
+export {
+  useAppForm,
+  withForm,
+  useFieldContext,
+  useFormFieldContext,
+  useFormContext,
+  FieldControlWrapper as AppFieldControl,
+  FieldErrorWrapper as AppFieldError,
+}

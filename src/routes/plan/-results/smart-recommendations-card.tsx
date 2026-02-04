@@ -1,27 +1,39 @@
 import { useState } from 'react'
-import { format, parseISO } from 'date-fns'
 import {
-  CheckCircle2,
-  ThumbsUp,
-  Users,
-  AlertCircle,
-  AlertTriangle,
   Plane,
   Calendar,
   Share2,
   UserPlus,
   Pencil,
 } from 'lucide-react'
-import { cn, pluralize } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useShare } from '@/hooks/use-clipboard'
 import { AlternativeSuggestionsModal } from './alternative-suggestions-modal'
 
-import { RECOMMENDATION_STATUS } from './recommendation-types'
+import { RECOMMENDATION_STATUS, RECOMMENDATION_PRIORITY } from './recommendation-types'
+import {
+  buildGoogleCalendarUrl,
+  formatDateRangeDisplay,
+  getStatusIcon,
+  getStatusStyles,
+  derivePersonalizedCTA,
+  deriveAvailabilityText,
+} from './recommendation-utils'
 
-import type { RecommendationResult, RecommendationStatus, AlternativeWindow } from './recommendation-types'
+import type { RecommendationResult, AlternativeWindow, RecommendationPriority } from './recommendation-types'
+
+const ACTION_MODE = {
+  DURATION_EDIT: 'duration_edit',
+  PERFECT_MATCH: 'perfect_match',
+  ADD_DATES: 'add_dates',
+  BLOCKER_CTA: 'blocker_cta',
+  GENERIC_EDIT: 'generic_edit',
+} as const
+
+type ActionMode = (typeof ACTION_MODE)[keyof typeof ACTION_MODE]
 
 interface SmartRecommendationsCardProps {
   recommendationResult: RecommendationResult
@@ -67,12 +79,15 @@ export function SmartRecommendationsCard({
     blockerShiftDirection: recommendation.blockerShiftDirection,
   })
 
-  const isDurationTooLong = priority === 4
-  const showDurationEditCTA = isDurationTooLong && !!shorterTripSuggestion && !!onEditDuration
-  const showPerfectMatchActions = isPerfect && hasResponded
-  const showAddDatesPrompt = !hasResponded && !isDurationTooLong
-  const showBlockerCTA = hasResponded && !isPerfect && !!personalizedCTA && !isDurationTooLong
-  const showGenericEditCTA = hasResponded && !isPerfect && !personalizedCTA && !isDurationTooLong
+  const isDurationTooLong = priority === RECOMMENDATION_PRIORITY.DURATION_TOO_LONG
+  const actionMode = deriveActionMode({
+    priority,
+    isPerfect,
+    hasResponded,
+    hasShorterTripSuggestion: !!shorterTripSuggestion,
+    hasEditDurationCallback: !!onEditDuration,
+    personalizedCTA,
+  })
 
   const dateRangeDisplay = bestWindow && formatDateRangeDisplay(bestWindow.start, bestWindow.end)
   const availabilityText = deriveAvailabilityText(bestWindow, isPerfect)
@@ -103,10 +118,16 @@ export function SmartRecommendationsCard({
     <>
       <Card variant="action" className={cn('p-6 md:p-8 h-full', className)}>
         <CardContent className="p-0 flex flex-col items-center text-center gap-4">
-          <StatusIconBadge icon={StatusIcon} bgColor={statusStyles.bgColor} iconColor={statusStyles.iconColor} />
-          <HeadlineText text={headline} />
+          <div className={cn('w-16 h-16 rounded-full flex items-center justify-center', statusStyles.bgColor)}>
+            <StatusIcon className={cn('w-8 h-8', statusStyles.iconColor)} />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground">{headline}</h2>
           <p className="text-lg text-text-secondary">Your ideal trip dates are:</p>
-          {dateRangeDisplay && <DateRangeDisplay dateRange={dateRangeDisplay} />}
+          {dateRangeDisplay && (
+            <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
+              {dateRangeDisplay}
+            </h3>
+          )}
 
           {availabilityText && (
             <AvailabilitySection icon={StatusIcon} iconColor={statusStyles.iconColor} text={availabilityText} />
@@ -126,11 +147,16 @@ export function SmartRecommendationsCard({
           )}
 
           {showShorterTripWindows && shorterTripSuggestion && (
-            <ShorterTripSection duration={shorterTripSuggestion.duration} windows={shorterTripSuggestion.windows} />
+            <div className="w-full max-w-lg">
+              <p className="text-text-secondary text-sm mb-2">
+                Perfect {shorterTripSuggestion.duration}-day windows:
+              </p>
+              <AlternativeWindowsList windows={shorterTripSuggestion.windows} />
+            </div>
           )}
 
           <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
-            {showDurationEditCTA && shorterTripSuggestion && onEditDuration && (
+            {actionMode === ACTION_MODE.DURATION_EDIT && shorterTripSuggestion && onEditDuration && (
               <DurationEditActions
                 duration={shorterTripSuggestion.duration}
                 onEditDuration={onEditDuration}
@@ -138,7 +164,7 @@ export function SmartRecommendationsCard({
               />
             )}
 
-            {showPerfectMatchActions && (
+            {actionMode === ACTION_MODE.PERFECT_MATCH && (
               <PerfectMatchActions
                 onCheckFlights={handleCheckFlights}
                 onAddToCalendar={handleAddToCalendar}
@@ -146,11 +172,11 @@ export function SmartRecommendationsCard({
               />
             )}
 
-            {showAddDatesPrompt && (
+            {actionMode === ACTION_MODE.ADD_DATES && (
               <AddDatesActions onEditAvailability={onEditAvailability} onShare={handleShare} />
             )}
 
-            {showBlockerCTA && personalizedCTA && (
+            {actionMode === ACTION_MODE.BLOCKER_CTA && personalizedCTA && (
               <BlockerActions
                 label={personalizedCTA.label}
                 isCreator={isCreator}
@@ -160,7 +186,7 @@ export function SmartRecommendationsCard({
               />
             )}
 
-            {showGenericEditCTA && (
+            {actionMode === ACTION_MODE.GENERIC_EDIT && (
               <GenericEditActions
                 isCreator={isCreator}
                 onEditAvailability={onEditAvailability}
@@ -182,32 +208,6 @@ export function SmartRecommendationsCard({
 }
 
 const OUTLINE_BUTTON_CLASS = 'w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3'
-
-interface StatusIconBadgeProps {
-  icon: React.ElementType
-  bgColor: string
-  iconColor: string
-}
-
-function StatusIconBadge({ icon: Icon, bgColor, iconColor }: StatusIconBadgeProps) {
-  return (
-    <div className={cn('w-16 h-16 rounded-full flex items-center justify-center', bgColor)}>
-      <Icon className={cn('w-8 h-8', iconColor)} />
-    </div>
-  )
-}
-
-function HeadlineText({ text }: { text: string }) {
-  return <h2 className="text-2xl md:text-3xl font-bold text-foreground">{text}</h2>
-}
-
-function DateRangeDisplay({ dateRange }: { dateRange: string }) {
-  return (
-    <h3 className="text-4xl md:text-5xl lg:text-5xl font-black text-foreground tracking-tight">
-      {dateRange}
-    </h3>
-  )
-}
 
 interface AvailabilitySectionProps {
   icon: React.ElementType
@@ -245,20 +245,6 @@ function SuggestionBox({ recommendationText, secondaryText, hasAlternatives, onS
           See Alternatives →
         </Button>
       )}
-    </div>
-  )
-}
-
-interface ShorterTripSectionProps {
-  duration: number
-  windows: AlternativeWindow[]
-}
-
-function ShorterTripSection({ duration, windows }: ShorterTripSectionProps) {
-  return (
-    <div className="w-full max-w-lg">
-      <p className="text-text-secondary text-sm mb-2">Perfect {duration}-day windows:</p>
-      <AlternativeWindowsList windows={windows} />
     </div>
   )
 }
@@ -403,87 +389,34 @@ function GenericEditActions({ isCreator, onEditAvailability, onEditPlan, onShare
   )
 }
 
-function buildGoogleCalendarUrl(planName: string, startDate: string, endDate: string): string {
-  const formatDateForCalendar = (iso: string) => iso.replace(/-/g, '')
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: planName,
-    dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
-  })
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
-}
+function deriveActionMode({
+  priority,
+  isPerfect,
+  hasResponded,
+  hasShorterTripSuggestion,
+  hasEditDurationCallback,
+  personalizedCTA,
+}: {
+  priority: RecommendationPriority
+  isPerfect: boolean
+  hasResponded: boolean
+  hasShorterTripSuggestion: boolean
+  hasEditDurationCallback: boolean
+  personalizedCTA: { label: string } | null
+}): ActionMode {
+  const isDurationTooLong = priority === RECOMMENDATION_PRIORITY.DURATION_TOO_LONG
 
-function formatDateRangeDisplay(start: string, end: string): string {
-  const startDate = parseISO(start)
-  const endDate = parseISO(end)
-  return `${format(startDate, 'MMM d')} – ${format(endDate, 'MMM d')}`
-}
-
-function getStatusIcon(status: RecommendationStatus) {
-  switch (status) {
-    case RECOMMENDATION_STATUS.PERFECT:
-      return CheckCircle2
-    case RECOMMENDATION_STATUS.GREAT:
-      return ThumbsUp
-    case RECOMMENDATION_STATUS.GOOD:
-      return Users
-    case RECOMMENDATION_STATUS.POSSIBLE:
-      return AlertCircle
-    case RECOMMENDATION_STATUS.UNLIKELY:
-      return AlertTriangle
+  if (isDurationTooLong && hasShorterTripSuggestion && hasEditDurationCallback) {
+    return ACTION_MODE.DURATION_EDIT
   }
-}
-
-function getStatusStyles(status: RecommendationStatus) {
-  switch (status) {
-    case RECOMMENDATION_STATUS.PERFECT:
-    case RECOMMENDATION_STATUS.GREAT:
-      return { iconColor: 'text-primary', bgColor: 'bg-primary/20', accentColor: 'text-primary' }
-    case RECOMMENDATION_STATUS.GOOD:
-    case RECOMMENDATION_STATUS.POSSIBLE:
-      return { iconColor: 'text-status-yellow', bgColor: 'bg-status-yellow/20', accentColor: 'text-status-yellow' }
-    case RECOMMENDATION_STATUS.UNLIKELY:
-      return { iconColor: 'text-status-red', bgColor: 'bg-status-red/20', accentColor: 'text-status-red' }
+  if (isPerfect && hasResponded) {
+    return ACTION_MODE.PERFECT_MATCH
   }
-}
-
-interface PersonalizedCTAInput {
-  isCurrentUserBlocker: boolean
-  isCurrentUserConstrainer: boolean
-  priority: number
-  blockerShiftDirection?: string
-}
-
-interface PersonalizedCTAResult {
-  label: string
-  emphasis: boolean
-}
-
-function derivePersonalizedCTA({ isCurrentUserBlocker, isCurrentUserConstrainer, priority, blockerShiftDirection }: PersonalizedCTAInput): PersonalizedCTAResult | null {
-  if (isCurrentUserBlocker) {
-    if (priority === 2 && blockerShiftDirection) {
-      const directionLabel = blockerShiftDirection === 'earlier' ? 'Earlier' : 'Later'
-      return { label: `Shift Your Dates ${directionLabel}`, emphasis: true }
-    }
-    if (priority === 3) {
-      return { label: 'Update Your Dates', emphasis: true }
-    }
+  if (!hasResponded && !isDurationTooLong) {
+    return ACTION_MODE.ADD_DATES
   }
-  if (isCurrentUserConstrainer && priority === 5) {
-    return { label: 'Add More Dates', emphasis: true }
+  if (hasResponded && !isPerfect && personalizedCTA && !isDurationTooLong) {
+    return ACTION_MODE.BLOCKER_CTA
   }
-  return null
-}
-
-function deriveAvailabilityText(
-  bestWindow: { totalCount: number; availableCount: number } | undefined,
-  isPerfect: boolean,
-): string | null {
-  if (!bestWindow) return null
-
-  if (isPerfect) {
-    return `All ${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
-  }
-
-  return `${bestWindow.availableCount}/${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, 'person', 'people')} available`
+  return ACTION_MODE.GENERIC_EDIT
 }

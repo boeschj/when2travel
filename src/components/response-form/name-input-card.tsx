@@ -54,11 +54,17 @@ export function NameInputCard({
             showTooltip={showTooltip}
           />
           {showDeleteButton && (
-            <DeleteButton
-              isDeleting={isDeleting}
-              isDisabled={isDeleteDisabled}
-              onDelete={onDelete}
-            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="lg"
+              className="h-12 sm:h-14 px-6"
+              onClick={onDelete}
+              disabled={isDeleteDisabled}
+            >
+              {isDeleting ? <Spinner className="mr-2 size-5" /> : <Trash2 className="mr-2 size-5" />}
+              Delete Response
+            </Button>
           )}
         </div>
       </div>
@@ -66,14 +72,12 @@ export function NameInputCard({
   )
 }
 
-interface NameFieldProps {
+function NameField({ name, onNameChange, error, inputState }: {
   name: string
   onNameChange: (name: string) => void
   error?: string
   inputState: 'error' | 'default'
-}
-
-function NameField({ name, onNameChange, error, inputState }: NameFieldProps) {
+}) {
   return (
     <label className="flex flex-col gap-3 grow xl:max-w-[480px]">
       <div className="flex items-center justify-between">
@@ -103,14 +107,12 @@ function NameField({ name, onNameChange, error, inputState }: NameFieldProps) {
   )
 }
 
-interface SubmitButtonProps {
+function SubmitButton({ isEditMode, isSubmitting, isDisabled, showTooltip }: {
   isEditMode: boolean
   isSubmitting?: boolean
   isDisabled: boolean | undefined
   showTooltip: boolean
-}
-
-function SubmitButton({ isEditMode, isSubmitting, isDisabled, showTooltip }: SubmitButtonProps) {
+}) {
   const button = (
     <Button
       type="submit"
@@ -138,46 +140,23 @@ function SubmitButton({ isEditMode, isSubmitting, isDisabled, showTooltip }: Sub
   return <div className="flex-1 xl:flex-initial">{button}</div>
 }
 
-interface SubmitButtonContentProps {
+function SubmitButtonContent({ isEditMode, isSubmitting }: {
   isEditMode: boolean
   isSubmitting?: boolean
-}
+}) {
+  const Icon = isSubmitting ? Spinner : Save
+  
+  let text = 'Submit Availability'
+  if (isEditMode) {
+    text = 'Save Changes'
+  } else if (isSubmitting) {
+    text = 'Submitting...'
+  } 
 
-function SubmitButtonContent({ isEditMode, isSubmitting }: SubmitButtonContentProps) {
-  if (!isEditMode && isSubmitting) {
-    return <>Submitting...</>
-  }
-
-  if (!isEditMode) {
-    return <>Submit Availability</>
-  }
-
-  if (isSubmitting) {
-    return <><Spinner className="mr-2 size-5" /> Save Changes</>
-  }
-
-  return <><Save className="mr-2 size-5" /> Save Changes</>
-}
-
-interface DeleteButtonProps {
-  isDeleting?: boolean
-  isDisabled: boolean | undefined
-  onDelete?: () => void
-}
-
-function DeleteButton({ isDeleting, isDisabled, onDelete }: DeleteButtonProps) {
   return (
-    <Button
-      type="button"
-      variant="destructive"
-      size="lg"
-      className="h-12 sm:h-14 px-6"
-      onClick={onDelete}
-      disabled={isDisabled}
-    >
-      {isDeleting && <Spinner className="mr-2 size-5" />}
-      {!isDeleting && <Trash2 className="mr-2 size-5" />}
-      Delete Response
-    </Button>
+    <>
+      {isEditMode && <Icon className="mr-2 size-5" />}
+      {text}
+    </>
   )
 }

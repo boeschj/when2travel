@@ -1,23 +1,32 @@
 import { cn } from '@/lib/utils'
 
+export const AVAILABILITY_STATUS = {
+  AVAILABLE: 'available',
+  HIGH: 'high',
+  PARTIAL: 'partial',
+  UNAVAILABLE: 'unavailable',
+} as const
+
+export type AvailabilityStatus = typeof AVAILABILITY_STATUS[keyof typeof AVAILABILITY_STATUS]
+
 interface AvailabilityBadgeProps {
-  status: 'available' | 'high' | 'partial' | 'unavailable'
+  status: AvailabilityStatus
   label?: string
   className?: string
 }
 
-const statusStyles = {
-  available: 'bg-primary shadow-glow-sm',
-  high: 'bg-calendar-high shadow-glow-calendar-high',
-  partial: 'bg-calendar-partial shadow-glow-calendar-partial',
-  unavailable: 'bg-calendar-unavailable shadow-glow-calendar-unavailable',
+const statusStyles: Record<AvailabilityStatus, string> = {
+  [AVAILABILITY_STATUS.AVAILABLE]: 'bg-primary shadow-glow-sm',
+  [AVAILABILITY_STATUS.HIGH]: 'bg-calendar-high shadow-glow-calendar-high',
+  [AVAILABILITY_STATUS.PARTIAL]: 'bg-calendar-partial shadow-glow-calendar-partial',
+  [AVAILABILITY_STATUS.UNAVAILABLE]: 'bg-calendar-unavailable shadow-glow-calendar-unavailable',
 }
 
-const defaultLabels = {
-  available: 'All Available',
-  high: 'High',
-  partial: 'Partial',
-  unavailable: 'Unavailable',
+const defaultLabels: Record<AvailabilityStatus, string> = {
+  [AVAILABILITY_STATUS.AVAILABLE]: 'All Available',
+  [AVAILABILITY_STATUS.HIGH]: 'High',
+  [AVAILABILITY_STATUS.PARTIAL]: 'Partial',
+  [AVAILABILITY_STATUS.UNAVAILABLE]: 'Unavailable',
 }
 
 export function AvailabilityBadge({

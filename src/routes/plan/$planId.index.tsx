@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { format } from 'date-fns'
 import { Users, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDeletePlan } from '@/lib/mutations'
@@ -18,15 +17,19 @@ import { DateAvailabilityDialog } from './-results/date-availability-popover'
 import { useCompatibleRanges } from './-results/use-compatible-ranges'
 import { useSmartRecommendation } from './-results/use-smart-recommendation'
 import { useCurrentUserResponse, useResponseEditTokens, usePlanAuthContext } from '@/hooks/use-auth-tokens'
-import { getRespondentColor } from './-results/user-avatar'
-import { buildAbsoluteUrl } from '@/lib/routes'
 import { copyToClipboard } from '@/hooks/use-clipboard'
 import { ResultsProvider, useResultsValue } from './-results/results-context'
+import {
+  getSelectedRespondentColor,
+  mapResponsesToRespondents,
+  buildDeleteConfig,
+  getPopoverParticipants,
+  buildShareUrl,
+} from './-results/results-page-utils'
 
 import type { PlanResponse } from '@/lib/types'
 import type { RecommendationResult } from './-results/recommendation-types'
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import type { Respondent } from './-results/results-context'
 
 export const Route = createFileRoute('/plan/$planId/')({
   component: PlanResultsPage,
@@ -58,7 +61,11 @@ function PlanResultsPage() {
   const bestWindow = compatibleRanges[0] ?? null
   const selectedRespondentColor = getSelectedRespondentColor(selectedRespondentId)
   const respondents = mapResponsesToRespondents(plan?.responses ?? null, hasResponseToken)
-  const popoverParticipants = getPopoverParticipants(popoverDate, plan?.responses ?? [], hasResponseToken)
+  const popoverParticipants = getPopoverParticipants({
+    popoverDate,
+    responses: plan?.responses ?? [],
+    hasResponseToken,
+  })
   const popoverAvailableCount = popoverParticipants.filter(p => p.isAvailable).length
   const shareUrl = buildShareUrl(planId)
 
@@ -249,11 +256,8 @@ function ResultsGrid({
       <div className="order-2 min-w-0 min-[1350px]:h-full">
         <div className="bg-surface-dark border border-border rounded-2xl p-4 md:p-6 flex flex-col overflow-hidden min-[1350px]:h-full">
           <RespondentChips />
-
           <Separator className="my-4" />
-
           <HeatmapHeader />
-
           <ResultsCalendar />
         </div>
       </div>
@@ -272,59 +276,3 @@ function HeatmapHeader() {
   )
 }
 
-function getSelectedRespondentColor(respondentId: string | null): string | null {
-  if (!respondentId) return null
-  return getRespondentColor(respondentId).hex
-}
-
-function mapResponsesToRespondents(
-  responses: PlanResponse[] | null,
-  hasResponseToken: (id: string) => boolean
-): Respondent[] {
-  if (!responses) return []
-  return responses.map((response) => ({
-    id: response.id,
-    name: response.name,
-    availableDates: response.availableDates,
-    isCurrentUser: hasResponseToken(response.id)
-  }))
-}
-
-interface DeleteConfigInput {
-  isCreator: boolean
-  onConfirm: () => void
-  isPending: boolean
-  responsesCount: number
-}
-
-function buildDeleteConfig({ isCreator, onConfirm, isPending, responsesCount }: DeleteConfigInput) {
-  if (!isCreator) return undefined
-  return { onConfirm, isPending, responsesCount }
-}
-
-function getPopoverParticipants(
-  popoverDate: Date | null,
-  responses: PlanResponse[],
-  hasResponseToken: (id: string) => boolean
-) {
-  if (!popoverDate) return []
-  return getParticipantsForDate(responses, popoverDate, hasResponseToken)
-}
-
-function getParticipantsForDate(
-  responses: PlanResponse[],
-  date: Date,
-  hasResponseToken: (id: string) => boolean
-) {
-  const dateStr = format(date, 'yyyy-MM-dd')
-  return responses.map((response) => ({
-    id: response.id,
-    name: response.name,
-    isAvailable: response.availableDates.includes(dateStr),
-    isCurrentUser: hasResponseToken(response.id)
-  }))
-}
-
-function buildShareUrl(planId: string): string {
-  return buildAbsoluteUrl('/plan/$planId/respond', { planId })
-}

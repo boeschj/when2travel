@@ -1,20 +1,15 @@
 import { cn } from '@/lib/utils'
-import { CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserAvatar } from './user-avatar'
 import { useResultsValue, useResultsActions } from './results-context'
-import { parseISO, eachDayOfInterval, format } from 'date-fns'
+import {
+  getRespondentStatus,
+  getDisplayName,
+  STATUS_DISPLAY,
+} from './respondent-status-utils'
 
-import type { CompatibleDateRange } from '@/lib/types'
 import type { Respondent } from './results-context'
-
-const RESPONDENT_STATUS = {
-  AVAILABLE: 'available',
-  PARTIAL: 'partial',
-  UNAVAILABLE: 'unavailable'
-} as const
-
-type RespondentStatus = (typeof RESPONDENT_STATUS)[keyof typeof RESPONDENT_STATUS]
+import type { RespondentStatus } from './respondent-status-utils'
 
 interface RespondentChipsProps {
   className?: string
@@ -25,98 +20,6 @@ interface RespondentChipProps {
   status: RespondentStatus
   isSelected: boolean
   onClick: () => void
-}
-
-function getWindowAvailabilityStatus(
-  respondent: Respondent,
-  bestWindow: CompatibleDateRange
-): RespondentStatus {
-  const windowDates = eachDayOfInterval({
-    start: parseISO(bestWindow.start),
-    end: parseISO(bestWindow.end)
-  })
-
-  const availableDatesSet = new Set(respondent.availableDates)
-  const availableDaysInWindow = windowDates.filter(date =>
-    availableDatesSet.has(format(date, 'yyyy-MM-dd'))
-  ).length
-
-  if (availableDaysInWindow === windowDates.length) return RESPONDENT_STATUS.AVAILABLE
-  if (availableDaysInWindow > 0) return RESPONDENT_STATUS.PARTIAL
-  return RESPONDENT_STATUS.UNAVAILABLE
-}
-
-function getConsecutiveAvailabilityStatus({
-  respondent,
-  startRange,
-  endRange,
-  requiredDays
-}: {
-  respondent: Respondent
-  startRange: string
-  endRange: string
-  requiredDays: number
-}): RespondentStatus {
-  const allDates = eachDayOfInterval({
-    start: parseISO(startRange),
-    end: parseISO(endRange)
-  })
-
-  const availableDatesSet = new Set(respondent.availableDates)
-  let maxConsecutiveDays = 0
-  let currentConsecutiveDays = 0
-
-  for (const date of allDates) {
-    if (availableDatesSet.has(format(date, 'yyyy-MM-dd'))) {
-      currentConsecutiveDays++
-      maxConsecutiveDays = Math.max(maxConsecutiveDays, currentConsecutiveDays)
-    } else {
-      currentConsecutiveDays = 0
-    }
-  }
-
-  if (maxConsecutiveDays >= requiredDays) return RESPONDENT_STATUS.AVAILABLE
-  if (maxConsecutiveDays > 0) return RESPONDENT_STATUS.PARTIAL
-  return RESPONDENT_STATUS.UNAVAILABLE
-}
-
-function getRespondentStatus({
-  respondent,
-  bestWindow,
-  startRange,
-  endRange,
-  requiredDays
-}: {
-  respondent: Respondent
-  bestWindow: CompatibleDateRange | null
-  startRange: string
-  endRange: string
-  requiredDays: number
-}): RespondentStatus {
-  if (bestWindow) {
-    return getWindowAvailabilityStatus(respondent, bestWindow)
-  }
-  return getConsecutiveAvailabilityStatus({ respondent, startRange, endRange, requiredDays })
-}
-
-const STATUS_DISPLAY = {
-  [RESPONDENT_STATUS.AVAILABLE]: {
-    StatusIcon: CheckCircle,
-    iconClass: 'text-primary'
-  },
-  [RESPONDENT_STATUS.PARTIAL]: {
-    StatusIcon: AlertCircle,
-    iconClass: 'text-status-yellow'
-  },
-  [RESPONDENT_STATUS.UNAVAILABLE]: {
-    StatusIcon: XCircle,
-    iconClass: 'text-status-red'
-  }
-} as const satisfies Record<RespondentStatus, { StatusIcon: typeof CheckCircle; iconClass: string }>
-
-function getDisplayName(respondent: Respondent): string {
-  if (respondent.isCurrentUser) return 'You'
-  return respondent.name
 }
 
 export function RespondentChips({ className }: RespondentChipsProps) {

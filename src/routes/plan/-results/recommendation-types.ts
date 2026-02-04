@@ -17,8 +17,20 @@ export const RECOMMENDATION_STATUS = {
 
 export type RecommendationStatus = (typeof RECOMMENDATION_STATUS)[keyof typeof RECOMMENDATION_STATUS]
 
+export const RECOMMENDATION_PRIORITY = {
+  PERFECT_MATCH: 1,
+  SHIFT_WINDOW: 2,
+  SINGLE_BLOCKER: 3,
+  DURATION_TOO_LONG: 4,
+  SCHEDULE_CONFLICT: 5,
+  GOOD_ENOUGH: 6,
+  EXPAND_RANGE: 7,
+  MULTIPLE_OPTIONS: 8,
+  GENERAL: 9,
+} as const
+
 /** Priority levels for recommendation cases (P1 highest, P9 fallback) */
-export type RecommendationPriority = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+export type RecommendationPriority = (typeof RECOMMENDATION_PRIORITY)[keyof typeof RECOMMENDATION_PRIORITY]
 
 /** Information about a respondent blocking a specific window */
 export interface BlockerInfo {

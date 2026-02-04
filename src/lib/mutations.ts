@@ -4,6 +4,8 @@ import { client, parseErrorResponse } from './api'
 import { planKeys } from './queries'
 import { usePlanEditTokens, useResponseEditTokens } from '@/hooks/use-auth-tokens'
 
+import type { PlanWithResponses } from './types'
+
 interface UseDeletePlanOptions {
   onSuccess: () => void
 }
@@ -67,6 +69,73 @@ export function useDeleteResponse({ onSuccess }: UseDeleteResponseOptions) {
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to delete response')
+    },
+  })
+}
+
+interface UpdateResponseInput {
+  responseId: string
+  planId: string
+  name: string
+  selectedDates: string[]
+}
+
+interface UseUpdateResponseOptions {
+  onSuccess: () => void
+}
+
+export function useUpdateResponse({ onSuccess }: UseUpdateResponseOptions) {
+  const queryClient = useQueryClient()
+  const { getResponseEditToken } = useResponseEditTokens()
+
+  return useMutation({
+    mutationFn: async ({ responseId, name, selectedDates }: UpdateResponseInput) => {
+      const editToken = getResponseEditToken(responseId)
+      if (!editToken) throw new Error('No edit permission')
+
+      const response = await client.responses[':id'].$put({
+        param: { id: responseId },
+        json: {
+          name: name.trim(),
+          availableDates: [...selectedDates].sort(),
+          editToken,
+        },
+      })
+      if (!response.ok) throw await parseErrorResponse(response, 'Failed to update response')
+      return response.json()
+    },
+    onMutate: async ({ responseId, planId, name, selectedDates }) => {
+      const planDetailQueryKey = planKeys.detail(planId).queryKey
+      await queryClient.cancelQueries({ queryKey: planDetailQueryKey })
+
+      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planDetailQueryKey)
+
+      queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, (cachedPlan) => {
+        if (!cachedPlan) return cachedPlan
+
+        const sortedDates = [...selectedDates].sort()
+        const updatedResponses = cachedPlan.responses?.map((existingResponse) => {
+          if (existingResponse.id !== responseId) return existingResponse
+          return { ...existingResponse, name, availableDates: sortedDates }
+        })
+
+        return { ...cachedPlan, responses: updatedResponses }
+      })
+
+      return { previousPlan, planDetailQueryKey }
+    },
+    onSuccess: () => {
+      toast.success('Your availability has been updated!')
+      onSuccess()
+    },
+    onError: (err, _variables, context) => {
+      if (context?.previousPlan) {
+        queryClient.setQueryData<PlanWithResponses>(context.planDetailQueryKey, context.previousPlan)
+      }
+      toast.error(err.message || 'Failed to update availability')
+    },
+    onSettled: (_data, _error, { planId }) => {
+      queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey })
     },
   })
 }

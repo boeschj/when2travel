@@ -29,35 +29,41 @@ export function ShareLinkInput({
     })
   }
 
-  const showShareButton = canShare && !!planName
-
-  let copyIcon = <Copy className="size-4" />
-  let copyLabel = 'Copy'
-  if (copied) {
-    copyIcon = <Check className="size-4 scale-110" />
-    copyLabel = 'Copied!'
-  }
-
-  let copyVariant: 'secondary' | 'default' = 'default'
-  if (showShareButton) {
-    copyVariant = 'secondary'
-  }
-
   const handleCopyButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     handleCopy()
   }
 
+  const showShareButton = canShare && !!planName
+  const copyIcon = copied ? <Check className="size-4 scale-110" /> : <Copy className="size-4" />
+  const copyLabel = copied ? 'Copied!' : 'Copy'
+  const copyVariant: 'secondary' | 'default' = showShareButton ? 'secondary' : 'default'
+
   return (
     <div className={cn('flex w-full items-center gap-2', className)}>
-      <LinkDisplay link={link} onClick={handleCopy}>
-        <CopyButton
-          onClick={handleCopyButtonClick}
-          variant={copyVariant}
-          icon={copyIcon}
-          label={copyLabel}
+      <div
+        className="relative flex flex-1 items-center rounded-2xl bg-input shadow-inner h-14 group cursor-pointer"
+        onClick={handleCopy}
+      >
+        <Input
+          className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-pointer pointer-events-none"
+          value={link}
+          readOnly
+          tabIndex={-1}
+          hideHelperText
         />
-      </LinkDisplay>
+        <div className="pr-2">
+          <Button
+            onClick={handleCopyButtonClick}
+            size="sm"
+            variant={copyVariant}
+            className="h-10 px-5 rounded-xl"
+          >
+            {copyIcon}
+            {copyLabel}
+          </Button>
+        </div>
+      </div>
       {showShareButton && (
         <Button
           onClick={handleShare}
@@ -69,52 +75,5 @@ export function ShareLinkInput({
         </Button>
       )}
     </div>
-  )
-}
-
-interface LinkDisplayProps {
-  link: string
-  onClick: () => void
-  children: React.ReactNode
-}
-
-function LinkDisplay({ link, onClick, children }: LinkDisplayProps) {
-  return (
-    <div
-      className="relative flex flex-1 items-center rounded-2xl bg-input shadow-inner h-14 group cursor-pointer"
-      onClick={onClick}
-    >
-      <Input
-        className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-pointer pointer-events-none"
-        value={link}
-        readOnly
-        tabIndex={-1}
-        hideHelperText
-      />
-      <div className="pr-2">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-interface CopyButtonProps {
-  onClick: (e: React.MouseEvent) => void
-  variant: 'secondary' | 'default'
-  icon: React.ReactNode
-  label: string
-}
-
-function CopyButton({ onClick, variant, icon, label }: CopyButtonProps) {
-  return (
-    <Button
-      onClick={onClick}
-      size="sm"
-      variant={variant}
-      className="h-10 px-5 rounded-xl"
-    >
-      {icon}
-      {label}
-    </Button>
   )
 }

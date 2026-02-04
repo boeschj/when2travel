@@ -88,7 +88,7 @@ function computeStringHash(str: string): number {
   for (let i = 0; i < str.length; i++) {
     const charCode = str.charCodeAt(i)
     hash = ((hash << 5) - hash) + charCode
-    hash = hash & hash
+    hash = hash | 0
   }
   return Math.abs(hash)
 }

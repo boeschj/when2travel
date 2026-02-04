@@ -2,29 +2,36 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Mail, MessageCircle, Send, Copy, type LucideIcon } from 'lucide-react'
 
-type Platform = 'email' | 'whatsapp' | 'telegram' | 'copy'
+const PLATFORM = {
+  EMAIL: 'email',
+  WHATSAPP: 'whatsapp',
+  TELEGRAM: 'telegram',
+  COPY: 'copy'
+} as const
+
+type Platform = typeof PLATFORM[keyof typeof PLATFORM]
 
 interface ShareButtonProps extends React.ComponentProps<typeof Button> {
   platform: Platform
 }
 
 const platformConfig: Record<Platform, { icon: LucideIcon; bgColor: string; title: string }> = {
-  email: {
+  [PLATFORM.EMAIL]: {
     icon: Mail,
     bgColor: 'hover:bg-[#25D366] hover:text-white',
     title: 'Share via Email'
   },
-  whatsapp: {
+  [PLATFORM.WHATSAPP]: {
     icon: MessageCircle,
     bgColor: 'hover:bg-[#25D366] hover:text-white',
     title: 'Share on WhatsApp'
   },
-  telegram: {
+  [PLATFORM.TELEGRAM]: {
     icon: Send,
     bgColor: 'hover:bg-[#0088cc] hover:text-white',
     title: 'Share on Telegram'
   },
-  copy: {
+  [PLATFORM.COPY]: {
     icon: Copy,
     bgColor: 'hover:bg-primary hover:text-primary-foreground',
     title: 'Copy Link'
@@ -56,3 +63,5 @@ export function ShareButton({
     </Button>
   )
 }
+
+export { PLATFORM }

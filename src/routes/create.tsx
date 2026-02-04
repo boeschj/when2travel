@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAppForm } from '@/components/ui/tanstack-form'
+import { useAppForm, withForm, AppFieldControl, AppFieldError } from '@/components/ui/tanstack-form'
 import { client, parseErrorResponse } from '@/lib/api'
 import { planKeys } from '@/lib/queries'
 import { ApiError } from '@/lib/errors'
 import type { InferRequestType, InferResponseType } from 'hono/client'
 import { format, parseISO } from 'date-fns'
+import { PLAN_VALIDATION, DATE_FORMAT } from '@/lib/constants/validation'
 import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
 import { DateRangeField } from './-create/date-range-field'
@@ -38,8 +39,15 @@ interface PlanFormValues {
 }
 
 const planFormSchema = z.object({
-  tripName: z.string().min(1, 'Trip name is required').min(3, 'At least 3 characters').max(100, 'Must be less than 100 characters'),
-  numDays: z.number().min(1, 'At least 1 day').max(60, 'Cannot exceed 60 days'),
+  tripName: z
+    .string()
+    .min(1, 'Trip name is required')
+    .min(PLAN_VALIDATION.NAME_MIN_LENGTH, `At least ${PLAN_VALIDATION.NAME_MIN_LENGTH} characters`)
+    .max(PLAN_VALIDATION.NAME_MAX_LENGTH, `Must be less than ${PLAN_VALIDATION.NAME_MAX_LENGTH} characters`),
+  numDays: z
+    .number()
+    .min(PLAN_VALIDATION.DAYS_MIN, `At least ${PLAN_VALIDATION.DAYS_MIN} day`)
+    .max(PLAN_VALIDATION.DAYS_MAX, `Cannot exceed ${PLAN_VALIDATION.DAYS_MAX} days`),
   dateRange: z.object({ from: z.date(), to: z.date() }, { error: 'Please select both start and end dates' }),
 })
 
@@ -103,6 +111,92 @@ function CreatePlanPage() {
   )
 }
 
+const planFormDefaults: PlanFormValues = {
+  tripName: '',
+  numDays: 7,
+  dateRange: undefined,
+}
+
+interface PlanFormContentProps {
+  isEditMode: boolean
+  isPending: boolean
+  planId?: string
+}
+
+const PlanFormContent = withForm({
+  defaultValues: planFormDefaults,
+  props: {} as PlanFormContentProps,
+  render: function PlanFormContentRender({ form, isEditMode, isPending, planId }) {
+    return (
+      <PageLayout>
+        <BackgroundEffects />
+        <AppHeader planId={planId} />
+
+        <FormContainer>
+          <FormSection className="space-y-6 text-center md:text-left">
+            <PageHeading isEditMode={isEditMode} />
+            <form.AppField name="tripName">
+              {() => (
+                <div className="relative group">
+                  <AppFieldControl>
+                    <TripNameInput />
+                  </AppFieldControl>
+                  <TripNameEditIcon />
+                  <AppFieldError />
+                </div>
+              )}
+            </form.AppField>
+          </FormSection>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <FormSection className="lg:col-span-7" direction="left" delay={0.2}>
+              <form.AppField name="dateRange" children={() => <DateRangeField />} />
+            </FormSection>
+
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              <FormSection className="flex-1" direction="right" delay={0.3}>
+                <form.AppField name="numDays" children={() => <DurationPicker />} />
+              </FormSection>
+
+              <FormSection delay={0.4}>
+                <form.Subscribe
+                  selector={(state) => ({
+                    numDays: state.values.numDays,
+                    dateRange: state.values.dateRange,
+                    isDirty: state.isDirty,
+                  })}
+                  children={({ numDays, dateRange, isDirty }) => (
+                    <PlanSummaryCard
+                      numDays={numDays}
+                      dateRange={dateRange}
+                      isPending={isPending}
+                      isEditMode={isEditMode}
+                      planId={planId}
+                      hasChanges={isDirty}
+                    />
+                  )}
+                />
+              </FormSection>
+            </div>
+          </div>
+        </FormContainer>
+
+        {isEditMode && (
+          <form.Subscribe
+            selector={(state) => state.isDirty}
+            children={(isDirty) => (
+              <NavigationBlocker
+                shouldBlock={isDirty}
+                onDiscard={() => form.reset()}
+              />
+            )}
+          />
+        )}
+      </PageLayout>
+    )
+  },
+})
+
 interface EditModeContentProps {
   planId: string
   editToken: string
@@ -131,69 +225,12 @@ function EditModeContent({
           form.handleSubmit()
         }}
       >
-        <PageLayout>
-          <BackgroundEffects />
-          <AppHeader planId={planId} />
-
-          <FormContainer>
-            <FormSection className="space-y-6 text-center md:text-left">
-              <PageHeading isEditMode />
-              <form.AppField name="tripName">
-                {() => (
-                  <div className="relative group">
-                    <form.AppField.FieldControl>
-                      <TripNameInput />
-                    </form.AppField.FieldControl>
-                    <TripNameEditIcon />
-                    <form.AppField.FieldError />
-                  </div>
-                )}
-              </form.AppField>
-            </FormSection>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <FormSection className="lg:col-span-7" direction="left" delay={0.2}>
-                <form.AppField name="dateRange" children={() => <DateRangeField />} />
-              </FormSection>
-
-              <div className="lg:col-span-5 flex flex-col gap-6">
-                <FormSection className="flex-1" direction="right" delay={0.3}>
-                  <form.AppField name="numDays" children={() => <DurationPicker />} />
-                </FormSection>
-
-                <FormSection delay={0.4}>
-                  <form.Subscribe
-                    selector={(state) => ({
-                      numDays: state.values.numDays,
-                      dateRange: state.values.dateRange,
-                      isDirty: state.isDirty,
-                    })}
-                    children={({ numDays, dateRange, isDirty }) => (
-                      <PlanSummaryCard
-                        numDays={numDays}
-                        dateRange={dateRange}
-                        isPending={updatePlanMutation.isPending}
-                        isEditMode
-                        planId={planId}
-                        hasChanges={isDirty}
-                      />
-                    )}
-                  />
-                </FormSection>
-              </div>
-            </div>
-          </FormContainer>
-
-          <form.Subscribe
-            selector={(state) => state.isDirty}
-            children={(isDirty) => (
-              <NavigationBlocker
-                shouldBlock={isDirty}
-                onDiscard={() => form.reset()}
-              />
-            )}
-          />
-        </PageLayout>
+        <PlanFormContent
+          form={form}
+          isEditMode
+          isPending={updatePlanMutation.isPending}
+          planId={planId}
+        />
       </form>
     </form.AppForm>
   )
@@ -238,7 +275,7 @@ function useUpdatePlanForm({
       form.reset(form.state.values)
       toast.success('Plan updated successfully!')
       if (returnUrl) {
-        setTimeout(() => navigate({ to: returnUrl }), 0)
+        queueMicrotask(() => navigate({ to: returnUrl }))
       }
     },
     onError: (error: Error, _newData, context) => {
@@ -269,6 +306,31 @@ interface CreateModeContentProps {
 }
 
 function CreateModeContent({ savePlanEditToken }: CreateModeContentProps) {
+  const { form, createPlanMutation } = useCreatePlanForm({ savePlanEditToken })
+
+  return (
+    <form.AppForm>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+      >
+        <PlanFormContent
+          form={form}
+          isEditMode={false}
+          isPending={createPlanMutation.isPending}
+        />
+      </form>
+    </form.AppForm>
+  )
+}
+
+interface UseCreatePlanFormProps {
+  savePlanEditToken: (id: string, token: string) => void
+}
+
+function useCreatePlanForm({ savePlanEditToken }: UseCreatePlanFormProps) {
   const navigate = useNavigate({ from: Route.fullPath })
 
   const createPlanMutation = useMutation({
@@ -287,14 +349,8 @@ function CreateModeContent({ savePlanEditToken }: CreateModeContentProps) {
     },
   })
 
-  const createDefaults: PlanFormValues = {
-    tripName: '',
-    numDays: 7,
-    dateRange: undefined,
-  }
-
   const form = useAppForm({
-    defaultValues: createDefaults,
+    defaultValues: planFormDefaults,
     validators: { onSubmit: planFormSchema },
     onSubmit: ({ value }) => {
       const transformed = transformFormValues(value)
@@ -302,69 +358,7 @@ function CreateModeContent({ savePlanEditToken }: CreateModeContentProps) {
     },
   })
 
-  return (
-    <form.AppForm>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
-        }}
-      >
-        <PageLayout>
-          <BackgroundEffects />
-          <AppHeader />
-
-          <FormContainer>
-            <FormSection className="space-y-6 text-center md:text-left">
-              <PageHeading isEditMode={false} />
-              <form.AppField name="tripName">
-                {() => (
-                  <div className="relative group">
-                    <form.AppField.FieldControl>
-                      <TripNameInput />
-                    </form.AppField.FieldControl>
-                    <TripNameEditIcon />
-                    <form.AppField.FieldError />
-                  </div>
-                )}
-              </form.AppField>
-            </FormSection>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <FormSection className="lg:col-span-7" direction="left" delay={0.2}>
-                <form.AppField name="dateRange" children={() => <DateRangeField />} />
-              </FormSection>
-
-              <div className="lg:col-span-5 flex flex-col gap-6">
-                <FormSection className="flex-1" direction="right" delay={0.3}>
-                  <form.AppField name="numDays" children={() => <DurationPicker />} />
-                </FormSection>
-
-                <FormSection delay={0.4}>
-                  <form.Subscribe
-                    selector={(state) => ({
-                      numDays: state.values.numDays,
-                      dateRange: state.values.dateRange,
-                      isDirty: state.isDirty,
-                    })}
-                    children={({ numDays, dateRange, isDirty }) => (
-                      <PlanSummaryCard
-                        numDays={numDays}
-                        dateRange={dateRange}
-                        isPending={createPlanMutation.isPending}
-                        isEditMode={false}
-                        hasChanges={isDirty}
-                      />
-                    )}
-                  />
-                </FormSection>
-              </div>
-            </div>
-          </FormContainer>
-        </PageLayout>
-      </form>
-    </form.AppForm>
-  )
+  return { form, createPlanMutation }
 }
 
 function CreateErrorComponent({ reset }: ErrorComponentProps) {
@@ -418,7 +412,7 @@ function transformFormValues(values: PlanFormValues) {
   return {
     name: values.tripName.trim(),
     numDays: values.numDays,
-    startRange: format(from, 'yyyy-MM-dd'),
-    endRange: format(to, 'yyyy-MM-dd'),
+    startRange: format(from, DATE_FORMAT.ISO),
+    endRange: format(to, DATE_FORMAT.ISO),
   }
 }

@@ -111,8 +111,13 @@ const CHEVRON_ICONS = {
   right: ChevronRight,
 } as const
 
+type HorizontalOrientation = keyof typeof CHEVRON_ICONS
+
 function CalendarChevron({ orientation = 'left' }: ChevronProps) {
-  const ChevronIcon = CHEVRON_ICONS[orientation]
+  const normalizedOrientation: HorizontalOrientation = orientation === 'left' || orientation === 'right'
+    ? orientation
+    : 'left'
+  const ChevronIcon = CHEVRON_ICONS[normalizedOrientation]
 
   return (
     <Button variant="ghost" size="icon-sm" asChild>

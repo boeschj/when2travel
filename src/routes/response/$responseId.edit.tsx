@@ -1,14 +1,23 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
-import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useDeleteResponse } from '@/lib/mutations'
-import { client, parseErrorResponse } from '@/lib/api'
-import { planKeys, responseKeys } from '@/lib/queries'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { useDeleteResponse, useUpdateResponse } from '@/lib/mutations'
+import { responseKeys } from '@/lib/queries'
 import { ApiError } from '@/lib/errors'
 import { ResponseForm } from '@/components/response-form/response-form'
 import { useAppForm } from '@/components/ui/tanstack-form'
 import { motion } from 'motion/react'
-import { toast } from 'sonner'
 import { NavigationBlocker } from '@/components/navigation-blocker'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { z } from 'zod'
 import { CalendarDays } from 'lucide-react'
 import { AppHeader } from '@/components/shared/app-header'
@@ -16,9 +25,9 @@ import { ErrorScreen } from '@/components/shared/error-screen'
 import { NotFound } from '@/components/shared/not-found'
 import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
 import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
+import { toast } from 'sonner'
 
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import type { PlanWithResponses } from '@/lib/types'
 
 const searchSchema = z.object({
   returnUrl: z.string().optional(),
@@ -65,7 +74,6 @@ function EditResponsePage() {
   return (
     <EditResponseContent
       responseId={responseId}
-      editToken={editToken}
       storedPlanId={storedPlanId}
       returnUrl={returnUrl}
     />
@@ -74,25 +82,30 @@ function EditResponsePage() {
 
 interface EditResponseContentProps {
   responseId: string
-  editToken: string
   storedPlanId: string
   returnUrl: string | undefined
 }
 
 function EditResponseContent({
   responseId,
-  editToken,
   storedPlanId,
   returnUrl,
 }: EditResponseContentProps) {
   const navigate = useNavigate({ from: Route.fullPath })
-  const queryClient = useQueryClient()
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const { plan, response } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId)).data
 
-  const planDetailQueryKey = planKeys.detail(plan.id).queryKey
   const otherRespondentNames = plan.responses
     ?.filter((existingResponse) => existingResponse.id !== responseId)
     .map((existingResponse) => existingResponse.name) ?? []
+
+  const updateResponseMutation = useUpdateResponse({
+    onSuccess: () => {
+      form.reset(form.state.values)
+      const destination = returnUrl || `/plan/${plan.id}`
+      queueMicrotask(() => navigate({ to: destination }))
+    },
+  })
 
   const form = useAppForm({
     defaultValues: {
@@ -100,59 +113,11 @@ function EditResponseContent({
       selectedDates: response.availableDates,
     },
     onSubmit: ({ value }) => {
-      updateResponseMutation.mutate(value)
-    },
-  })
-
-  const updateResponseMutation = useMutation({
-    mutationFn: async ({ name, selectedDates }: { name: string; selectedDates: string[] }) => {
-      const res = await client.responses[':id'].$put({
-        param: { id: responseId },
-        json: {
-          name: name.trim(),
-          availableDates: [...selectedDates].sort(),
-          editToken,
-        },
+      updateResponseMutation.mutate({
+        responseId,
+        planId: plan.id,
+        ...value,
       })
-      if (!res.ok) throw await parseErrorResponse(res, 'Failed to update response')
-      return res.json()
-    },
-    onMutate: async (updatedValues) => {
-      await queryClient.cancelQueries({ queryKey: planDetailQueryKey })
-
-      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planDetailQueryKey)
-
-      queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, (cachedPlan) => {
-        const hasCachedPlan = cachedPlan !== undefined
-        if (!hasCachedPlan) return cachedPlan
-
-        const sortedDates = [...updatedValues.selectedDates].sort()
-        const updatedResponses = cachedPlan.responses?.map((existingResponse) => {
-          if (existingResponse.id !== responseId) return existingResponse
-          return { ...existingResponse, name: updatedValues.name, availableDates: sortedDates }
-        })
-
-        return { ...cachedPlan, responses: updatedResponses }
-      })
-
-      return { previousPlan }
-    },
-    onSuccess: () => {
-      form.reset(form.state.values)
-      toast.success('Your availability has been updated!')
-      const destination = returnUrl || `/plan/${plan.id}`
-      setTimeout(() => {
-        navigate({ to: destination })
-      }, 0) //HACK: Delay navigation away until one render cycle to prevent the navblocker from incorrectly triggering
-    },
-    onError: (err, _updatedValues, context) => {
-      if (context?.previousPlan) {
-        queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, context.previousPlan)
-      }
-      toast.error(err.message || 'Failed to update availability')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: planDetailQueryKey })
     },
   })
 
@@ -163,14 +128,15 @@ function EditResponseContent({
     },
   })
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete your response?')) {
-      deleteResponseMutation.mutate({ responseId, planId: plan.id })
-    }
+  const handleDeleteRequest = () => setIsDeleteDialogOpen(true)
+
+  const handleDeleteConfirm = () => {
+    setIsDeleteDialogOpen(false)
+    deleteResponseMutation.mutate({ responseId, planId: plan.id })
   }
 
-  const isNavigationSafe = updateResponseMutation.isPending || updateResponseMutation.isSuccess || deleteResponseMutation.isPending
-  const shouldBlockNavigation = form.state.isDirty && !isNavigationSafe
+  const isMutationActive = updateResponseMutation.isPending || updateResponseMutation.isSuccess || deleteResponseMutation.isPending
+  const shouldBlockNavigation = form.state.isDirty && !isMutationActive
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
@@ -193,7 +159,7 @@ function EditResponseContent({
                 existingNames={otherRespondentNames}
                 isSubmitting={updateResponseMutation.isPending}
                 isEditMode
-                onDelete={handleDelete}
+                onDelete={handleDeleteRequest}
                 isDeleting={deleteResponseMutation.isPending}
               />
             </form.AppForm>
@@ -204,6 +170,12 @@ function EditResponseContent({
       <NavigationBlocker
         shouldBlock={shouldBlockNavigation}
         onDiscard={() => form.reset()}
+      />
+
+      <DeleteResponseDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   )
@@ -246,5 +218,30 @@ function NoPermissionScreen() {
         <p className="text-text-secondary">You can only edit your own responses.</p>
       </div>
     </div>
+  )
+}
+
+interface DeleteResponseDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConfirm: () => void
+}
+
+function DeleteResponseDialog({ open, onOpenChange, onConfirm }: DeleteResponseDialogProps) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Response</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete your response? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

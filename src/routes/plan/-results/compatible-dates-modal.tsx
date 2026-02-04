@@ -1,21 +1,22 @@
-import { format, parseISO, differenceInDays } from 'date-fns'
-import { ThumbsUp, Users } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { differenceInDays, format, parseISO } from "date-fns";
+import { ThumbsUp, Users } from "lucide-react";
+
+import type { CompatibleDateRange } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from '@/components/ui/responsive-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import type { CompatibleDateRange } from '@/lib/types'
+} from "@/components/ui/responsive-dialog";
 
 interface CompatibleDatesModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  compatibleRanges: CompatibleDateRange[]
-  onRangeSelect?: (range: CompatibleDateRange) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  compatibleRanges: CompatibleDateRange[];
+  onRangeSelect?: (range: CompatibleDateRange) => void;
 }
 
 export function CompatibleDatesModal({
@@ -25,17 +26,20 @@ export function CompatibleDatesModal({
   onRangeSelect,
 }: CompatibleDatesModalProps) {
   const handleRangeClick = (range: CompatibleDateRange) => {
-    onRangeSelect?.(range)
-    onOpenChange(false)
-  }
+    onRangeSelect?.(range);
+    onOpenChange(false);
+  };
 
-  const hasRanges = compatibleRanges.length > 0
+  const hasRanges = compatibleRanges.length > 0;
 
   return (
-    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="bg-surface-dark border-border max-w-md max-h-[80vh] overflow-hidden flex flex-col gap-6">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      <ResponsiveDialogContent className="bg-surface-dark border-border flex max-h-[80vh] max-w-md flex-col gap-6 overflow-hidden">
         <ModalHeader />
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 -mr-2">
+        <div className="-mr-2 flex-1 space-y-3 overflow-y-auto pr-2">
           {hasRanges && (
             <RangeList
               ranges={compatibleRanges}
@@ -46,27 +50,27 @@ export function CompatibleDatesModal({
         </div>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
-  )
+  );
 }
 
 function ModalHeader() {
   return (
     <ResponsiveDialogHeader className="shrink-0">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-surface-darker flex items-center justify-center">
-          <ThumbsUp className="w-5 h-5 text-text-secondary" />
+        <div className="bg-surface-darker flex h-10 w-10 items-center justify-center rounded-full">
+          <ThumbsUp className="text-text-secondary h-5 w-5" />
         </div>
-        <ResponsiveDialogTitle className="text-2xl font-bold text-foreground">
+        <ResponsiveDialogTitle className="text-foreground text-2xl font-bold">
           Compatible Date Ranges
         </ResponsiveDialogTitle>
       </div>
     </ResponsiveDialogHeader>
-  )
+  );
 }
 
 interface RangeListProps {
-  ranges: CompatibleDateRange[]
-  onRangeClick: (range: CompatibleDateRange) => void
+  ranges: CompatibleDateRange[];
+  onRangeClick: (range: CompatibleDateRange) => void;
 }
 
 function RangeList({ ranges, onRangeClick }: RangeListProps) {
@@ -81,38 +85,37 @@ function RangeList({ ranges, onRangeClick }: RangeListProps) {
         />
       ))}
     </>
-  )
+  );
 }
 
 interface RangeCardProps {
-  range: CompatibleDateRange
-  isBestMatch: boolean
-  onClick: () => void
+  range: CompatibleDateRange;
+  isBestMatch: boolean;
+  onClick: () => void;
 }
 
 function RangeCard({ range, isBestMatch, onClick }: RangeCardProps) {
-  const startDate = parseISO(range.start)
-  const endDate = parseISO(range.end)
-  const durationDays = differenceInDays(endDate, startDate) + 1
-  const formattedRange = `${format(startDate, 'MMM d')} – ${format(endDate, 'MMM d')}`
+  const startDate = parseISO(range.start);
+  const endDate = parseISO(range.end);
+  const durationDays = differenceInDays(endDate, startDate) + 1;
+  const formattedRange = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d")}`;
 
   return (
     <Button
       variant="outline"
       onClick={onClick}
       className={cn(
-        'w-full h-auto p-4 rounded-lg border transition-all text-left flex flex-col items-stretch hover:scale-100',
-        isBestMatch
-          && 'bg-primary/10 border-primary hover:bg-primary/15 hover:border-primary',
-        !isBestMatch
-          && 'bg-surface-darker border-border hover:bg-surface-darker hover:border-text-secondary',
+        "flex h-auto w-full flex-col items-stretch rounded-lg border p-4 text-left transition-all hover:scale-100",
+        isBestMatch && "bg-primary/10 border-primary hover:bg-primary/15 hover:border-primary",
+        !isBestMatch &&
+          "bg-surface-darker border-border hover:bg-surface-darker hover:border-text-secondary",
       )}
     >
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-white font-bold text-xl">{formattedRange}</h3>
+          <h3 className="text-xl font-bold text-white">{formattedRange}</h3>
           {isBestMatch && (
-            <Badge className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1">
+            <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold">
               Best Match
             </Badge>
           )}
@@ -124,33 +127,31 @@ function RangeCard({ range, isBestMatch, onClick }: RangeCardProps) {
         totalCount={range.totalCount}
       />
     </Button>
-  )
+  );
 }
 
 interface RangeDetailsProps {
-  durationDays: number
-  availableCount: number
-  totalCount: number
+  durationDays: number;
+  availableCount: number;
+  totalCount: number;
 }
 
 function RangeDetails({ durationDays, availableCount, totalCount }: RangeDetailsProps) {
   return (
-    <div className="flex items-center justify-between w-full mt-1">
+    <div className="mt-1 flex w-full items-center justify-between">
       <p className="text-primary text-sm font-semibold">{durationDays} Days</p>
-      <div className="flex items-center gap-1.5 text-primary">
-        <Users className="w-4 h-4" />
+      <div className="text-primary flex items-center gap-1.5">
+        <Users className="h-4 w-4" />
         <span className="font-semibold">
           {availableCount}/{totalCount}
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 function EmptyState() {
   return (
-    <div className="text-center py-8 text-text-secondary">
-      No compatible date ranges found
-    </div>
-  )
+    <div className="text-text-secondary py-8 text-center">No compatible date ranges found</div>
+  );
 }

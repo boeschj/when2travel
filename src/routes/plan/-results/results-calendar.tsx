@@ -1,31 +1,32 @@
-import { useMemo } from 'react'
-import { cn } from '@/lib/utils'
-import { format, parseISO, addMonths, eachDayOfInterval } from 'date-fns'
-import { Calendar } from '@/components/ui/calendar'
-import { CalendarProvider, type AvailabilityData } from '@/components/calendar/calendar-context'
-import { CalendarNavHeader } from '@/components/calendar/calendar-nav-header'
-import { HeatmapDayButton } from '@/components/calendar/heatmap-day-button'
-import { useMonthNavigation } from '@/components/calendar/use-month-navigation'
-import { useResultsValue, useResultsActions } from './results-context'
+import { useMemo } from "react";
+import { addMonths, eachDayOfInterval, format, parseISO } from "date-fns";
 
-import type { PlanResponse } from '@/lib/types'
+import type { PlanResponse } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { CalendarProvider, type AvailabilityData } from "@/components/calendar/calendar-context";
+import { CalendarNavHeader } from "@/components/calendar/calendar-nav-header";
+import { HeatmapDayButton } from "@/components/calendar/heatmap-day-button";
+import { useMonthNavigation } from "@/components/calendar/use-month-navigation";
+import { Calendar } from "@/components/ui/calendar";
+
+import { useResultsActions, useResultsValue } from "./results-context";
 
 interface ResultsCalendarProps {
-  showNavigation?: boolean
-  className?: string
-  numberOfMonths?: 1 | 2
+  showNavigation?: boolean;
+  className?: string;
+  numberOfMonths?: 1 | 2;
 }
 
 interface MonthPanelProps {
-  month: Date
-  dateRange: { start: Date; end: Date }
-  isFirst: boolean
-  isLast: boolean
-  showNavigation: boolean
-  showDivider: boolean
-  onPrevious: () => void
-  onNext: () => void
-  onMonthChange: (month: Date) => void
+  month: Date;
+  dateRange: { start: Date; end: Date };
+  isFirst: boolean;
+  isLast: boolean;
+  showNavigation: boolean;
+  showDivider: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+  onMonthChange: (month: Date) => void;
 }
 
 export function ResultsCalendar({
@@ -33,34 +34,38 @@ export function ResultsCalendar({
   className,
   numberOfMonths = 2,
 }: ResultsCalendarProps) {
-  const { plan, selectedRespondentId, selectedRespondentColor } = useResultsValue()
-  const { onDateClick } = useResultsActions()
+  const { plan, selectedRespondentId, selectedRespondentColor } = useResultsValue();
+  const { onDateClick } = useResultsActions();
 
-  const { month: currentMonth, setMonth: setCurrentMonth, goToPrevious, goToNext } =
-    useMonthNavigation(parseISO(plan.startRange))
+  const {
+    month: currentMonth,
+    setMonth: setCurrentMonth,
+    goToPrevious,
+    goToNext,
+  } = useMonthNavigation(parseISO(plan.startRange));
 
   const dateRange = useMemo(
     () => ({
       start: parseISO(plan.startRange),
       end: parseISO(plan.endRange),
     }),
-    [plan.startRange, plan.endRange]
-  )
+    [plan.startRange, plan.endRange],
+  );
 
-  const responses = useMemo(() => plan.responses ?? [], [plan.responses])
+  const responses = useMemo(() => plan.responses ?? [], [plan.responses]);
 
   const availabilityMap = useMemo(
     () => buildAvailabilityMap(dateRange, responses),
-    [dateRange, responses]
-  )
+    [dateRange, responses],
+  );
 
   const months = useMemo(() => {
-    const result = [currentMonth]
+    const result = [currentMonth];
     if (numberOfMonths === 2) {
-      result.push(addMonths(currentMonth, 1))
+      result.push(addMonths(currentMonth, 1));
     }
-    return result
-  }, [currentMonth, numberOfMonths])
+    return result;
+  }, [currentMonth, numberOfMonths]);
 
   const heatmapContext = useMemo(
     () => ({
@@ -69,21 +74,21 @@ export function ResultsCalendar({
       selectedRespondentColor,
       onDateClick,
     }),
-    [availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick]
-  )
+    [availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick],
+  );
 
-  const hasMultipleMonths = numberOfMonths > 1
+  const hasMultipleMonths = numberOfMonths > 1;
 
   return (
     <CalendarProvider value={heatmapContext}>
-      <div className={cn('flex flex-wrap justify-center gap-4 md:gap-0', className)}>
+      <div className={cn("flex flex-wrap justify-center gap-4 md:gap-0", className)}>
         {months.map((month, index) => {
-          const isFirst = index === 0
-          const isLast = index === months.length - 1
+          const isFirst = index === 0;
+          const isLast = index === months.length - 1;
 
           return (
             <MonthPanel
-              key={format(month, 'yyyy-MM')}
+              key={format(month, "yyyy-MM")}
               month={month}
               dateRange={dateRange}
               isFirst={isFirst}
@@ -94,11 +99,11 @@ export function ResultsCalendar({
               onNext={goToNext}
               onMonthChange={setCurrentMonth}
             />
-          )
+          );
         })}
       </div>
     </CalendarProvider>
-  )
+  );
 }
 
 function MonthPanel({
@@ -114,7 +119,7 @@ function MonthPanel({
 }: MonthPanelProps) {
   return (
     <div className="flex">
-      <div className={cn('flex flex-col gap-4', !isFirst && 'hidden md:flex')}>
+      <div className={cn("flex flex-col gap-4", !isFirst && "hidden md:flex")}>
         <CalendarNavHeader
           month={month}
           onPrevious={onPrevious}
@@ -133,47 +138,45 @@ function MonthPanel({
           disabled={[{ before: dateRange.start }, { after: dateRange.end }]}
           className="bg-transparent p-0 [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12)]"
           classNames={{
-            nav: 'hidden',
-            month_caption: 'hidden',
+            nav: "hidden",
+            month_caption: "hidden",
           }}
           components={{
             DayButton: HeatmapDayButton,
           }}
         />
       </div>
-      {showDivider && (
-        <div className="hidden md:block w-px bg-border mx-6 self-stretch" />
-      )}
+      {showDivider && <div className="bg-border mx-6 hidden w-px self-stretch md:block" />}
     </div>
-  )
+  );
 }
 
 function buildAvailabilityMap(
   dateRange: { start: Date; end: Date },
-  responses: Pick<PlanResponse, 'id' | 'name' | 'availableDates'>[]
+  responses: Pick<PlanResponse, "id" | "name" | "availableDates">[],
 ): Map<string, AvailabilityData> {
-  const map = new Map<string, AvailabilityData>()
+  const map = new Map<string, AvailabilityData>();
 
-  const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
+  const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
   for (const date of allDates) {
-    const dateStr = format(date, 'yyyy-MM-dd')
+    const dateStr = format(date, "yyyy-MM-dd");
     map.set(dateStr, {
       date: dateStr,
       availableCount: 0,
       totalCount: responses.length,
       respondentIds: [],
-    })
+    });
   }
 
   for (const response of responses) {
     for (const dateStr of response.availableDates) {
-      const data = map.get(dateStr)
+      const data = map.get(dateStr);
       if (data) {
-        data.availableCount += 1
-        data.respondentIds.push(response.id)
+        data.availableCount += 1;
+        data.respondentIds.push(response.id);
       }
     }
   }
 
-  return map
+  return map;
 }

@@ -1,38 +1,32 @@
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/lib/utils'
+import { cva, type VariantProps } from "class-variance-authority";
 
-const logoVariants = cva(
-  'shrink-0 h-auto',
-  {
-    variants: {
-      color: {
-        primary: 'text-primary',
-        foreground: 'text-foreground',
-        muted: 'text-muted-foreground',
-        destructive: 'text-destructive',
-      },
-      size: {
-        small: 'w-6',
-        medium: 'w-6 md:w-10',
-        large: 'w-10 md:w-16',
-      },
+import { cn } from "@/lib/utils";
+
+const logoVariants = cva("shrink-0 h-auto", {
+  variants: {
+    color: {
+      primary: "text-primary",
+      foreground: "text-foreground",
+      muted: "text-muted-foreground",
+      destructive: "text-destructive",
     },
-    defaultVariants: {
-      color: 'foreground',
-      size: 'medium',
-    }
-  }
-)
+    size: {
+      small: "w-6",
+      medium: "w-6 md:w-10",
+      large: "w-10 md:w-16",
+    },
+  },
+  defaultVariants: {
+    color: "foreground",
+    size: "medium",
+  },
+});
 
 export type LogoProps = VariantProps<typeof logoVariants> & {
-  className?: string
-}
+  className?: string;
+};
 
-function Logo({
-  color = 'foreground',
-  size = 'medium',
-  className
-}: LogoProps) {
+function Logo({ color = "foreground", size = "medium", className }: LogoProps) {
   return (
     <svg
       viewBox="0 0 611 456"
@@ -45,9 +39,8 @@ function Logo({
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }
 
-export { Logo, logoVariants }
-export default Logo
-  
+export { Logo, logoVariants };
+export default Logo;

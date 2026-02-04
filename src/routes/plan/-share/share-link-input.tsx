@@ -1,52 +1,57 @@
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Copy, Check, Share2 } from 'lucide-react'
-import { useCopyToClipboard, useShare } from '@/hooks/use-clipboard'
+import { useCopyToClipboard, useShare } from "@/hooks/use-clipboard";
+import { Check, Copy, Share2 } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface ShareLinkInputProps {
-  link: string
-  planName?: string
-  className?: string
+  link: string;
+  planName?: string;
+  className?: string;
 }
 
-export function ShareLinkInput({
-  link,
-  planName,
-  className
-}: ShareLinkInputProps) {
-  const { copied, copy } = useCopyToClipboard()
-  const { share, canShare } = useShare()
+export function ShareLinkInput({ link, planName, className }: ShareLinkInputProps) {
+  const { copied, copy } = useCopyToClipboard();
+  const { share, canShare } = useShare();
 
-  const handleCopy = () => copy(link)
+  const handleCopy = () => void copy(link);
 
   const handleShare = () => {
-    if (!planName) return
-    share({
+    if (!planName) return;
+    void share({
       title: `Join our trip: ${planName}`,
       text: `I'm organizing a trip and would love to know when you're available!`,
       url: link,
-    })
-  }
+    });
+  };
 
   const handleCopyButtonClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    handleCopy()
-  }
+    e.stopPropagation();
+    void copy(link);
+  };
 
-  const showShareButton = canShare && !!planName
-  const copyIcon = copied ? <Check className="size-4 scale-110" /> : <Copy className="size-4" />
-  const copyLabel = copied ? 'Copied!' : 'Copy'
-  const copyVariant: 'secondary' | 'default' = showShareButton ? 'secondary' : 'default'
+  const showShareButton = canShare && !!planName;
+  const copyIcon = copied ? <Check className="size-4 scale-110" /> : <Copy className="size-4" />;
+  const copyLabel = copied ? "Copied!" : "Copy";
+  const copyVariant: "secondary" | "default" = showShareButton ? "secondary" : "default";
 
   return (
-    <div className={cn('flex w-full items-center gap-2', className)}>
+    <div className={cn("flex w-full items-center gap-2", className)}>
       <div
-        className="relative flex flex-1 items-center rounded-2xl bg-input shadow-inner h-14 group cursor-pointer"
+        role="button"
+        tabIndex={0}
+        className="bg-input group relative flex h-14 flex-1 cursor-pointer items-center rounded-2xl shadow-inner"
         onClick={handleCopy}
+        onKeyDown={e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCopy();
+          }
+        }}
       >
         <Input
-          className="w-full bg-transparent border-none text-foreground px-5 text-sm font-medium focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/50 truncate select-all cursor-pointer pointer-events-none"
+          className="text-foreground placeholder:text-muted-foreground/50 pointer-events-none w-full cursor-pointer truncate border-none bg-transparent px-5 text-sm font-medium select-all focus:ring-0 focus-visible:ring-0"
           value={link}
           readOnly
           tabIndex={-1}
@@ -57,7 +62,7 @@ export function ShareLinkInput({
             onClick={handleCopyButtonClick}
             size="sm"
             variant={copyVariant}
-            className="h-10 px-5 rounded-xl"
+            className="h-10 rounded-xl px-5"
           >
             {copyIcon}
             {copyLabel}
@@ -68,12 +73,12 @@ export function ShareLinkInput({
         <Button
           onClick={handleShare}
           size="sm"
-          className="h-14 px-5 rounded-2xl shrink-0"
+          className="h-14 shrink-0 rounded-2xl px-5"
         >
           <Share2 className="size-4" />
           Share
         </Button>
       )}
     </div>
-  )
+  );
 }

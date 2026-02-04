@@ -1,31 +1,27 @@
-import { AppLink } from '@/components/shared/app-link'
-import { ArrowRight, PlayCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useFirstKnownPlanId } from '@/hooks/use-auth-tokens'
+import { useFirstKnownPlanId } from "@/hooks/use-auth-tokens";
+import { ArrowRight, PlayCircle } from "lucide-react";
 
-const HERO_IMAGES: string[] = [
-  '/images/hero-1.webp',
-  '/images/hero-2.webp',
-  '/images/hero-3.webp',
-]
+import { AppLink } from "@/components/shared/app-link";
+import { Button } from "@/components/ui/button";
 
+const HERO_IMAGES: string[] = ["/images/hero-1.webp", "/images/hero-2.webp", "/images/hero-3.webp"];
 
 export function Hero() {
-  const mostRecentPlanId = useFirstKnownPlanId()
+  const mostRecentPlanId = useFirstKnownPlanId();
 
-  const primaryCtaRoute = mostRecentPlanId ? '/trips' : '/create'
-  const primaryCtaLabel = mostRecentPlanId ? 'My Trips' : 'Start Planning'
+  const primaryCtaRoute = mostRecentPlanId ? "/trips" : "/create";
+  const primaryCtaLabel = mostRecentPlanId ? "My Trips" : "Start Planning";
 
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] w-full overflow-hidden pt-20"
+      className="relative z-10 flex min-h-[90vh] w-full flex-col items-center justify-center overflow-hidden pt-20"
     >
       <BackgroundImages />
       <BackgroundOverlays />
 
-      <div className="flex flex-col max-w-[1120px] w-full gap-12 relative z-20 px-5 md:px-10">
-        <div className="flex flex-col items-center justify-center gap-8 text-center max-w-[900px] mx-auto">
+      <div className="relative z-20 flex w-full max-w-[1120px] flex-col gap-12 px-5 md:px-10">
+        <div className="mx-auto flex max-w-[900px] flex-col items-center justify-center gap-8 text-center">
           <HeroHeading />
           <HeroSubheading />
           <HeroActions
@@ -35,15 +31,15 @@ export function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 function BackgroundImages() {
-  if (HERO_IMAGES.length === 0) return null
+  if (HERO_IMAGES.length === 0) return null;
 
   return (
     <div
-      className="absolute inset-0 z-0 hidden md:grid grid-cols-3 gap-1 select-none pointer-events-none"
+      className="pointer-events-none absolute inset-0 z-0 hidden grid-cols-3 gap-1 select-none md:grid"
       aria-hidden="true"
     >
       {HERO_IMAGES.map((src, i) => (
@@ -59,68 +55,85 @@ function BackgroundImages() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function BackgroundOverlays() {
   return (
     <>
-      <div className="absolute inset-0 bg-black md:hidden z-0" aria-hidden="true" />
-      <div className="absolute inset-0 hidden md:block bg-linear-to-t from-black via-black/70 to-black/60 z-0" aria-hidden="true" />
-      <div className="absolute inset-0 hidden md:block bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] z-0" aria-hidden="true" />
+      <div
+        className="absolute inset-0 z-0 bg-black md:hidden"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 z-0 hidden bg-linear-to-t from-black via-black/70 to-black/60 md:block"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 z-0 hidden bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.6)_0%,transparent_70%)] md:block"
+        aria-hidden="true"
+      />
     </>
-  )
+  );
 }
 
 function HeroHeading() {
   return (
     <h1
       id="hero-heading"
-      className="text-white text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter"
+      className="text-5xl leading-[0.95] font-black tracking-tighter text-white md:text-7xl lg:text-8xl"
     >
-      Get the trip out of{' '}
-      <br className="hidden md:block" />
-      <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-green-200">
+      Get the trip out of <br className="hidden md:block" />
+      <span className="from-primary bg-linear-to-r to-green-200 bg-clip-text text-transparent">
         the group chat.
       </span>
     </h1>
-  )
+  );
 }
 
 function HeroSubheading() {
   return (
-    <p className="text-white/90 text-lg md:text-2xl font-medium leading-relaxed max-w-[680px] mx-auto">
-      The fastest way to find dates that work for everyone. Create a plan,
-      share the link, see when everyone's free.
+    <p className="mx-auto max-w-[680px] text-lg leading-relaxed font-medium text-white/90 md:text-2xl">
+      The fastest way to find dates that work for everyone. Create a plan, share the link, see when
+      everyone's free.
     </p>
-  )
+  );
 }
 
 interface HeroActionsProps {
-  primaryCtaRoute: string
-  primaryCtaLabel: string
+  primaryCtaRoute: string;
+  primaryCtaLabel: string;
 }
 
 function HeroActions({ primaryCtaRoute, primaryCtaLabel }: HeroActionsProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-5 pt-6 w-full justify-center">
-      <AppLink to={primaryCtaRoute} className="w-full sm:w-auto">
+    <div className="flex w-full flex-col justify-center gap-5 pt-6 sm:flex-row">
+      <AppLink
+        to={primaryCtaRoute}
+        className="w-full sm:w-auto"
+      >
         <Button
           size="xl"
-          className="w-full sm:w-auto shadow-glow-lg hover:shadow-glow-xl hover:-translate-y-1"
+          className="shadow-glow-lg hover:shadow-glow-xl w-full hover:-translate-y-1 sm:w-auto"
         >
           <span>{primaryCtaLabel}</span>
-          <ArrowRight className="size-5" aria-hidden="true" />
+          <ArrowRight
+            className="size-5"
+            aria-hidden="true"
+          />
         </Button>
       </AppLink>
       <Button
         variant="outline"
         size="xl"
-        className="w-full sm:w-auto bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/30 backdrop-blur-sm text-white hover:-translate-y-1"
+        className="w-full border-white/10 bg-white/5 text-white backdrop-blur-sm hover:-translate-y-1 hover:border-white/30 hover:bg-white/10 sm:w-auto"
       >
-        <PlayCircle className="size-5 text-primary" aria-hidden="true" />
+        <PlayCircle
+          className="text-primary size-5"
+          aria-hidden="true"
+        />
         <span>See Demo</span>
       </Button>
     </div>
-  )
+  );
 }

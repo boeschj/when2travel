@@ -1,16 +1,16 @@
-import { cn } from '@/lib/utils'
-import { AvailabilityBadge } from '@/components/response-form/availability-badge'
+import { cn } from "@/lib/utils";
+import { AvailabilityBadge } from "@/components/response-form/availability-badge";
 
-const ALL_STATUSES = ['unavailable', 'partial', 'high', 'available'] as const
+const ALL_STATUSES = ["unavailable", "partial", "high", "available"] as const;
 
-type AvailabilityStatus = (typeof ALL_STATUSES)[number]
+type AvailabilityStatus = (typeof ALL_STATUSES)[number];
 
 interface AvailabilityLegendProps {
-  showAvailable?: boolean
-  showHigh?: boolean
-  showPartial?: boolean
-  showUnavailable?: boolean
-  className?: string
+  showAvailable?: boolean;
+  showHigh?: boolean;
+  showPartial?: boolean;
+  showUnavailable?: boolean;
+  className?: string;
 }
 
 export function AvailabilityLegend({
@@ -25,73 +25,73 @@ export function AvailabilityLegend({
     high: showHigh,
     partial: showPartial,
     unavailable: showUnavailable,
-  }
-  const visibleStatuses = ALL_STATUSES.filter((status) => visibilityByStatus[status])
-  const containerClassName = cn(
-    'flex items-center gap-3 text-xs font-medium flex-wrap',
-    className
-  )
+  };
+  const visibleStatuses = ALL_STATUSES.filter(status => visibilityByStatus[status]);
+  const containerClassName = cn("flex items-center gap-3 text-xs font-medium flex-wrap", className);
 
   return (
     <div className={containerClassName}>
-      {visibleStatuses.map((status) => (
-        <AvailabilityBadge key={status} status={status} />
+      {visibleStatuses.map(status => (
+        <AvailabilityBadge
+          key={status}
+          status={status}
+        />
       ))}
     </div>
-  )
+  );
 }
 
 interface ResultsLegendProps {
-  className?: string
+  className?: string;
 }
 
 interface LegendItemConfig {
-  dotClassName: string
-  label: string
+  dotClassName: string;
+  label: string;
 }
 
 const RESULTS_LEGEND_ITEMS: LegendItemConfig[] = [
   {
-    dotClassName: 'bg-status-red shadow-glow-status-red',
-    label: 'Busy',
+    dotClassName: "bg-status-red shadow-glow-status-red",
+    label: "Busy",
   },
   {
-    dotClassName: 'bg-status-yellow shadow-glow-status-yellow',
-    label: 'Partial',
+    dotClassName: "bg-status-yellow shadow-glow-status-yellow",
+    label: "Partial",
   },
   {
-    dotClassName: 'bg-primary shadow-glow-sm',
-    label: 'All Free',
+    dotClassName: "bg-primary shadow-glow-sm",
+    label: "All Free",
   },
-]
+];
 
 interface LegendItemProps {
-  dotClassName: string
-  label: string
+  dotClassName: string;
+  label: string;
 }
 
 function LegendItem({ dotClassName, label }: LegendItemProps) {
-  const dotClassNameFull = cn('w-3 h-3 rounded-full', dotClassName)
+  const dotClassNameFull = cn("w-3 h-3 rounded-full", dotClassName);
 
   return (
     <div className="flex items-center gap-2">
       <div className={dotClassNameFull} />
       <span className="text-text-secondary">{label}</span>
     </div>
-  )
+  );
 }
 
 export function ResultsLegend({ className }: ResultsLegendProps) {
-  const containerClassName = cn(
-    'flex items-center gap-4 text-xs font-medium',
-    className
-  )
+  const containerClassName = cn("flex items-center gap-4 text-xs font-medium", className);
 
   return (
     <div className={containerClassName}>
-      {RESULTS_LEGEND_ITEMS.map((item) => (
-        <LegendItem key={item.label} {...item} />
+      {RESULTS_LEGEND_ITEMS.map(item => (
+        <LegendItem
+          key={item.label}
+          {...item}
+        />
       ))}
     </div>
-  )
+  );
 }

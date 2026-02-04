@@ -1,118 +1,123 @@
-import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { Users, UserPlus } from 'lucide-react'
-import { toast } from 'sonner'
-import { useDeletePlan } from '@/lib/mutations'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { planKeys } from '@/lib/queries'
-import { PlanHeader } from './-results/plan-header'
-import { ErrorScreen } from '@/components/shared/error-screen'
-import { ResultsCalendar } from './-results/results-calendar'
-import { SmartRecommendationsCard } from './-results/smart-recommendations-card'
-import { ResultsLegend } from './-results/availability-legend'
-import { RespondentChips } from './-results/respondent-chips'
-import { DateAvailabilityDialog } from './-results/date-availability-popover'
-import { useCompatibleRanges } from './-results/use-compatible-ranges'
-import { useSmartRecommendation } from './-results/use-smart-recommendation'
-import { useCurrentUserResponse, useResponseEditTokens, usePlanAuthContext } from '@/hooks/use-auth-tokens'
-import { copyToClipboard } from '@/hooks/use-clipboard'
-import { ResultsProvider, useResultsValue } from './-results/results-context'
+import { useState } from "react";
 import {
+  useCurrentUserResponse,
+  usePlanAuthContext,
+  useResponseEditTokens,
+} from "@/hooks/use-auth-tokens";
+import { copyToClipboard } from "@/hooks/use-clipboard";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { UserPlus, Users } from "lucide-react";
+import { toast } from "sonner";
+
+import { useDeletePlan } from "@/lib/mutations";
+import { planKeys } from "@/lib/queries";
+import type { PlanResponse } from "@/lib/types";
+import { ErrorScreen } from "@/components/shared/error-screen";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+import { ResultsLegend } from "./-results/availability-legend";
+import { DateAvailabilityDialog } from "./-results/date-availability-popover";
+import { PlanHeader } from "./-results/plan-header";
+import type { RecommendationResult } from "./-results/recommendation-types";
+import { RespondentChips } from "./-results/respondent-chips";
+import { ResultsCalendar } from "./-results/results-calendar";
+import { ResultsProvider, useResultsValue } from "./-results/results-context";
+import {
+  buildDeleteConfig,
+  buildShareUrl,
+  getPopoverParticipants,
   getSelectedRespondentColor,
   mapResponsesToRespondents,
-  buildDeleteConfig,
-  getPopoverParticipants,
-  buildShareUrl,
-} from './-results/results-page-utils'
+} from "./-results/results-page-utils";
+import { SmartRecommendationsCard } from "./-results/smart-recommendations-card";
+import { useCompatibleRanges } from "./-results/use-compatible-ranges";
+import { useSmartRecommendation } from "./-results/use-smart-recommendation";
 
-import type { PlanResponse } from '@/lib/types'
-import type { RecommendationResult } from './-results/recommendation-types'
-import type { ErrorComponentProps } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/plan/$planId/')({
+export const Route = createFileRoute("/plan/$planId/")({
   component: PlanResultsPage,
   errorComponent: PlanErrorComponent,
   pendingComponent: () => null,
-})
+});
 
 function PlanResultsPage() {
-  const { planId } = Route.useParams()
-  const navigate = useNavigate({ from: Route.fullPath })
-  const { hasResponseToken } = useResponseEditTokens()
-  const { isCreator } = usePlanAuthContext(planId)
-  const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null)
-  const [popoverDate, setPopoverDate] = useState<Date | null>(null)
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-  const { data: plan } = useSuspenseQuery(planKeys.detail(planId))
+  const { planId } = Route.useParams();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { hasResponseToken } = useResponseEditTokens();
+  const { isCreator } = usePlanAuthContext(planId);
+  const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null);
+  const [popoverDate, setPopoverDate] = useState<Date | null>(null);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const { data: plan } = useSuspenseQuery(planKeys.detail(planId));
 
   const deletePlanMutation = useDeletePlan({
     onSuccess: () => {
-      toast.success('Plan deleted successfully')
-      navigate({ to: '/trips' })
+      toast.success("Plan deleted successfully");
+      void navigate({ to: "/trips" });
     },
-  })
+  });
 
-  const compatibleRanges = useCompatibleRanges(plan)
-  const recommendation = useSmartRecommendation(plan)
-  const currentUserResponse = useCurrentUserResponse(plan?.responses)
+  const compatibleRanges = useCompatibleRanges(plan);
+  const recommendation = useSmartRecommendation(plan);
+  const currentUserResponse = useCurrentUserResponse(plan.responses);
 
-  const bestWindow = compatibleRanges[0] ?? null
-  const selectedRespondentColor = getSelectedRespondentColor(selectedRespondentId)
-  const respondents = mapResponsesToRespondents(plan?.responses ?? null, hasResponseToken)
+  const bestWindow = compatibleRanges[0] ?? null;
+  const selectedRespondentColor = getSelectedRespondentColor(selectedRespondentId);
+  const respondents = mapResponsesToRespondents(plan.responses, hasResponseToken);
   const popoverParticipants = getPopoverParticipants({
     popoverDate,
-    responses: plan?.responses ?? [],
+    responses: plan.responses,
     hasResponseToken,
-  })
-  const popoverAvailableCount = popoverParticipants.filter(p => p.isAvailable).length
-  const shareUrl = buildShareUrl(planId)
+  });
+  const popoverAvailableCount = popoverParticipants.filter(p => p.isAvailable).length;
+  const shareUrl = buildShareUrl(planId);
 
   function handleShareLink() {
-    copyToClipboard(shareUrl)
-    toast.success('Link copied to clipboard')
+    void copyToClipboard(shareUrl);
+    toast.success("Link copied to clipboard");
   }
 
   function handleEditAvailability() {
-    const returnUrl = window.location.pathname
+    const returnUrl = globalThis.location.pathname;
     if (currentUserResponse) {
-      navigate({
-        to: '/response/$responseId/edit',
+      void navigate({
+        to: "/response/$responseId/edit",
         params: { responseId: currentUserResponse.id },
-        search: { returnUrl }
-      })
-      return
+        search: { returnUrl },
+      });
+      return;
     }
-    navigate({
-      to: '/plan/$planId/respond',
+    void navigate({
+      to: "/plan/$planId/respond",
       params: { planId },
-      search: { returnUrl }
-    })
+      search: { returnUrl },
+    });
   }
 
   function handleEditPlan() {
-    navigate({ to: '/create', search: { planId, returnUrl: window.location.pathname } })
+    void navigate({ to: "/create", search: { planId, returnUrl: globalThis.location.pathname } });
   }
 
   function handleDateClick(date: Date) {
-    setPopoverDate(date)
-    setIsPopoverOpen(true)
+    setPopoverDate(date);
+    setIsPopoverOpen(true);
   }
 
-  const hasRespondents = respondents.length > 0
+  const hasRespondents = respondents.length > 0;
 
   const deleteConfig = buildDeleteConfig({
     isCreator,
     onConfirm: () => deletePlanMutation.mutate(planId),
     isPending: deletePlanMutation.isPending,
     responsesCount: respondents.length,
-  })
+  });
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
-      <main className="flex-1 flex flex-col items-center px-6 md:px-12 xl:px-20 pb-20 pt-4 md:pt-10">
-        <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-8">
+    <div className="bg-background text-foreground relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      <main className="flex flex-1 flex-col items-center px-6 pt-4 pb-20 md:px-12 md:pt-10 xl:px-20">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8">
           <PlanHeader
             name={plan.name}
             numDays={plan.numDays}
@@ -164,7 +169,7 @@ function PlanResultsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 function PlanErrorComponent({ reset }: ErrorComponentProps) {
@@ -174,56 +179,54 @@ function PlanErrorComponent({ reset }: ErrorComponentProps) {
       message="We're having trouble loading this trip. Please try again in a moment."
       onRetry={reset}
     />
-  )
+  );
 }
 
 interface NoRespondentsStateProps {
-  onAddAvailability: () => void
-  onShare: () => void
+  onAddAvailability: () => void;
+  onShare: () => void;
 }
 
 function NoRespondentsState({ onAddAvailability, onShare }: NoRespondentsStateProps) {
   return (
-    <div className="rounded-2xl bg-surface-dark border border-border p-6 md:p-8">
-      <div className="flex flex-col items-center text-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-          <Users className="w-8 h-8 text-primary" />
+    <div className="bg-surface-dark border-border rounded-2xl border p-6 md:p-8">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="bg-primary/20 flex h-16 w-16 items-center justify-center rounded-full">
+          <Users className="text-primary h-8 w-8" />
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-          Waiting for responses
-        </h2>
-        <p className="text-lg text-text-secondary">
+        <h2 className="text-foreground text-2xl font-bold md:text-3xl">Waiting for responses</h2>
+        <p className="text-text-secondary text-lg">
           Share this plan with your group to start collecting availability.
         </p>
 
-        <div className="w-full max-w-lg pt-2 flex flex-col gap-3">
+        <div className="flex w-full max-w-lg flex-col gap-3 pt-2">
           <Button
             onClick={onAddAvailability}
             size="cta"
           >
             Add Dates
-            <UserPlus className="w-5 h-5 ml-2" />
+            <UserPlus className="ml-2 h-5 w-5" />
           </Button>
           <Button
             onClick={onShare}
             variant="outline"
             size="lg"
-            className="w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3"
+            className="border-border hover:border-primary hover:text-primary h-auto w-full rounded-full py-3 font-semibold"
           >
             Share Plan
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 interface ResultsGridProps {
-  recommendation: RecommendationResult | null
-  isCreator: boolean
-  currentUserResponse: PlanResponse | null | undefined
-  onEditPlan: () => void
-  onEditAvailability: () => void
+  recommendation: RecommendationResult | null;
+  isCreator: boolean;
+  currentUserResponse: PlanResponse | null | undefined;
+  onEditPlan: () => void;
+  onEditAvailability: () => void;
 }
 
 function ResultsGrid({
@@ -233,11 +236,11 @@ function ResultsGrid({
   onEditPlan,
   onEditAvailability,
 }: ResultsGridProps) {
-  const { plan } = useResultsValue()
-  const hasResponded = !!currentUserResponse
+  const { plan } = useResultsValue();
+  const hasResponded = !!currentUserResponse;
 
   return (
-    <div className="grid grid-cols-1 min-[1350px]:grid-cols-[minmax(300px,420px)_1fr] gap-6 min-[1350px]:gap-10 min-[1350px]:items-stretch">
+    <div className="grid grid-cols-1 gap-6 min-[1350px]:grid-cols-[minmax(300px,420px)_1fr] min-[1350px]:items-stretch min-[1350px]:gap-10">
       <div className="order-1 min-[1350px]:h-full">
         {recommendation && (
           <SmartRecommendationsCard
@@ -254,7 +257,7 @@ function ResultsGrid({
       </div>
 
       <div className="order-2 min-w-0 min-[1350px]:h-full">
-        <div className="bg-surface-dark border border-border rounded-2xl p-4 md:p-6 flex flex-col overflow-hidden min-[1350px]:h-full">
+        <div className="bg-surface-dark border-border flex flex-col overflow-hidden rounded-2xl border p-4 min-[1350px]:h-full md:p-6">
           <RespondentChips />
           <Separator className="my-4" />
           <HeatmapHeader />
@@ -262,17 +265,16 @@ function ResultsGrid({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function HeatmapHeader() {
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
-      <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider">
+    <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <h3 className="text-text-secondary text-sm font-semibold tracking-wider uppercase">
         Availability Heatmap
       </h3>
       <ResultsLegend />
     </div>
-  )
+  );
 }
-

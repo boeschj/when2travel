@@ -1,78 +1,93 @@
-import { useState } from 'react'
-import { cn } from '@/lib/utils'
-import { useDateInteraction } from './use-date-interaction'
-import { DateInteractionProvider } from './date-interaction-context'
-import { NameInputCard } from './name-input-card'
-import { SelectDatesCard } from './select-dates-card'
-import { ManageDatesCard } from './manage-dates-card'
+import { useState } from "react";
+
+import type { PlanWithResponses } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
   AlertDialogAction,
-  AlertDialogCancel
-} from '@/components/ui/alert-dialog'
-import { withForm, useFormFieldContext } from '@/components/ui/tanstack-form'
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useFormFieldContext, withForm } from "@/components/ui/tanstack-form";
 
-import type { PlanWithResponses } from '@/lib/types'
+import { DateInteractionProvider } from "./date-interaction-context";
+import { ManageDatesCard } from "./manage-dates-card";
+import { NameInputCard } from "./name-input-card";
+import { SelectDatesCard } from "./select-dates-card";
+import { useDateInteraction } from "./use-date-interaction";
 
 export interface ResponseFormValues {
-  name: string
-  selectedDates: string[]
+  name: string;
+  selectedDates: string[];
 }
 
 const responseFormDefaults: ResponseFormValues = {
-  name: '',
+  name: "",
   selectedDates: [],
-}
+};
 
 interface ResponseFormProps {
-  startRange: PlanWithResponses['startRange']
-  endRange: PlanWithResponses['endRange']
-  numDays: number
-  existingNames?: string[]
-  isSubmitting?: boolean
-  isEditMode?: boolean
-  onDelete?: () => void
-  isDeleting?: boolean
-  className?: string
+  startRange: PlanWithResponses["startRange"];
+  endRange: PlanWithResponses["endRange"];
+  numDays: number;
+  existingNames?: string[];
+  isSubmitting?: boolean;
+  isEditMode?: boolean;
+  onDelete?: () => void;
+  isDeleting?: boolean;
+  className?: string;
 }
 
 export const ResponseForm = withForm({
   defaultValues: responseFormDefaults,
   props: {} as ResponseFormProps,
-  render: function ResponseFormRender({ form, startRange, endRange, numDays, existingNames = [], isSubmitting, isEditMode = false, onDelete, isDeleting, className }) {
-    const [showNoDatesWarning, setShowNoDatesWarning] = useState(false)
+  render: function ResponseFormRender({
+    form,
+    startRange,
+    endRange,
+    numDays,
+    existingNames = [],
+    isSubmitting,
+    isEditMode = false,
+    onDelete,
+    isDeleting,
+    className,
+  }) {
+    const [showNoDatesWarning, setShowNoDatesWarning] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
 
-      const nameErrors = await form.validateField('name', 'submit')
-      if (nameErrors.length > 0) return
+      const nameErrors = await form.validateField("name", "submit");
+      if (nameErrors.length > 0) return;
 
-      const selectedDates = form.getFieldValue('selectedDates')
-      const hasNoDates = selectedDates.length === 0
+      const selectedDates = form.getFieldValue("selectedDates");
+      const hasNoDates = selectedDates.length === 0;
       if (hasNoDates) {
-        setShowNoDatesWarning(true)
-        return
+        setShowNoDatesWarning(true);
+        return;
       }
 
-      form.handleSubmit()
-    }
+      void form.handleSubmit();
+    };
 
     const handleWarningConfirm = () => {
-      form.handleSubmit()
-      setShowNoDatesWarning(false)
-    }
+      void form.handleSubmit();
+      setShowNoDatesWarning(false);
+    };
 
-    const handleWarningDismiss = () => setShowNoDatesWarning(false)
+    const handleWarningDismiss = () => setShowNoDatesWarning(false);
 
     return (
-      <form onSubmit={handleSubmit} className={cn('space-y-6', className)}>
+      <form
+        onSubmit={handleSubmit}
+        className={cn("space-y-6", className)}
+      >
         <form.AppField name="selectedDates">
           {() => (
             <DateInteractionSection
@@ -89,11 +104,11 @@ export const ResponseForm = withForm({
             onSubmit: ({ value }) => validateName(value, existingNames),
           }}
         >
-          {(field) => {
-            const hasVisibleError = field.state.meta.isTouched && !field.state.meta.isValid
-            let errorMessage: string | undefined = undefined
+          {field => {
+            const hasVisibleError = field.state.meta.isTouched && !field.state.meta.isValid;
+            let errorMessage: string | undefined;
             if (hasVisibleError) {
-              errorMessage = String(field.state.meta.errors[0])
+              errorMessage = String(field.state.meta.errors[0]);
             }
 
             return (
@@ -107,7 +122,7 @@ export const ResponseForm = withForm({
                 onDelete={onDelete}
                 isDeleting={isDeleting}
               />
-            )
+            );
           }}
         </form.AppField>
 
@@ -117,18 +132,18 @@ export const ResponseForm = withForm({
           onDismiss={handleWarningDismiss}
         />
       </form>
-    )
+    );
   },
-})
+});
 
 interface DateInteractionSectionProps {
-  startRange: string
-  endRange: string
-  numDays: number
+  startRange: string;
+  endRange: string;
+  numDays: number;
 }
 
 function DateInteractionSection({ startRange, endRange, numDays }: DateInteractionSectionProps) {
-  const field = useFormFieldContext<string[]>()
+  const field = useFormFieldContext<string[]>();
 
   const {
     selectedDatesSet,
@@ -148,7 +163,7 @@ function DateInteractionSection({ startRange, endRange, numDays }: DateInteracti
     numDays,
     selectedDates: field.state.value,
     onDatesChange: field.handleChange,
-  })
+  });
 
   return (
     <DateInteractionProvider
@@ -166,7 +181,7 @@ function DateInteractionSection({ startRange, endRange, numDays }: DateInteracti
       toggleRangeSelection={toggleRangeSelection}
       deleteSelectedRanges={deleteSelectedRanges}
     >
-      <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_auto]">
         <div className="flex flex-col gap-6">
           <SelectDatesCard />
         </div>
@@ -174,23 +189,27 @@ function DateInteractionSection({ startRange, endRange, numDays }: DateInteracti
         <ManageDatesCard />
       </div>
     </DateInteractionProvider>
-  )
+  );
 }
 
 interface NoDatesWarningDialogProps {
-  isOpen: boolean
-  onConfirm: () => void
-  onDismiss: () => void
+  isOpen: boolean;
+  onConfirm: () => void;
+  onDismiss: () => void;
 }
 
 function NoDatesWarningDialog({ isOpen, onConfirm, onDismiss }: NoDatesWarningDialogProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={open => !open && onDismiss()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Wait! You have no available dates</AlertDialogTitle>
           <AlertDialogDescription>
-            This will indicate you're unavailable for the entire period. Are you sure you want to continue?
+            This will indicate you're unavailable for the entire period. Are you sure you want to
+            continue?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -199,19 +218,19 @@ function NoDatesWarningDialog({ isOpen, onConfirm, onDismiss }: NoDatesWarningDi
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
 
 function validateName(value: string, existingNames: string[]): string | undefined {
-  const trimmed = value.trim()
-  if (!trimmed) return 'Name is required'
-  if (trimmed.length < 2) return 'Name must be at least 2 characters'
-  if (trimmed.length > 50) return 'Name must be less than 50 characters'
+  const trimmed = value.trim();
+  if (!trimmed) return "Name is required";
+  if (trimmed.length < 2) return "Name must be at least 2 characters";
+  if (trimmed.length > 50) return "Name must be less than 50 characters";
 
   const isDuplicate = existingNames.some(
-    (existingName) => existingName.toLowerCase() === trimmed.toLowerCase()
-  )
-  if (isDuplicate) return 'Someone with this name has already responded'
+    existingName => existingName.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (isDuplicate) return "Someone with this name has already responded";
 
-  return undefined
+  return undefined;
 }

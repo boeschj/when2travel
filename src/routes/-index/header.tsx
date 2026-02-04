@@ -1,15 +1,16 @@
-import { AppLink } from '@/components/shared/app-link'
-import { Button } from '@/components/ui/button'
-import { Wordmark } from '@/components/shared/wordmark'
-import { useFirstKnownPlanId } from '@/hooks/use-auth-tokens'
+import { useFirstKnownPlanId } from "@/hooks/use-auth-tokens";
+
+import { AppLink } from "@/components/shared/app-link";
+import { Wordmark } from "@/components/shared/wordmark";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
-  const mostRecentPlanId = useFirstKnownPlanId()
+  const mostRecentPlanId = useFirstKnownPlanId();
 
-  const hasExistingPlan = Boolean(mostRecentPlanId)
+  const hasExistingPlan = Boolean(mostRecentPlanId);
 
   return (
-    <header className="fixed top-0 z-50 w-full bg-black/60 backdrop-blur-xl border-b border-white/5">
+    <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-black/60 backdrop-blur-xl">
       <HeaderContainer>
         <div className="flex items-center justify-between">
           <Wordmark />
@@ -17,46 +18,45 @@ export function Header() {
         </div>
       </HeaderContainer>
     </header>
-  )
+  );
 }
 
 function HeaderContainer({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-4">
-      {children}
-    </div>
-  )
+  return <div className="mx-auto max-w-[1280px] px-5 py-4 md:px-10">{children}</div>;
 }
 
 function Navigation({ hasExistingPlan }: { hasExistingPlan: boolean }) {
   return (
-    <nav aria-label="Main navigation" className="flex items-center gap-4 md:gap-8">
+    <nav
+      aria-label="Main navigation"
+      className="flex items-center gap-4 md:gap-8"
+    >
       <HowItWorksLink />
       <TripActionButton hasExistingPlan={hasExistingPlan} />
     </nav>
-  )
+  );
+}
+
+function scrollToHowItWorks(e: React.MouseEvent) {
+  e.preventDefault();
+  document.querySelector("#how-it-works")?.scrollIntoView({ behavior: "smooth" });
 }
 
 function HowItWorksLink() {
-  const scrollToHowItWorks = (e: React.MouseEvent) => {
-    e.preventDefault()
-    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
     <Button
       variant="link"
-      className="hidden md:block text-gray-300 hover:text-primary p-0 h-auto"
+      className="hover:text-primary hidden h-auto p-0 text-gray-300 md:block"
       onClick={scrollToHowItWorks}
     >
       How it works
     </Button>
-  )
+  );
 }
 
 function TripActionButton({ hasExistingPlan }: { hasExistingPlan: boolean }) {
-  const route = hasExistingPlan ? '/trips' : '/create'
-  const label = hasExistingPlan ? 'My Trips' : 'New Trip'
+  const route = hasExistingPlan ? "/trips" : "/create";
+  const label = hasExistingPlan ? "My Trips" : "New Trip";
 
   return (
     <AppLink to={route}>
@@ -68,5 +68,5 @@ function TripActionButton({ hasExistingPlan }: { hasExistingPlan: boolean }) {
         {label}
       </Button>
     </AppLink>
-  )
+  );
 }

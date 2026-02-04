@@ -1,35 +1,35 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useContext, useMemo } from "react";
+import type { ReactNode } from "react";
 
-import type { ReactNode } from 'react'
-import type { DateRange } from '@/lib/types'
-import type { DateStatus } from './use-date-interaction'
+import type { DateRange } from "@/lib/types";
+
+import type { DateStatus } from "./use-date-interaction";
 
 interface DateInteractionValueContextType {
-  startRange: string
-  endRange: string
-  selectedDatesSet: Set<string>
-  rangeStart: Date | null
-  availableRanges: DateRange[]
-  unavailableRanges: DateRange[]
-  selectedRangeIds: Set<string>
-  hasSelectedRanges: boolean
-  compatibleWindowsCount: number
+  startRange: string;
+  endRange: string;
+  selectedDatesSet: Set<string>;
+  rangeStart: Date | null;
+  availableRanges: DateRange[];
+  unavailableRanges: DateRange[];
+  selectedRangeIds: Set<string>;
+  hasSelectedRanges: boolean;
+  compatibleWindowsCount: number;
 }
 
 interface DateInteractionActionsContextType {
-  handleDateClick: (date: Date) => void
-  markAllAs: (status: DateStatus) => void
-  toggleRangeSelection: (rangeId: string) => void
-  deleteSelectedRanges: () => void
+  handleDateClick: (date: Date) => void;
+  markAllAs: (status: DateStatus) => void;
+  toggleRangeSelection: (rangeId: string) => void;
+  deleteSelectedRanges: () => void;
 }
 
-const DateInteractionValueContext = createContext<DateInteractionValueContextType | null>(null)
-const DateInteractionActionsContext = createContext<DateInteractionActionsContextType | null>(null)
+const DateInteractionValueContext = createContext<DateInteractionValueContextType | null>(null);
+const DateInteractionActionsContext = createContext<DateInteractionActionsContextType | null>(null);
 
 interface DateInteractionProviderProps
-  extends DateInteractionValueContextType,
-    DateInteractionActionsContextType {
-  children: ReactNode
+  extends DateInteractionValueContextType, DateInteractionActionsContextType {
+  children: ReactNode;
 }
 
 export function DateInteractionProvider({
@@ -70,8 +70,8 @@ export function DateInteractionProvider({
       selectedRangeIds,
       hasSelectedRanges,
       compatibleWindowsCount,
-    ]
-  )
+    ],
+  );
 
   const actionsContext = useMemo<DateInteractionActionsContextType>(
     () => ({
@@ -80,8 +80,8 @@ export function DateInteractionProvider({
       toggleRangeSelection,
       deleteSelectedRanges,
     }),
-    [handleDateClick, markAllAs, toggleRangeSelection, deleteSelectedRanges]
-  )
+    [handleDateClick, markAllAs, toggleRangeSelection, deleteSelectedRanges],
+  );
 
   return (
     <DateInteractionValueContext.Provider value={valueContext}>
@@ -89,23 +89,23 @@ export function DateInteractionProvider({
         {children}
       </DateInteractionActionsContext.Provider>
     </DateInteractionValueContext.Provider>
-  )
+  );
 }
 
 export function useDateInteractionValue(): DateInteractionValueContextType {
-  const context = useContext(DateInteractionValueContext)
+  const context = useContext(DateInteractionValueContext);
   if (!context) {
-    throw new Error('useDateInteractionValue must be used within a DateInteractionProvider')
+    throw new Error("useDateInteractionValue must be used within a DateInteractionProvider");
   }
-  return context
+  return context;
 }
 
 export function useDateInteractionActions(): DateInteractionActionsContextType {
-  const context = useContext(DateInteractionActionsContext)
+  const context = useContext(DateInteractionActionsContext);
   if (!context) {
-    throw new Error('useDateInteractionActions must be used within a DateInteractionProvider')
+    throw new Error("useDateInteractionActions must be used within a DateInteractionProvider");
   }
-  return context
+  return context;
 }
 
-export type { DateInteractionValueContextType, DateInteractionActionsContextType }
+export type { DateInteractionValueContextType, DateInteractionActionsContextType };

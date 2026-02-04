@@ -1,58 +1,55 @@
-import { Button } from '@/components/ui/button'
+import { Ban, CalendarDays, CheckCircle, ChevronDown, Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+import type { DateRange } from "@/lib/types";
+import { cn, formatDateRangeDisplay, pluralize } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem
-} from '@/components/ui/dropdown-menu'
-import { ChevronDown, CheckCircle, Ban, CalendarDays, Trash2 } from 'lucide-react'
-import { formatDateRangeDisplay, cn, pluralize } from '@/lib/utils'
-import { useDateInteractionValue, useDateInteractionActions } from './date-interaction-context'
-import { DATE_STATUS } from './use-date-interaction'
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import type { DateRange } from '@/lib/types'
-import type { LucideIcon } from 'lucide-react'
-import type { DateStatus } from './use-date-interaction'
+import { useDateInteractionActions, useDateInteractionValue } from "./date-interaction-context";
+import { DATE_STATUS } from "./use-date-interaction";
+import type { DateStatus } from "./use-date-interaction";
 
 interface DateRangeCheckboxItemProps {
-  range: DateRange
-  checked: boolean
-  onToggle: () => void
+  range: DateRange;
+  checked: boolean;
+  onToggle: () => void;
 }
 
-function DateRangeCheckboxItem({
-  range,
-  checked,
-  onToggle
-}: DateRangeCheckboxItemProps) {
-  const dateRangeDisplay = formatDateRangeDisplay(range)
-  const dayCountLabel = `${range.days} ${pluralize(range.days, 'day')}`
+function DateRangeCheckboxItem({ range, checked, onToggle }: DateRangeCheckboxItemProps) {
+  const dateRangeDisplay = formatDateRangeDisplay(range);
+  const dayCountLabel = `${range.days} ${pluralize(range.days, "day")}`;
 
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
       onCheckedChange={onToggle}
-      onSelect={(e) => e.preventDefault()}
+      onSelect={e => e.preventDefault()}
     >
       <div className="flex flex-col">
         <span>{dateRangeDisplay}</span>
-        <span className="text-xs text-muted-foreground">{dayCountLabel}</span>
+        <span className="text-muted-foreground text-xs">{dayCountLabel}</span>
       </div>
     </DropdownMenuCheckboxItem>
-  )
+  );
 }
 
 interface ManageDatesDropdownHeaderProps {
-  hasSelectedRanges: boolean
-  onDeleteSelected: () => void
+  hasSelectedRanges: boolean;
+  onDeleteSelected: () => void;
 }
 
 function ManageDatesDropdownHeader({
   hasSelectedRanges,
-  onDeleteSelected
+  onDeleteSelected,
 }: ManageDatesDropdownHeaderProps) {
   return (
     <div className="flex items-center justify-between px-2 py-1.5">
@@ -62,29 +59,29 @@ function ManageDatesDropdownHeader({
         size="sm"
         onClick={onDeleteSelected}
         className={cn(
-          'h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10',
-          !hasSelectedRanges && 'invisible'
+          "text-destructive hover:text-destructive hover:bg-destructive/10 h-6 px-2 text-xs",
+          !hasSelectedRanges && "invisible",
         )}
       >
-        <Trash2 className="size-3 mr-1" />
+        <Trash2 className="mr-1 size-3" />
         Clear
       </Button>
     </div>
-  )
+  );
 }
 
 interface DateRangeSectionProps {
-  label: string
-  ranges: DateRange[]
-  selectedRangeIds: Set<string>
-  onToggleRangeSelection: (rangeId: string) => void
+  label: string;
+  ranges: DateRange[];
+  selectedRangeIds: Set<string>;
+  onToggleRangeSelection: (rangeId: string) => void;
 }
 
 function DateRangeSection({
   label,
   ranges,
   selectedRangeIds,
-  onToggleRangeSelection
+  onToggleRangeSelection,
 }: DateRangeSectionProps) {
   return (
     <>
@@ -98,25 +95,23 @@ function DateRangeSection({
         />
       ))}
     </>
-  )
+  );
 }
 
 function EmptyDatesState() {
   return (
-    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-      No dates selected yet
-    </div>
-  )
+    <div className="text-muted-foreground px-2 py-3 text-center text-sm">No dates selected yet</div>
+  );
 }
 
 interface ManageDatesDropdownProps {
-  availableRanges: DateRange[]
-  unavailableRanges: DateRange[]
-  selectedRangeIds: Set<string>
-  hasSelectedRanges: boolean
-  hasAnyRanges: boolean
-  onToggleRangeSelection: (rangeId: string) => void
-  onDeleteSelected: () => void
+  availableRanges: DateRange[];
+  unavailableRanges: DateRange[];
+  selectedRangeIds: Set<string>;
+  hasSelectedRanges: boolean;
+  hasAnyRanges: boolean;
+  onToggleRangeSelection: (rangeId: string) => void;
+  onDeleteSelected: () => void;
 }
 
 function ManageDatesDropdown({
@@ -126,22 +121,29 @@ function ManageDatesDropdown({
   hasSelectedRanges,
   hasAnyRanges,
   onToggleRangeSelection,
-  onDeleteSelected
+  onDeleteSelected,
 }: ManageDatesDropdownProps) {
-  const hasAvailableRanges = availableRanges.length > 0
-  const hasUnavailableRanges = unavailableRanges.length > 0
-  const shouldShowSeparator = hasAvailableRanges && hasUnavailableRanges
+  const hasAvailableRanges = availableRanges.length > 0;
+  const hasUnavailableRanges = unavailableRanges.length > 0;
+  const shouldShowSeparator = hasAvailableRanges && hasUnavailableRanges;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 xl:hidden">
-          <CalendarDays className="size-4 mr-1" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 xl:hidden"
+        >
+          <CalendarDays className="mr-1 size-4" />
           <span>Manage</span>
-          <ChevronDown className="size-4 ml-1" />
+          <ChevronDown className="ml-1 size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent
+        align="end"
+        className="w-64"
+      >
         <ManageDatesDropdownHeader
           hasSelectedRanges={hasSelectedRanges}
           onDeleteSelected={onDeleteSelected}
@@ -171,30 +173,30 @@ function ManageDatesDropdown({
         {!hasAnyRanges && <EmptyDatesState />}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 const QUICK_ACTIONS = [
   {
     status: DATE_STATUS.available,
     icon: CheckCircle,
-    label: 'Mark all available',
-    iconClassName: 'text-primary'
+    label: "Mark all available",
+    iconClassName: "text-primary",
   },
   {
     status: DATE_STATUS.unavailable,
     icon: Ban,
-    label: 'Mark all unavailable',
-    iconClassName: ''
-  }
-] as const
+    label: "Mark all unavailable",
+    iconClassName: "",
+  },
+] as const;
 
 interface QuickActionMenuItemProps {
-  status: DateStatus
-  icon: LucideIcon
-  label: string
-  iconClassName: string
-  onMarkAllAs: (status: DateStatus) => void
+  status: DateStatus;
+  icon: LucideIcon;
+  label: string;
+  iconClassName: string;
+  onMarkAllAs: (status: DateStatus) => void;
 }
 
 function QuickActionMenuItem({
@@ -202,29 +204,33 @@ function QuickActionMenuItem({
   icon: Icon,
   label,
   iconClassName,
-  onMarkAllAs
+  onMarkAllAs,
 }: QuickActionMenuItemProps) {
-  const handleClick = () => onMarkAllAs(status)
+  const handleClick = () => onMarkAllAs(status);
 
   return (
     <DropdownMenuItem onClick={handleClick}>
       <Icon className={iconClassName} />
       {label}
     </DropdownMenuItem>
-  )
+  );
 }
 
 interface QuickActionsDropdownProps {
-  onMarkAllAs: (status: DateStatus) => void
+  onMarkAllAs: (status: DateStatus) => void;
 }
 
 function QuickActionsDropdown({ onMarkAllAs }: QuickActionsDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+        >
           <span>Quick actions</span>
-          <ChevronDown className="size-4 ml-1" />
+          <ChevronDown className="ml-1 size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -237,19 +243,15 @@ function QuickActionsDropdown({ onMarkAllAs }: QuickActionsDropdownProps) {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 export function AvailabilityActions() {
-  const {
-    availableRanges,
-    unavailableRanges,
-    selectedRangeIds,
-    hasSelectedRanges,
-  } = useDateInteractionValue()
-  const { toggleRangeSelection, deleteSelectedRanges, markAllAs } = useDateInteractionActions()
+  const { availableRanges, unavailableRanges, selectedRangeIds, hasSelectedRanges } =
+    useDateInteractionValue();
+  const { toggleRangeSelection, deleteSelectedRanges, markAllAs } = useDateInteractionActions();
 
-  const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0
+  const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -264,5 +266,5 @@ export function AvailabilityActions() {
       />
       <QuickActionsDropdown onMarkAllAs={markAllAs} />
     </div>
-  )
+  );
 }

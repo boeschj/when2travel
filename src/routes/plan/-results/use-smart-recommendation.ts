@@ -1,24 +1,26 @@
-import { useMemo } from 'react'
-import type { PlanWithResponses } from '@/lib/types'
-import type { RecommendationResult } from './recommendation-types'
+import { useMemo } from "react";
+
+import type { PlanWithResponses } from "@/lib/types";
+
+import { evaluateRules, type RuleContext } from "./recommendation-rules";
 import {
-  scoreWindows,
-  findShorterPerfectWindows,
   findConstrainingPeople,
-} from './recommendation-scoring'
-import { evaluateRules, type RuleContext } from './recommendation-rules'
+  findShorterPerfectWindows,
+  scoreWindows,
+} from "./recommendation-scoring";
+import type { RecommendationResult } from "./recommendation-types";
 
 export function useSmartRecommendation(
-  plan: PlanWithResponses | undefined | null
+  plan: PlanWithResponses | undefined | null,
 ): RecommendationResult | null {
   return useMemo(() => {
-    if (!plan?.responses || plan.responses.length === 0) return null
+    if (!plan?.responses || plan.responses.length === 0) return null;
 
-    const { responses, numDays, startRange, endRange } = plan
-    const scoredWindows = scoreWindows(startRange, endRange, numDays, responses)
-    const bestWindow = scoredWindows[0] ?? null
-    const shorterTrip = findShorterPerfectWindows(responses, startRange, endRange, numDays)
-    const constrainers = findConstrainingPeople(scoredWindows.slice(0, 5), responses, numDays)
+    const { responses, numDays, startRange, endRange } = plan;
+    const scoredWindows = scoreWindows(startRange, endRange, numDays, responses);
+    const bestWindow = scoredWindows[0] ?? null;
+    const shorterTrip = findShorterPerfectWindows(responses, startRange, endRange, numDays);
+    const constrainers = findConstrainingPeople(scoredWindows.slice(0, 5), responses, numDays);
 
     const context: RuleContext = {
       bestWindow,
@@ -30,10 +32,13 @@ export function useSmartRecommendation(
       endRange,
       shorterTrip,
       constrainers,
-    }
+    };
 
-    const [primary, ...alternatives] = evaluateRules(context)
+    const recommendations = evaluateRules(context);
+    const primary = recommendations[0];
+    if (!primary) return null;
 
-    return { primary, alternatives }
-  }, [plan])
+    const alternatives = recommendations.slice(1);
+    return { primary, alternatives };
+  }, [plan]);
 }

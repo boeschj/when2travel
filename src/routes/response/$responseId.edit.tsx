@@ -1,13 +1,22 @@
-import { useState } from 'react'
-import { createFileRoute, useNavigate, notFound } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { useDeleteResponse, useUpdateResponse } from '@/lib/mutations'
-import { responseKeys } from '@/lib/queries'
-import { ApiError } from '@/lib/errors'
-import { ResponseForm } from '@/components/response-form/response-form'
-import { useAppForm } from '@/components/ui/tanstack-form'
-import { motion } from 'motion/react'
-import { NavigationBlocker } from '@/components/navigation-blocker'
+import { useState } from "react";
+import { useResponseEditTokens } from "@/hooks/use-auth-tokens";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { CalendarDays } from "lucide-react";
+import { motion } from "motion/react";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { ApiError } from "@/lib/errors";
+import { useDeleteResponse, useUpdateResponse } from "@/lib/mutations";
+import { responseKeys } from "@/lib/queries";
+import { getStorageRecord, STORAGE_KEYS } from "@/lib/storage";
+import { NavigationBlocker } from "@/components/navigation-blocker";
+import { ResponseForm } from "@/components/response-form/response-form";
+import { AppHeader } from "@/components/shared/app-header";
+import { ErrorScreen } from "@/components/shared/error-screen";
+import { NotFound } from "@/components/shared/not-found";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,58 +26,50 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { z } from 'zod'
-import { CalendarDays } from 'lucide-react'
-import { AppHeader } from '@/components/shared/app-header'
-import { ErrorScreen } from '@/components/shared/error-screen'
-import { NotFound } from '@/components/shared/not-found'
-import { useResponseEditTokens } from '@/hooks/use-auth-tokens'
-import { getStorageRecord, STORAGE_KEYS } from '@/lib/storage'
-import { toast } from 'sonner'
-
-import type { ErrorComponentProps } from '@tanstack/react-router'
+} from "@/components/ui/alert-dialog";
+import { useAppForm } from "@/components/ui/tanstack-form";
 
 const searchSchema = z.object({
   returnUrl: z.string().optional(),
-})
+});
 
-export const Route = createFileRoute('/response/$responseId/edit')({
+export const Route = createFileRoute("/response/$responseId/edit")({
   loader: async ({ context: { queryClient }, params: { responseId } }) => {
-    const editTokens = getStorageRecord(STORAGE_KEYS.responseEditTokens)
-    const planIds = getStorageRecord(STORAGE_KEYS.responsePlanIds)
-    const editToken = editTokens[responseId]
-    const storedPlanId = planIds[responseId]
+    const editTokens = getStorageRecord(STORAGE_KEYS.responseEditTokens);
+    const planIds = getStorageRecord(STORAGE_KEYS.responsePlanIds);
+    const editToken = editTokens[responseId];
+    const storedPlanId = planIds[responseId];
 
-    if (!editToken || !storedPlanId) return
+    if (!editToken || !storedPlanId) return;
 
     try {
-      await queryClient.ensureQueryData(responseKeys.withPlan(responseId, storedPlanId))
+      await queryClient.ensureQueryData(responseKeys.withPlan(responseId, storedPlanId));
     } catch (error) {
-      if (error instanceof ApiError && error.isNotFound) throw notFound()
-      throw error
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router pattern
+      if (error instanceof ApiError && error.isNotFound) throw notFound();
+      throw error;
     }
   },
   head: () => ({
-    meta: [{ title: 'Edit Availability | PlanTheTrip' }],
+    meta: [{ title: "Edit Availability | PlanTheTrip" }],
   }),
   component: EditResponsePage,
   notFoundComponent: NotFound,
   errorComponent: EditResponseErrorComponent,
   pendingComponent: () => null,
   validateSearch: searchSchema,
-})
+});
 
 function EditResponsePage() {
-  const { responseId } = Route.useParams()
-  const { returnUrl } = Route.useSearch()
-  const { getResponseEditToken, getResponsePlanId } = useResponseEditTokens()
+  const { responseId } = Route.useParams();
+  const { returnUrl } = Route.useSearch();
+  const { getResponseEditToken, getResponsePlanId } = useResponseEditTokens();
 
-  const editToken = getResponseEditToken(responseId)
-  const storedPlanId = getResponsePlanId(responseId)
+  const editToken = getResponseEditToken(responseId);
+  const storedPlanId = getResponsePlanId(responseId);
 
   if (!editToken || !storedPlanId) {
-    return <NoPermissionScreen />
+    return <NoPermissionScreen />;
   }
 
   return (
@@ -77,35 +78,31 @@ function EditResponsePage() {
       storedPlanId={storedPlanId}
       returnUrl={returnUrl}
     />
-  )
+  );
 }
 
 interface EditResponseContentProps {
-  responseId: string
-  storedPlanId: string
-  returnUrl: string | undefined
+  responseId: string;
+  storedPlanId: string;
+  returnUrl: string | undefined;
 }
 
-function EditResponseContent({
-  responseId,
-  storedPlanId,
-  returnUrl,
-}: EditResponseContentProps) {
-  const navigate = useNavigate({ from: Route.fullPath })
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const { plan, response } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId)).data
+function EditResponseContent({ responseId, storedPlanId, returnUrl }: EditResponseContentProps) {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { plan, response } = useSuspenseQuery(responseKeys.withPlan(responseId, storedPlanId)).data;
 
   const otherRespondentNames = plan.responses
-    ?.filter((existingResponse) => existingResponse.id !== responseId)
-    .map((existingResponse) => existingResponse.name) ?? []
+    .filter(existingResponse => existingResponse.id !== responseId)
+    .map(existingResponse => existingResponse.name);
 
   const updateResponseMutation = useUpdateResponse({
     onSuccess: () => {
-      form.reset(form.state.values)
-      const destination = returnUrl || `/plan/${plan.id}`
-      queueMicrotask(() => navigate({ to: destination }))
+      form.reset(form.state.values);
+      const destination = returnUrl ?? `/plan/${plan.id}`;
+      queueMicrotask(() => void navigate({ to: destination }));
     },
-  })
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -117,32 +114,35 @@ function EditResponseContent({
         responseId,
         planId: plan.id,
         ...value,
-      })
+      });
     },
-  })
+  });
 
   const deleteResponseMutation = useDeleteResponse({
     onSuccess: () => {
-      toast.success('Your response has been deleted')
-      navigate({ to: returnUrl || '/trips' })
+      toast.success("Your response has been deleted");
+      void navigate({ to: returnUrl ?? "/trips" });
     },
-  })
+  });
 
-  const handleDeleteRequest = () => setIsDeleteDialogOpen(true)
+  const handleDeleteRequest = () => setIsDeleteDialogOpen(true);
 
   const handleDeleteConfirm = () => {
-    setIsDeleteDialogOpen(false)
-    deleteResponseMutation.mutate({ responseId, planId: plan.id })
-  }
+    setIsDeleteDialogOpen(false);
+    deleteResponseMutation.mutate({ responseId, planId: plan.id });
+  };
 
-  const isMutationActive = updateResponseMutation.isPending || updateResponseMutation.isSuccess || deleteResponseMutation.isPending
-  const shouldBlockNavigation = form.state.isDirty && !isMutationActive
+  const isMutationActive =
+    updateResponseMutation.isPending ||
+    updateResponseMutation.isSuccess ||
+    deleteResponseMutation.isPending;
+  const shouldBlockNavigation = form.state.isDirty && !isMutationActive;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground relative flex min-h-screen w-full flex-col overflow-x-hidden">
       <AppHeader planId={plan.id} />
-      <main className="flex-1 flex flex-col items-center justify-center px-6 md:px-12 lg:px-20 pb-20 pt-10">
-        <div className="w-full md:w-fit mx-auto flex flex-col gap-12">
+      <main className="flex flex-1 flex-col items-center justify-center px-6 pt-10 pb-20 md:px-12 lg:px-20">
+        <div className="mx-auto flex w-full flex-col gap-12 md:w-fit">
           <PageHeading planName={plan.name} />
 
           <motion.div
@@ -178,7 +178,7 @@ function EditResponseContent({
         onConfirm={handleDeleteConfirm}
       />
     </div>
-  )
+  );
 }
 
 function EditResponseErrorComponent({ reset }: ErrorComponentProps) {
@@ -188,7 +188,7 @@ function EditResponseErrorComponent({ reset }: ErrorComponentProps) {
       message="Please try navigating from the plan page."
       onRetry={reset}
     />
-  )
+  );
 }
 
 function PageHeading({ planName }: { planName: string }) {
@@ -199,37 +199,40 @@ function PageHeading({ planName }: { planName: string }) {
       transition={{ duration: 0.5 }}
       className="space-y-2"
     >
-      <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em] text-foreground">
+      <h1 className="text-foreground text-4xl leading-tight font-black tracking-[-0.033em] sm:text-5xl">
         Edit Your Availability
       </h1>
-      <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2">
         <CalendarDays className="size-5" />
-        <p className="text-lg font-normal leading-normal">{planName}</p>
+        <p className="text-lg leading-normal font-normal">{planName}</p>
       </div>
     </motion.div>
-  )
+  );
 }
 
 function NoPermissionScreen() {
   return (
-    <div className="min-h-screen bg-background-dark flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="text-red-500 text-xl">No edit permission</div>
+    <div className="bg-background-dark flex min-h-screen items-center justify-center">
+      <div className="space-y-4 text-center">
+        <div className="text-xl text-red-500">No edit permission</div>
         <p className="text-text-secondary">You can only edit your own responses.</p>
       </div>
     </div>
-  )
+  );
 }
 
 interface DeleteResponseDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
 }
 
 function DeleteResponseDialog({ open, onOpenChange, onConfirm }: DeleteResponseDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Response</AlertDialogTitle>
@@ -243,5 +246,5 @@ function DeleteResponseDialog({ open, onOpenChange, onConfirm }: DeleteResponseD
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

@@ -1,4 +1,5 @@
-import { useBlocker } from '@tanstack/react-router'
+import { useBlocker } from "@tanstack/react-router";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,25 +9,32 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from "@/components/ui/alert-dialog";
 
 interface NavigationBlockerProps {
-  shouldBlock: boolean
-  onDiscard: () => void
+  shouldBlock: boolean;
+  onDiscard: () => void;
 }
 
 export function NavigationBlocker({ shouldBlock, onDiscard }: NavigationBlockerProps) {
-  const { proceed, reset, status } = useBlocker({ shouldBlockFn: () => shouldBlock, enableBeforeUnload: shouldBlock, withResolver: true })
+  const { proceed, reset, status } = useBlocker({
+    shouldBlockFn: () => shouldBlock,
+    enableBeforeUnload: shouldBlock,
+    withResolver: true,
+  });
 
-  const isBlocked = status === 'blocked'
+  const isBlocked = status === "blocked";
 
   const handleDiscard = () => {
-    onDiscard()
-    proceed?.()
-  }
+    onDiscard();
+    proceed?.();
+  };
 
   return (
-    <AlertDialog open={isBlocked} onOpenChange={(open) => !open && reset?.()}>
+    <AlertDialog
+      open={isBlocked}
+      onOpenChange={open => !open && reset?.()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
@@ -40,5 +48,5 @@ export function NavigationBlocker({ shouldBlock, onDiscard }: NavigationBlockerP
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

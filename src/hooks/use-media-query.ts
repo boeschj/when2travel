@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from "react";
 
 export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false)
+  const [matches, setMatches] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia(query)
-    setMatches(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [query])
+    const mq = globalThis.matchMedia(query);
+    setMatches(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
 
-  return matches
+  return matches;
 }

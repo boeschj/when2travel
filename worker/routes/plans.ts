@@ -1,22 +1,23 @@
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
-import { eq } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
-import { z } from 'zod'
-import { plans, planResponses } from '../db/schema'
-import { createPlanSchema, updatePlanSchema, deletePlanSchema } from '../lib/schemas'
-import type { Bindings } from '../lib/env'
+import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { nanoid } from "nanoid";
+import { z } from "zod";
 
-const availableDatesSchema = z.array(z.string())
+import { planResponses, plans } from "../db/schema";
+import type { Bindings } from "../lib/env";
+import { createPlanSchema, deletePlanSchema, updatePlanSchema } from "../lib/schemas";
+
+const availableDatesSchema = z.array(z.string());
 
 export const plansRoutes = new Hono<{ Bindings: Bindings }>()
-  .post('/', zValidator('json', createPlanSchema), async (c) => {
-    const db = c.var.db
-    const body = c.req.valid('json')
+  .post("/", zValidator("json", createPlanSchema), async c => {
+    const db = c.var.db;
+    const body = c.req.valid("json");
 
-    const id = nanoid()
-    const editToken = nanoid()
-    const now = new Date().toISOString()
+    const id = nanoid();
+    const editToken = nanoid();
+    const now = new Date().toISOString();
 
     const newPlan = {
       id,
@@ -27,20 +28,20 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
       endRange: body.endRange,
       createdAt: now,
       updatedAt: now,
-    }
+    };
 
-    await db.insert(plans).values(newPlan)
+    await db.insert(plans).values(newPlan);
 
-    return c.json(newPlan, 201)
+    return c.json(newPlan, 201);
   })
-  .get('/:id', async (c) => {
-    const db = c.var.db
-    const planId = c.req.param('id')
+  .get("/:id", async c => {
+    const db = c.var.db;
+    const planId = c.req.param("id");
 
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
 
     if (!plan) {
-      return c.json({ error: 'Plan not found' }, 404)
+      return c.json({ error: "Plan not found" }, 404);
     }
 
     const responses = await db
@@ -53,44 +54,44 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
         updatedAt: planResponses.updatedAt,
       })
       .from(planResponses)
-      .where(eq(planResponses.planId, planId))
+      .where(eq(planResponses.planId, planId));
 
-    const parsedResponses = responses.map((response) => ({
+    const parsedResponses = responses.map(response => ({
       ...response,
       availableDates: availableDatesSchema.parse(JSON.parse(response.availableDates)),
-    }))
+    }));
 
-    const publicPlan = excludeEditToken(plan)
+    const publicPlan = excludeEditToken(plan);
 
     return c.json({
       ...publicPlan,
       responses: parsedResponses,
-    })
+    });
   })
-  .put('/:id', zValidator('json', updatePlanSchema), async (c) => {
-    const db = c.var.db
-    const planId = c.req.param('id')
-    const body = c.req.valid('json')
+  .put("/:id", zValidator("json", updatePlanSchema), async c => {
+    const db = c.var.db;
+    const planId = c.req.param("id");
+    const body = c.req.valid("json");
 
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
 
     if (!plan) {
-      return c.json({ error: 'Plan not found' }, 404)
+      return c.json({ error: "Plan not found" }, 404);
     }
 
     if (plan.editToken !== body.editToken) {
-      return c.json({ error: 'Unauthorized' }, 401)
+      return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const now = new Date().toISOString()
-    const updateFields = excludeEditToken(body)
+    const now = new Date().toISOString();
+    const updateFields = excludeEditToken(body);
 
-    const mergedStartRange = updateFields.startRange ?? plan.startRange
-    const mergedEndRange = updateFields.endRange ?? plan.endRange
+    const mergedStartRange = updateFields.startRange ?? plan.startRange;
+    const mergedEndRange = updateFields.endRange ?? plan.endRange;
 
-    const startDateExceedsEndDate = new Date(mergedStartRange) > new Date(mergedEndRange)
+    const startDateExceedsEndDate = new Date(mergedStartRange) > new Date(mergedEndRange);
     if (startDateExceedsEndDate) {
-      return c.json({ error: 'Start date must be before or equal to end date' }, 400)
+      return c.json({ error: "Start date must be before or equal to end date" }, 400);
     }
 
     await db
@@ -102,34 +103,34 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
         ...(updateFields.endRange && { endRange: updateFields.endRange }),
         updatedAt: now,
       })
-      .where(eq(plans.id, planId))
+      .where(eq(plans.id, planId));
 
-    const [updatedPlan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+    const [updatedPlan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
 
-    return c.json(updatedPlan)
+    return c.json(updatedPlan);
   })
-  .delete('/:id', zValidator('json', deletePlanSchema), async (c) => {
-    const db = c.var.db
-    const planId = c.req.param('id')
-    const body = c.req.valid('json')
+  .delete("/:id", zValidator("json", deletePlanSchema), async c => {
+    const db = c.var.db;
+    const planId = c.req.param("id");
+    const body = c.req.valid("json");
 
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1)
+    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
 
     if (!plan) {
-      return c.json({ error: 'Plan not found' }, 404)
+      return c.json({ error: "Plan not found" }, 404);
     }
 
     if (plan.editToken !== body.editToken) {
-      return c.json({ error: 'Unauthorized' }, 401)
+      return c.json({ error: "Unauthorized" }, 401);
     }
 
-    await db.delete(plans).where(eq(plans.id, planId))
+    await db.delete(plans).where(eq(plans.id, planId));
 
-    return c.json({ message: 'Plan deleted successfully' })
-  })
+    return c.json({ message: "Plan deleted successfully" });
+  });
 
-function excludeEditToken<T extends { editToken: string }>(obj: T): Omit<T, 'editToken'> {
-  const { editToken, ...rest } = obj
-  void editToken
-  return rest
+function excludeEditToken<T extends { editToken: string }>(obj: T): Omit<T, "editToken"> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Destructuring to omit editToken
+  const { editToken, ...rest } = obj;
+  return rest;
 }

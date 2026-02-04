@@ -1,31 +1,33 @@
-import { forwardRef } from 'react'
-import { Edit } from 'lucide-react'
-import { useFormFieldContext } from '@/components/ui/tanstack-form'
+import { forwardRef } from "react";
+import { Edit } from "lucide-react";
 
-interface TripNameInputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+import { useFormFieldContext } from "@/components/ui/tanstack-form";
+
+type TripNameInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export const TripNameInput = forwardRef<HTMLInputElement, TripNameInputProps>(
   function TripNameInput(props, ref) {
-    const field = useFormFieldContext<string>()
+    const field = useFormFieldContext<string>();
 
     return (
       <input
         ref={ref}
         type="text"
         value={field.state.value}
-        onChange={(e) => field.handleChange(e.target.value)}
+        onChange={e => field.handleChange(e.target.value)}
         onBlur={field.handleBlur}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- Primary input on dedicated create page
         autoFocus
-        className="w-full bg-transparent border-0 border-b-2 rounded-none pl-0 pr-12 py-4 text-3xl md:text-5xl font-bold text-foreground placeholder:text-foreground/20 focus:ring-0 focus:outline-none transition-colors duration-300 ease-out border-foreground/20 focus:border-primary aria-invalid:border-destructive aria-invalid:focus:border-destructive"
+        className="text-foreground placeholder:text-foreground/20 border-foreground/20 focus:border-primary aria-invalid:border-destructive aria-invalid:focus:border-destructive w-full rounded-none border-0 border-b-2 bg-transparent py-4 pr-12 pl-0 text-3xl font-bold transition-colors duration-300 ease-out focus:ring-0 focus:outline-none md:text-5xl"
         placeholder="Name your trip (e.g., Hawaii Trip '26)"
         {...props}
       />
-    )
-  }
-)
+    );
+  },
+);
 
 export function TripNameEditIcon() {
   return (
-    <Edit className="absolute right-0 top-1/2 -translate-y-1/2 text-foreground/20 w-10 h-10 group-focus-within:text-primary transition-colors" />
-  )
+    <Edit className="text-foreground/20 group-focus-within:text-primary absolute top-1/2 right-0 h-10 w-10 -translate-y-1/2 transition-colors" />
+  );
 }

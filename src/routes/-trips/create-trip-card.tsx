@@ -1,43 +1,51 @@
-import { AppLink } from '@/components/shared/app-link'
-import { Plus, Share2 } from 'lucide-react'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Plus, Share2 } from "lucide-react";
+
+import { AppLink } from "@/components/shared/app-link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export function CreateTripCard() {
   return (
-    <Card className="border-dashed border-2 hover:border-primary border-primary/50 transition-colors h-full">
-      <CardContent className="flex-1 flex flex-col gap-4 pt-6">
+    <Card className="hover:border-primary border-primary/50 h-full border-2 border-dashed transition-colors">
+      <CardContent className="flex flex-1 flex-col gap-4 pt-6">
         <GetStartedBadge />
-        <h3 className="text-xl font-bold text-foreground leading-tight">
+        <h3 className="text-foreground text-xl leading-tight font-bold">
           Plan Your Next Adventure
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Create a new trip or invite friends to join PlanTheTrip and coordinate your travels together.
+        <p className="text-muted-foreground text-sm">
+          Create a new trip or invite friends to join PlanTheTrip and coordinate your travels
+          together.
         </p>
       </CardContent>
       <CardFooter className="gap-3 pb-6">
-        <Button asChild className="flex-1">
+        <Button
+          asChild
+          className="flex-1"
+        >
           <AppLink to="/create">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             New Trip
           </AppLink>
         </Button>
-        <Button variant="outline" asChild>
+        <Button
+          variant="outline"
+          asChild
+        >
           <AppLink to="/">
-            <Share2 className="h-4 w-4 mr-2" />
+            <Share2 className="mr-2 h-4 w-4" />
             Invite
           </AppLink>
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 function GetStartedBadge() {
   return (
-    <div className="flex items-center gap-2 text-primary">
+    <div className="text-primary flex items-center gap-2">
       <Plus className="h-5 w-5" />
-      <span className="text-sm font-semibold uppercase tracking-wide">Get Started</span>
+      <span className="text-sm font-semibold tracking-wide uppercase">Get Started</span>
     </div>
-  )
+  );
 }

@@ -1,18 +1,18 @@
-import { useMemo } from 'react'
-import { eachDayOfInterval, parseISO } from 'date-fns'
-import { groupDatesIntoRanges } from '@/lib/utils'
-import { formatDateString, countCompatibleWindows } from './date-range-utilities'
-import { useDateRangeSelection, DATE_STATUS } from './use-date-range-selection'
-import { useRangeSelection } from './use-range-selection'
+import { useMemo } from "react";
+import { eachDayOfInterval, parseISO } from "date-fns";
 
-import type { DateStatus } from './use-date-range-selection'
+import { groupDatesIntoRanges } from "@/lib/utils";
+
+import { countCompatibleWindows, formatDateString } from "./date-range-utilities";
+import { DATE_STATUS, useDateRangeSelection } from "./use-date-range-selection";
+import { useRangeSelection } from "./use-range-selection";
 
 interface UseDateInteractionProps {
-  startRange: string
-  endRange: string
-  numDays: number
-  selectedDates: string[]
-  onDatesChange: (dates: string[]) => void
+  startRange: string;
+  endRange: string;
+  numDays: number;
+  selectedDates: string[];
+  onDatesChange: (dates: string[]) => void;
 }
 
 export function useDateInteraction({
@@ -23,42 +23,39 @@ export function useDateInteraction({
   onDatesChange,
 }: UseDateInteractionProps) {
   const allTripDates = useMemo(() => {
-    const start = parseISO(startRange)
-    const end = parseISO(endRange)
-    const datesInInterval = eachDayOfInterval({ start, end })
-    const dateStrings = datesInInterval.map(formatDateString)
-    return dateStrings
-  }, [startRange, endRange])
+    const start = parseISO(startRange);
+    const end = parseISO(endRange);
+    const datesInInterval = eachDayOfInterval({ start, end });
+    const dateStrings = datesInInterval.map(d => formatDateString(d));
+    return dateStrings;
+  }, [startRange, endRange]);
 
-  const dateRangeStart = parseISO(startRange)
-  const dateRangeEnd = parseISO(endRange)
-  const dateRange = { start: dateRangeStart, end: dateRangeEnd }
+  const dateRangeStart = parseISO(startRange);
+  const dateRangeEnd = parseISO(endRange);
+  const dateRange = { start: dateRangeStart, end: dateRangeEnd };
 
-  const selectedDatesSet = useMemo(() => new Set(selectedDates), [selectedDates])
+  const selectedDatesSet = useMemo(() => new Set(selectedDates), [selectedDates]);
 
-  const {
-    rangeStart,
-    toggleDateSelection,
-    markAllAs,
-  } = useDateRangeSelection({ dateRange, allTripDates, selectedDatesSet, onDatesChange })
-
-  const unavailableDates = allTripDates.filter((date) => !selectedDatesSet.has(date))
-
-  const availableRanges = groupDatesIntoRanges(selectedDates, DATE_STATUS.available)
-  const unavailableRanges = groupDatesIntoRanges(unavailableDates, DATE_STATUS.unavailable)
-  const compatibleWindowsCount = countCompatibleWindows(availableRanges, numDays)
-
-  const {
-    selectedRangeIds,
-    hasSelectedRanges,
-    toggleRangeSelection,
-    deleteSelectedRanges,
-  } = useRangeSelection({
-    availableRanges,
-    unavailableRanges,
+  const { rangeStart, toggleDateSelection, markAllAs } = useDateRangeSelection({
+    dateRange,
+    allTripDates,
     selectedDatesSet,
     onDatesChange,
-  })
+  });
+
+  const unavailableDates = allTripDates.filter(date => !selectedDatesSet.has(date));
+
+  const availableRanges = groupDatesIntoRanges(selectedDates, DATE_STATUS.available);
+  const unavailableRanges = groupDatesIntoRanges(unavailableDates, DATE_STATUS.unavailable);
+  const compatibleWindowsCount = countCompatibleWindows(availableRanges, numDays);
+
+  const { selectedRangeIds, hasSelectedRanges, toggleRangeSelection, deleteSelectedRanges } =
+    useRangeSelection({
+      availableRanges,
+      unavailableRanges,
+      selectedDatesSet,
+      onDatesChange,
+    });
 
   return {
     selectedDatesSet,
@@ -72,8 +69,7 @@ export function useDateInteraction({
     toggleRangeSelection,
     deleteSelectedRanges,
     markAllAs,
-  }
+  };
 }
 
-export { DATE_STATUS }
-export type { DateStatus }
+export { type DateStatus, DATE_STATUS } from "./use-date-range-selection";

@@ -1,38 +1,37 @@
-import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory'
-import { client } from './api'
-import { ApiError } from './errors'
+import { createQueryKeys, mergeQueryKeys } from "@lukemorales/query-key-factory";
+
+import { client } from "./api";
+import { ApiError } from "./errors";
 
 async function fetchPlanById(planId: string) {
-  const response = await client.plans[':id'].$get({
+  const response = await client.plans[":id"].$get({
     param: { id: planId },
-  })
+  });
   if (!response.ok) {
-    throw await ApiError.fromResponse(response)
+    throw await ApiError.fromResponse(response);
   }
-  return response.json()
+  return response.json();
 }
 
-export const planKeys = createQueryKeys('plans', {
+export const planKeys = createQueryKeys("plans", {
   detail: (planId: string) => ({
     queryKey: [planId],
     queryFn: () => fetchPlanById(planId),
   }),
-})
+});
 
-export const responseKeys = createQueryKeys('responses', {
+export const responseKeys = createQueryKeys("responses", {
   withPlan: (responseId: string, planId: string) => ({
     queryKey: [responseId, planId],
     queryFn: async () => {
-      const plan = await fetchPlanById(planId)
-      const matchingResponse = plan.responses?.find(
-        (response) => response.id === responseId,
-      )
+      const plan = await fetchPlanById(planId);
+      const matchingResponse = plan.responses.find(response => response.id === responseId);
       if (!matchingResponse) {
-        throw new ApiError(404, 'Response not found in plan')
+        throw new ApiError(404, "Response not found in plan");
       }
-      return { plan, response: matchingResponse }
+      return { plan, response: matchingResponse };
     },
   }),
-})
+});
 
-export const queries = mergeQueryKeys(planKeys, responseKeys)
+export const queries = mergeQueryKeys(planKeys, responseKeys);

@@ -1,59 +1,59 @@
-import { useId, createContext, useContext } from 'react'
-import { Slot } from '@radix-ui/react-slot'
-import {
-  createFormHookContexts,
-  createFormHook,
-  useStore,
-} from '@tanstack/react-form'
-import { Field, FieldLabel, FieldDescription, FieldError } from '@/components/ui/field'
+import { createContext, useContext, useId } from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { createFormHook, createFormHookContexts, useStore } from "@tanstack/react-form";
+
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 
 const {
   fieldContext,
   formContext,
   useFieldContext: useFormFieldContext,
   useFormContext,
-} = createFormHookContexts()
+} = createFormHookContexts();
 
 interface FieldIdContextValue {
-  id: string
-  errorId: string
-  descriptionId: string
+  id: string;
+  errorId: string;
+  descriptionId: string;
 }
 
-const FieldIdContext = createContext<FieldIdContextValue | null>(null)
+const FieldIdContext = createContext<FieldIdContextValue | null>(null);
 
 function useFieldIdContext() {
-  const ctx = useContext(FieldIdContext)
-  if (!ctx) throw new Error('useFieldIdContext must be used within FieldWrapper')
-  return ctx
+  const ctx = useContext(FieldIdContext);
+  if (!ctx) throw new Error("useFieldIdContext must be used within FieldWrapper");
+  return ctx;
 }
 
 function useFieldContext<TData>() {
-  const fieldApi = useFormFieldContext<TData>()
-  const ids = useFieldIdContext()
-  return Object.assign(fieldApi, ids)
+  const fieldApi = useFormFieldContext<TData>();
+  const ids = useFieldIdContext();
+  return Object.assign(fieldApi, ids);
 }
 
 function FieldWrapper({ className, children, ...props }: React.ComponentProps<typeof Field>) {
-  const id = useId()
-  const errorId = `${id}-error`
-  const descriptionId = `${id}-description`
+  const id = useId();
+  const errorId = `${id}-error`;
+  const descriptionId = `${id}-description`;
 
   return (
     <FieldIdContext value={{ id, errorId, descriptionId }}>
-      <Field className={className} {...props}>
+      <Field
+        className={className}
+        {...props}
+      >
         {children}
       </Field>
     </FieldIdContext>
-  )
+  );
 }
 
 function FieldControlWrapper({ children, ...props }: React.ComponentProps<typeof Slot>) {
-  const field = useFormFieldContext()
-  const { id, errorId } = useFieldIdContext()
-  const isTouched = useStore(field.store, (s) => s.meta.isTouched)
-  const isValid = useStore(field.store, (s) => s.meta.isValid)
-  const isInvalid = isTouched && !isValid
+  const field = useFormFieldContext();
+  const { id, errorId } = useFieldIdContext();
+  const isTouched = useStore(field.store, s => s.meta.isTouched);
+  const isValid = useStore(field.store, s => s.meta.isValid);
+  const isInvalid = isTouched && !isValid;
 
   return (
     <Slot
@@ -64,31 +64,48 @@ function FieldControlWrapper({ children, ...props }: React.ComponentProps<typeof
     >
       {children}
     </Slot>
-  )
+  );
 }
 
 function FieldLabelWrapper({ className, ...props }: React.ComponentProps<typeof FieldLabel>) {
-  const { id } = useFieldIdContext()
+  const { id } = useFieldIdContext();
 
-  return <FieldLabel htmlFor={id} className={className} {...props} />
+  return (
+    <FieldLabel
+      htmlFor={id}
+      className={className}
+      {...props}
+    />
+  );
 }
 
 function FieldDescriptionWrapper(props: React.ComponentProps<typeof FieldDescription>) {
-  const { descriptionId } = useFieldIdContext()
+  const { descriptionId } = useFieldIdContext();
 
-  return <FieldDescription id={descriptionId} {...props} />
+  return (
+    <FieldDescription
+      id={descriptionId}
+      {...props}
+    />
+  );
 }
 
-function FieldErrorWrapper({ className, ...props }: Omit<React.ComponentProps<typeof FieldError>, 'errors'>) {
-  const field = useFormFieldContext()
-  const { errorId } = useFieldIdContext()
-  const isTouched = useStore(field.store, (s) => s.meta.isTouched)
-  const isValid = useStore(field.store, (s) => s.meta.isValid)
-  const errors = useStore(field.store, (s) => s.meta.errors)
+function FieldErrorWrapper({
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof FieldError>, "errors">) {
+  const field = useFormFieldContext();
+  const { errorId } = useFieldIdContext();
+  const isTouched = useStore(field.store, s => s.meta.isTouched);
+  const isValid = useStore(field.store, s => s.meta.isValid);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TanStack Form types are complex
+  const errors: unknown[] = useStore(field.store, s => s.meta.errors);
 
-  if (!isTouched || isValid) return null
+  if (!isTouched || isValid) return null;
 
-  const formattedErrors = errors.map((e) => ({ message: String(e) }))
+  const formattedErrors = errors.map(e => ({
+    message: String(e),
+  }));
 
   return (
     <FieldError
@@ -97,7 +114,7 @@ function FieldErrorWrapper({ className, ...props }: Omit<React.ComponentProps<ty
       className={className}
       {...props}
     />
-  )
+  );
 }
 
 const { useAppForm, withForm } = createFormHook({
@@ -111,7 +128,7 @@ const { useAppForm, withForm } = createFormHook({
   formComponents: {},
   fieldContext,
   formContext,
-})
+});
 
 export {
   useAppForm,
@@ -121,4 +138,4 @@ export {
   useFormContext,
   FieldControlWrapper as AppFieldControl,
   FieldErrorWrapper as AppFieldError,
-}
+};

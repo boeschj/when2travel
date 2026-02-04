@@ -3,8 +3,8 @@ export const PLAN_VALIDATION = {
   NAME_MAX_LENGTH: 100,
   DAYS_MIN: 1,
   DAYS_MAX: 60,
-} as const
+} as const;
 
 export const DATE_FORMAT = {
-  ISO: 'yyyy-MM-dd',
-} as const
+  ISO: "yyyy-MM-dd",
+} as const;

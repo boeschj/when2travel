@@ -1,9 +1,10 @@
-import { QueryErrorResetBoundary } from '@tanstack/react-query'
-import { ErrorBoundary } from 'react-error-boundary'
-import { ErrorScreen } from './error-screen'
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+
+import { ErrorScreen } from "./error-screen";
 
 interface QueryBoundaryProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function QueryBoundary({ children }: QueryBoundaryProps) {
@@ -24,5 +25,5 @@ export function QueryBoundary({ children }: QueryBoundaryProps) {
         </ErrorBoundary>
       )}
     </QueryErrorResetBoundary>
-  )
+  );
 }

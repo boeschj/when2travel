@@ -1,13 +1,13 @@
-import type { InferSelectModel, InferInsertModel } from 'drizzle-orm'
-import type { plans, planResponses } from './schema'
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-export type Plan = InferSelectModel<typeof plans>
-export type PlanResponse = InferSelectModel<typeof planResponses>
+import type { planResponses, plans } from "./schema";
 
-export type NewPlan = InferInsertModel<typeof plans>
-export type NewPlanResponse = InferInsertModel<typeof planResponses>
+export type Plan = InferSelectModel<typeof plans>;
+export type PlanResponse = InferSelectModel<typeof planResponses>;
+
+export type NewPlan = InferInsertModel<typeof plans>;
+export type NewPlanResponse = InferInsertModel<typeof planResponses>;
 
 export type PlanWithResponses = Plan & {
-  responses: PlanResponse[]
-}
-
+  responses: PlanResponse[];
+};

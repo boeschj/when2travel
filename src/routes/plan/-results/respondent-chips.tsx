@@ -2,8 +2,11 @@ import { cn } from '@/lib/utils'
 import { CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserAvatar } from './user-avatar'
-import type { CompatibleDateRange } from '@/lib/types'
+import { useResultsValue, useResultsActions } from './results-context'
 import { parseISO, eachDayOfInterval, format } from 'date-fns'
+
+import type { CompatibleDateRange } from '@/lib/types'
+import type { Respondent } from './results-context'
 
 const RESPONDENT_STATUS = {
   AVAILABLE: 'available',
@@ -13,21 +16,7 @@ const RESPONDENT_STATUS = {
 
 type RespondentStatus = (typeof RESPONDENT_STATUS)[keyof typeof RESPONDENT_STATUS]
 
-interface Respondent {
-  id: string
-  name: string
-  availableDates: string[]
-  isCurrentUser: boolean
-}
-
 interface RespondentChipsProps {
-  respondents: Respondent[]
-  bestWindow: CompatibleDateRange | null
-  selectedRespondentId: string | null
-  onRespondentClick: (respondentId: string | null) => void
-  startRange: string
-  endRange: string
-  numDays: number
   className?: string
 }
 
@@ -130,16 +119,10 @@ function getDisplayName(respondent: Respondent): string {
   return respondent.name
 }
 
-export function RespondentChips({
-  respondents,
-  bestWindow,
-  selectedRespondentId,
-  onRespondentClick,
-  startRange,
-  endRange,
-  numDays,
-  className
-}: RespondentChipsProps) {
+export function RespondentChips({ className }: RespondentChipsProps) {
+  const { respondents, bestWindow, selectedRespondentId, plan } = useResultsValue()
+  const { onRespondentClick } = useResultsActions()
+
   const selectedRespondent = respondents.find(
     respondent => respondent.id === selectedRespondentId
   )
@@ -169,9 +152,9 @@ export function RespondentChips({
             const status = getRespondentStatus({
               respondent,
               bestWindow,
-              startRange,
-              endRange,
-              requiredDays: numDays
+              startRange: plan.startRange,
+              endRange: plan.endRange,
+              requiredDays: plan.numDays
             })
             const isSelected = selectedRespondentId === respondent.id
 

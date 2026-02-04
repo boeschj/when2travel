@@ -10,10 +10,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, CheckCircle, Ban, CalendarDays, Trash2 } from 'lucide-react'
 import { formatDateRangeDisplay, cn, pluralize } from '@/lib/utils'
+import { useDateInteractionValue, useDateInteractionActions } from './date-interaction-context'
+import { DATE_STATUS } from './use-date-interaction'
+
 import type { DateRange } from '@/lib/types'
 import type { LucideIcon } from 'lucide-react'
 import type { DateStatus } from './use-date-interaction'
-import { DATE_STATUS } from './use-date-interaction'
 
 interface DateRangeCheckboxItemProps {
   range: DateRange
@@ -238,27 +240,17 @@ function QuickActionsDropdown({ onMarkAllAs }: QuickActionsDropdownProps) {
   )
 }
 
-interface AvailabilityActionsProps {
-  availableRanges: DateRange[]
-  unavailableRanges: DateRange[]
-  selectedRangeIds: Set<string>
-  hasSelectedRanges: boolean
-  hasAnyRanges: boolean
-  onToggleRangeSelection: (rangeId: string) => void
-  onDeleteSelected: () => void
-  onMarkAllAs: (status: DateStatus) => void
-}
+export function AvailabilityActions() {
+  const {
+    availableRanges,
+    unavailableRanges,
+    selectedRangeIds,
+    hasSelectedRanges,
+  } = useDateInteractionValue()
+  const { toggleRangeSelection, deleteSelectedRanges, markAllAs } = useDateInteractionActions()
 
-export function AvailabilityActions({
-  availableRanges,
-  unavailableRanges,
-  selectedRangeIds,
-  hasSelectedRanges,
-  hasAnyRanges,
-  onToggleRangeSelection,
-  onDeleteSelected,
-  onMarkAllAs
-}: AvailabilityActionsProps) {
+  const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0
+
   return (
     <div className="flex items-center gap-2">
       <ManageDatesDropdown
@@ -267,10 +259,10 @@ export function AvailabilityActions({
         selectedRangeIds={selectedRangeIds}
         hasSelectedRanges={hasSelectedRanges}
         hasAnyRanges={hasAnyRanges}
-        onToggleRangeSelection={onToggleRangeSelection}
-        onDeleteSelected={onDeleteSelected}
+        onToggleRangeSelection={toggleRangeSelection}
+        onDeleteSelected={deleteSelectedRanges}
       />
-      <QuickActionsDropdown onMarkAllAs={onMarkAllAs} />
+      <QuickActionsDropdown onMarkAllAs={markAllAs} />
     </div>
   )
 }

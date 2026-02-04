@@ -4,42 +4,20 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { AvailabilityCalendar } from './availability-calendar'
 import { AvailabilityActions } from './availability-actions'
+import { useDateInteractionValue, useDateInteractionActions } from './date-interaction-context'
 import { pluralize } from '@/lib/utils'
-import type { DateRange } from '@/lib/types'
-import type { DateStatus } from './use-date-interaction'
 
-interface SelectDatesCardProps {
-  startRange: string
-  endRange: string
-  selectedDates: string[]
-  compatibleWindowsCount: number
-  rangeStart: Date | null
-  onDateClick: (date: Date) => void
-  onMarkAllAs: (status: DateStatus) => void
-  availableRanges: DateRange[]
-  unavailableRanges: DateRange[]
-  selectedRangeIds: Set<string>
-  hasSelectedRanges: boolean
-  onToggleRangeSelection: (rangeId: string) => void
-  onDeleteSelected: () => void
-}
+export function SelectDatesCard() {
+  const {
+    startRange,
+    endRange,
+    selectedDatesSet,
+    compatibleWindowsCount,
+    rangeStart,
+  } = useDateInteractionValue()
+  const { handleDateClick } = useDateInteractionActions()
 
-export function SelectDatesCard({
-  startRange,
-  endRange,
-  selectedDates,
-  compatibleWindowsCount,
-  rangeStart,
-  onDateClick,
-  onMarkAllAs,
-  availableRanges,
-  unavailableRanges,
-  selectedRangeIds,
-  hasSelectedRanges,
-  onToggleRangeSelection,
-  onDeleteSelected
-}: SelectDatesCardProps) {
-  const hasAnyRanges = availableRanges.length > 0 || unavailableRanges.length > 0
+  const selectedDates = Array.from(selectedDatesSet)
   const hasSelectedDates = selectedDates.length > 0
 
   return (
@@ -56,16 +34,7 @@ export function SelectDatesCard({
             Tap once to start a range, tap again to complete it.
           </SectionSubheader>
         </div>
-        <AvailabilityActions
-          availableRanges={availableRanges}
-          unavailableRanges={unavailableRanges}
-          selectedRangeIds={selectedRangeIds}
-          hasSelectedRanges={hasSelectedRanges}
-          hasAnyRanges={hasAnyRanges}
-          onToggleRangeSelection={onToggleRangeSelection}
-          onDeleteSelected={onDeleteSelected}
-          onMarkAllAs={onMarkAllAs}
-        />
+        <AvailabilityActions />
       </div>
       <Separator className="mb-4" />
       <AvailabilityCalendar
@@ -73,7 +42,7 @@ export function SelectDatesCard({
         endRange={endRange}
         selectedDates={selectedDates}
         rangeStart={rangeStart}
-        onDateClick={onDateClick}
+        onDateClick={handleDateClick}
         numberOfMonths={2}
       />
     </Card>

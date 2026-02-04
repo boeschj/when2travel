@@ -21,11 +21,12 @@ import { useCurrentUserResponse, useResponseEditTokens, usePlanAuthContext } fro
 import { getRespondentColor } from './-results/user-avatar'
 import { buildAbsoluteUrl } from '@/lib/routes'
 import { copyToClipboard } from '@/hooks/use-clipboard'
+import { ResultsProvider, useResultsValue } from './-results/results-context'
 
 import type { PlanResponse } from '@/lib/types'
-import type { CompatibleDateRange } from '@/lib/types'
 import type { RecommendationResult } from './-results/recommendation-types'
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import type { Respondent } from './-results/results-context'
 
 export const Route = createFileRoute('/plan/$planId/')({
   component: PlanResultsPage,
@@ -125,20 +126,23 @@ function PlanResultsPage() {
           )}
 
           {hasRespondents && (
-            <ResultsGrid
+            <ResultsProvider
               plan={plan}
-              recommendation={recommendation}
-              isCreator={isCreator}
-              currentUserResponse={currentUserResponse}
               respondents={respondents}
               bestWindow={bestWindow}
               selectedRespondentId={selectedRespondentId}
               selectedRespondentColor={selectedRespondentColor}
               onRespondentClick={setSelectedRespondentId}
               onDateClick={handleDateClick}
-              onEditPlan={handleEditPlan}
-              onEditAvailability={handleEditAvailability}
-            />
+            >
+              <ResultsGrid
+                recommendation={recommendation}
+                isCreator={isCreator}
+                currentUserResponse={currentUserResponse}
+                onEditPlan={handleEditPlan}
+                onEditAvailability={handleEditAvailability}
+              />
+            </ResultsProvider>
           )}
 
           <DateAvailabilityDialog
@@ -207,42 +211,22 @@ function NoRespondentsState({ onAddAvailability, onShare }: NoRespondentsStatePr
   )
 }
 
-interface Respondent {
-  id: string
-  name: string
-  availableDates: string[]
-  isCurrentUser: boolean
-}
-
 interface ResultsGridProps {
-  plan: { name: string; startRange: string; endRange: string; numDays: number; responses: PlanResponse[] | null }
   recommendation: RecommendationResult | null
   isCreator: boolean
   currentUserResponse: PlanResponse | null | undefined
-  respondents: Respondent[]
-  bestWindow: CompatibleDateRange | null
-  selectedRespondentId: string | null
-  selectedRespondentColor: string | null
-  onRespondentClick: (id: string | null) => void
-  onDateClick: (date: Date) => void
   onEditPlan: () => void
   onEditAvailability: () => void
 }
 
 function ResultsGrid({
-  plan,
   recommendation,
   isCreator,
   currentUserResponse,
-  respondents,
-  bestWindow,
-  selectedRespondentId,
-  selectedRespondentColor,
-  onRespondentClick,
-  onDateClick,
   onEditPlan,
   onEditAvailability,
 }: ResultsGridProps) {
+  const { plan } = useResultsValue()
   const hasResponded = !!currentUserResponse
 
   return (
@@ -264,28 +248,13 @@ function ResultsGrid({
 
       <div className="order-2 min-w-0 min-[1350px]:h-full">
         <div className="bg-surface-dark border border-border rounded-2xl p-4 md:p-6 flex flex-col overflow-hidden min-[1350px]:h-full">
-          <RespondentChips
-            respondents={respondents}
-            bestWindow={bestWindow}
-            selectedRespondentId={selectedRespondentId}
-            onRespondentClick={onRespondentClick}
-            startRange={plan.startRange}
-            endRange={plan.endRange}
-            numDays={plan.numDays}
-          />
+          <RespondentChips />
 
           <Separator className="my-4" />
 
           <HeatmapHeader />
 
-          <ResultsCalendar
-            startRange={plan.startRange}
-            endRange={plan.endRange}
-            responses={plan.responses ?? []}
-            selectedRespondentId={selectedRespondentId}
-            selectedRespondentColor={selectedRespondentColor}
-            onDateClick={onDateClick}
-          />
+          <ResultsCalendar />
         </div>
       </div>
     </div>

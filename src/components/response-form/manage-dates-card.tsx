@@ -5,30 +5,22 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Trash2, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DateRangeList } from './date-range-list'
-import type { DateRange } from '@/lib/types'
+import { useDateInteractionValue, useDateInteractionActions } from './date-interaction-context'
 
-interface ManageDatesCardProps {
-  availableRanges: DateRange[]
-  unavailableRanges: DateRange[]
-  selectedRangeIds: Set<string>
-  hasSelectedRanges: boolean
-  onToggleRangeSelection: (rangeId: string) => void
-  onDeleteSelected: () => void
-}
+export function ManageDatesCard() {
+  const {
+    availableRanges,
+    unavailableRanges,
+    selectedRangeIds,
+    hasSelectedRanges,
+  } = useDateInteractionValue()
+  const { toggleRangeSelection, deleteSelectedRanges } = useDateInteractionActions()
 
-export function ManageDatesCard({
-  availableRanges,
-  unavailableRanges,
-  selectedRangeIds,
-  hasSelectedRanges,
-  onToggleRangeSelection,
-  onDeleteSelected
-}: ManageDatesCardProps) {
   return (
     <Card className="hidden xl:flex p-4 w-72 flex-col overflow-hidden max-h-0 min-h-full">
       <CardHeader
         hasSelectedRanges={hasSelectedRanges}
-        onDeleteSelected={onDeleteSelected}
+        onDeleteSelected={deleteSelectedRanges}
       />
       <ScrollArea className="flex-1 min-h-0">
         <div className="space-y-6 pr-2">
@@ -36,13 +28,13 @@ export function ManageDatesCard({
             title="Available Dates"
             ranges={availableRanges}
             selectedIds={selectedRangeIds}
-            onToggleSelection={onToggleRangeSelection}
+            onToggleSelection={toggleRangeSelection}
           />
           <DateRangeList
             title="Unavailable Dates"
             ranges={unavailableRanges}
             selectedIds={selectedRangeIds}
-            onToggleSelection={onToggleRangeSelection}
+            onToggleSelection={toggleRangeSelection}
           />
         </div>
       </ScrollArea>

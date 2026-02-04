@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useDateInteraction } from './use-date-interaction'
+import { DateInteractionProvider } from './date-interaction-context'
 import { NameInputCard } from './name-input-card'
 import { SelectDatesCard } from './select-dates-card'
 import { ManageDatesCard } from './manage-dates-card'
@@ -14,8 +15,9 @@ import {
   AlertDialogAction,
   AlertDialogCancel
 } from '@/components/ui/alert-dialog'
-import type { PlanWithResponses } from '@/lib/types'
 import { withForm, useFormFieldContext } from '@/components/ui/tanstack-form'
+
+import type { PlanWithResponses } from '@/lib/types'
 
 export interface ResponseFormValues {
   name: string
@@ -149,34 +151,29 @@ function DateInteractionSection({ startRange, endRange, numDays }: DateInteracti
   })
 
   return (
-    <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
-      <div className="flex flex-col gap-6">
-        <SelectDatesCard
-          startRange={startRange}
-          endRange={endRange}
-          selectedDates={Array.from(selectedDatesSet)}
-          compatibleWindowsCount={compatibleWindowsCount}
-          rangeStart={rangeStart}
-          onDateClick={handleDateClick}
-          onMarkAllAs={markAllAs}
-          availableRanges={availableRanges}
-          unavailableRanges={unavailableRanges}
-          selectedRangeIds={selectedRangeIds}
-          hasSelectedRanges={hasSelectedRanges}
-          onToggleRangeSelection={toggleRangeSelection}
-          onDeleteSelected={deleteSelectedRanges}
-        />
-      </div>
+    <DateInteractionProvider
+      startRange={startRange}
+      endRange={endRange}
+      selectedDatesSet={selectedDatesSet}
+      rangeStart={rangeStart}
+      availableRanges={availableRanges}
+      unavailableRanges={unavailableRanges}
+      selectedRangeIds={selectedRangeIds}
+      hasSelectedRanges={hasSelectedRanges}
+      compatibleWindowsCount={compatibleWindowsCount}
+      handleDateClick={handleDateClick}
+      markAllAs={markAllAs}
+      toggleRangeSelection={toggleRangeSelection}
+      deleteSelectedRanges={deleteSelectedRanges}
+    >
+      <div className="flex flex-col xl:grid xl:grid-cols-[1fr_auto] gap-6">
+        <div className="flex flex-col gap-6">
+          <SelectDatesCard />
+        </div>
 
-      <ManageDatesCard
-        availableRanges={availableRanges}
-        unavailableRanges={unavailableRanges}
-        selectedRangeIds={selectedRangeIds}
-        hasSelectedRanges={hasSelectedRanges}
-        onToggleRangeSelection={toggleRangeSelection}
-        onDeleteSelected={deleteSelectedRanges}
-      />
-    </div>
+        <ManageDatesCard />
+      </div>
+    </DateInteractionProvider>
   )
 }
 

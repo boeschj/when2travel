@@ -6,15 +6,11 @@ import { CalendarProvider, type AvailabilityData } from '@/components/calendar/c
 import { CalendarNavHeader } from '@/components/calendar/calendar-nav-header'
 import { HeatmapDayButton } from '@/components/calendar/heatmap-day-button'
 import { useMonthNavigation } from '@/components/calendar/use-month-navigation'
+import { useResultsValue, useResultsActions } from './results-context'
+
 import type { PlanResponse } from '@/lib/types'
 
 interface ResultsCalendarProps {
-  startRange: string
-  endRange: string
-  responses: Pick<PlanResponse, 'id' | 'name' | 'availableDates'>[]
-  selectedRespondentId?: string | null
-  selectedRespondentColor?: string | null
-  onDateClick?: (date: Date) => void
   showNavigation?: boolean
   className?: string
   numberOfMonths?: 1 | 2
@@ -33,30 +29,29 @@ interface MonthPanelProps {
 }
 
 export function ResultsCalendar({
-  startRange,
-  endRange,
-  responses,
-  selectedRespondentId,
-  selectedRespondentColor,
-  onDateClick,
   showNavigation = true,
   className,
   numberOfMonths = 2,
 }: ResultsCalendarProps) {
+  const { plan, selectedRespondentId, selectedRespondentColor } = useResultsValue()
+  const { onDateClick } = useResultsActions()
+
   const { month: currentMonth, setMonth: setCurrentMonth, goToPrevious, goToNext } =
-    useMonthNavigation(parseISO(startRange))
+    useMonthNavigation(parseISO(plan.startRange))
 
   const dateRange = useMemo(
     () => ({
-      start: parseISO(startRange),
-      end: parseISO(endRange),
+      start: parseISO(plan.startRange),
+      end: parseISO(plan.endRange),
     }),
-    [startRange, endRange]
+    [plan.startRange, plan.endRange]
   )
+
+  const responses = useMemo(() => plan.responses ?? [], [plan.responses])
 
   const availabilityMap = useMemo(
     () => buildAvailabilityMap(dateRange, responses),
-    [responses, dateRange]
+    [dateRange, responses]
   )
 
   const months = useMemo(() => {

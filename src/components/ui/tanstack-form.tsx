@@ -98,14 +98,12 @@ function FieldErrorWrapper({
   const { errorId } = useFieldIdContext();
   const isTouched = useStore(field.store, s => s.meta.isTouched);
   const isValid = useStore(field.store, s => s.meta.isValid);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TanStack Form types are complex
-  const errors: unknown[] = useStore(field.store, s => s.meta.errors);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- TanStack Form context type erasure: errors are ValidationError[] but generic is lost through React Context
+  const errors = useStore(field.store, s => s.meta.errors as unknown[]);
 
   if (!isTouched || isValid) return null;
 
-  const formattedErrors = errors.map(e => ({
-    message: String(e),
-  }));
+  const formattedErrors = errors.map(error => extractErrorMessage(error));
 
   return (
     <FieldError
@@ -115,6 +113,21 @@ function FieldErrorWrapper({
       {...props}
     />
   );
+}
+
+/**
+ * Extracts error message from TanStack Form validation errors.
+ * Due to React Context type erasure, errors from useStore are typed as `unknown[]`.
+ * When using Zod validation, errors are actually `StandardSchemaV1Issue` objects.
+ * This function safely handles both object errors and primitive fallbacks.
+ */
+function extractErrorMessage(error: unknown): { message: string } {
+  const hasMessage = typeof error === "object" && error !== null && "message" in error;
+  if (hasMessage) {
+    const message = error.message;
+    return { message: typeof message === "string" ? message : String(message) };
+  }
+  return { message: String(error) };
 }
 
 const { useAppForm, withForm } = createFormHook({
@@ -130,12 +143,4 @@ const { useAppForm, withForm } = createFormHook({
   formContext,
 });
 
-export {
-  useAppForm,
-  withForm,
-  useFieldContext,
-  useFormFieldContext,
-  useFormContext,
-  FieldControlWrapper as AppFieldControl,
-  FieldErrorWrapper as AppFieldError,
-};
+export { useAppForm, withForm, useFieldContext, useFormFieldContext, useFormContext };

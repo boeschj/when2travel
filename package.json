@@ -61,9 +61,9 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@boeschj/eslint-config-react": "^1.0.0",
-    "@boeschj/prettier-config": "^1.0.0",
-    "@boeschj/tsconfig": "^1.0.0",
+    "@boeschj/eslint-config-react": "^1.0.1",
+    "@boeschj/prettier-config": "^1.0.1",
+    "@boeschj/tsconfig": "^1.0.1",
     "@cloudflare/vite-plugin": "^1.17.1",
     "@eslint/js": "^9.33.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.0",

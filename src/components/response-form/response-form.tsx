@@ -44,6 +44,7 @@ interface ResponseFormProps {
 
 export const ResponseForm = withForm({
   defaultValues: responseFormDefaults,
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- TanStack Form withForm API pattern for render prop types
   props: {} as ResponseFormProps,
   render: function ResponseFormRender({
     form,

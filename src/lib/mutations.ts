@@ -28,7 +28,7 @@ export function useDeletePlan({ onSuccess }: UseDeletePlanOptions) {
     },
     onSuccess: (_data, planId) => {
       removePlanEditToken(planId);
-      void queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey });
+      queryClient.removeQueries({ queryKey: planKeys.detail(planId).queryKey });
       onSuccess();
     },
     onError: error => {

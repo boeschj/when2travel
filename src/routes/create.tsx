@@ -2,7 +2,7 @@ import { usePlanEditTokens } from "@/hooks/use-auth-tokens";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { format, parseISO } from "date-fns";
+import { differenceInDays, format, parseISO } from "date-fns";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -18,12 +18,7 @@ import { NavigationBlocker } from "@/components/navigation-blocker";
 import { AppHeader } from "@/components/shared/app-header";
 import { ErrorScreen } from "@/components/shared/error-screen";
 import { NotFound } from "@/components/shared/not-found";
-import {
-  AppFieldControl,
-  AppFieldError,
-  useAppForm,
-  withForm,
-} from "@/components/ui/tanstack-form";
+import { useAppForm, withForm } from "@/components/ui/tanstack-form";
 
 import { DateRangeField } from "./-create/date-range-field";
 import { DurationPicker } from "./-create/duration-picker";
@@ -44,24 +39,38 @@ interface PlanFormValues {
   dateRange: DateRange | undefined;
 }
 
-const planFormSchema = z.object({
-  tripName: z
-    .string()
-    .min(1, "Trip name is required")
-    .min(PLAN_VALIDATION.NAME_MIN_LENGTH, `At least ${PLAN_VALIDATION.NAME_MIN_LENGTH} characters`)
-    .max(
-      PLAN_VALIDATION.NAME_MAX_LENGTH,
-      `Must be less than ${PLAN_VALIDATION.NAME_MAX_LENGTH} characters`,
+const planFormSchema = z
+  .object({
+    tripName: z
+      .string()
+      .min(1, "Trip name is required")
+      .min(
+        PLAN_VALIDATION.NAME_MIN_LENGTH,
+        `At least ${PLAN_VALIDATION.NAME_MIN_LENGTH} characters`,
+      )
+      .max(
+        PLAN_VALIDATION.NAME_MAX_LENGTH,
+        `Must be less than ${PLAN_VALIDATION.NAME_MAX_LENGTH} characters`,
+      ),
+    numDays: z
+      .number()
+      .min(PLAN_VALIDATION.DAYS_MIN, `At least ${PLAN_VALIDATION.DAYS_MIN} day`)
+      .max(PLAN_VALIDATION.DAYS_MAX, `Cannot exceed ${PLAN_VALIDATION.DAYS_MAX} days`),
+    dateRange: z.object(
+      { from: z.date(), to: z.date() },
+      { error: "Please select both start and end dates" },
     ),
-  numDays: z
-    .number()
-    .min(PLAN_VALIDATION.DAYS_MIN, `At least ${PLAN_VALIDATION.DAYS_MIN} day`)
-    .max(PLAN_VALIDATION.DAYS_MAX, `Cannot exceed ${PLAN_VALIDATION.DAYS_MAX} days`),
-  dateRange: z.object(
-    { from: z.date(), to: z.date() },
-    { error: "Please select both start and end dates" },
-  ),
-});
+  })
+  .refine(
+    ({ numDays, dateRange }) => {
+      const daysInRange = differenceInDays(dateRange.to, dateRange.from) + 1;
+      return daysInRange >= numDays;
+    },
+    {
+      message: "Date range must span at least as many days as trip length",
+      path: ["dateRange"],
+    },
+  );
 
 const searchSchema = z.object({
   planId: z.string().optional(),
@@ -136,6 +145,7 @@ interface PlanFormContentProps {
 
 const PlanFormContent = withForm({
   defaultValues: planFormDefaults,
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- TanStack Form withForm API pattern for render prop types
   props: {} as PlanFormContentProps,
   render: function PlanFormContentRender({ form, isEditMode, isPending, planId }) {
     return (
@@ -147,14 +157,16 @@ const PlanFormContent = withForm({
           <FormSection className="space-y-6 text-center md:text-left">
             <PageHeading isEditMode={isEditMode} />
             <form.AppField name="tripName">
-              {() => (
-                <div className="group relative">
-                  <AppFieldControl>
-                    <TripNameInput />
-                  </AppFieldControl>
-                  <TripNameEditIcon />
-                  <AppFieldError />
-                </div>
+              {field => (
+                <field.Field>
+                  <div className="group relative">
+                    <field.FieldControl>
+                      <TripNameInput />
+                    </field.FieldControl>
+                    <TripNameEditIcon />
+                  </div>
+                  <field.FieldError />
+                </field.Field>
               )}
             </form.AppField>
           </FormSection>

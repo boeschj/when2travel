@@ -8,12 +8,20 @@ import {
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
+const VALID_THEMES: ReadonlySet<string> = new Set(["light", "dark", "system"]);
+type ValidTheme = "light" | "dark" | "system";
+
+function isValidTheme(theme: string | undefined): theme is ValidTheme {
+  return theme !== undefined && VALID_THEMES.has(theme);
+}
+
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
+  const { theme } = useTheme();
+  const validatedTheme = isValidTheme(theme) ? theme : "system";
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={validatedTheme}
       position="top-right"
       offset={100}
       className="toaster group"

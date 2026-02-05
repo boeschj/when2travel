@@ -13,7 +13,14 @@ type CalendarDropdownProps = {
   options?: DropdownOption[];
 } & Omit<SelectHTMLAttributes<HTMLSelectElement>, "children">;
 
+/**
+ * Creates a minimal synthetic event for react-day-picker's Dropdown onChange callback.
+ * react-day-picker expects React.ChangeEvent<HTMLSelectElement>, but we use Radix Select
+ * which provides onValueChange(value: string). This bridges the two incompatible APIs.
+ * react-day-picker only reads target.value from the event at runtime.
+ */
 function createSelectChangeEvent(value: string) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Library interop: react-day-picker expects ChangeEvent but only uses target.value; Radix Select provides different API
   return {
     target: { value },
     currentTarget: { value },

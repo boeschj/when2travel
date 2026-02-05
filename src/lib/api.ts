@@ -5,13 +5,20 @@ import { ApiError } from "./errors";
 
 export const client = hc<AppType>("/api");
 
+function isErrorBody(value: unknown): value is { error: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "error" in value &&
+    typeof value.error === "string"
+  );
+}
+
 export async function parseErrorResponse(
   response: { status: number; json: () => Promise<unknown> },
   fallback: string,
 ): Promise<ApiError> {
   const body = await response.json().catch(() => null);
-  const hasErrorMessage =
-    typeof body === "object" && body !== null && "error" in body && typeof body.error === "string";
-  const message = hasErrorMessage ? (body as { error: string }).error : fallback;
+  const message = isErrorBody(body) ? body.error : fallback;
   return new ApiError(response.status, message);
 }

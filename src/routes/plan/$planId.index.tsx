@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useCurrentUserResponse,
   usePlanAuthContext,
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useDeletePlan } from "@/lib/mutations";
 import { planKeys } from "@/lib/queries";
 import type { PlanResponse } from "@/lib/types";
+import { buildColorMap } from "@/lib/utils";
 import { ErrorScreen } from "@/components/shared/error-screen";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -29,7 +30,6 @@ import {
   buildDeleteConfig,
   buildShareUrl,
   getPopoverParticipants,
-  getSelectedRespondentColor,
   mapResponsesToRespondents,
 } from "./-results/results-page-utils";
 import { SmartRecommendationsCard } from "./-results/smart-recommendations-card";
@@ -64,12 +64,20 @@ function PlanResultsPage() {
   const currentUserResponse = useCurrentUserResponse(plan.responses);
 
   const bestWindow = compatibleRanges[0] ?? null;
-  const selectedRespondentColor = getSelectedRespondentColor(selectedRespondentId);
-  const respondents = mapResponsesToRespondents(plan.responses, hasResponseToken);
+  const respondents = useMemo(
+    () => mapResponsesToRespondents(plan.responses, hasResponseToken),
+    [plan.responses, hasResponseToken],
+  );
+
+  const respondentColorMap = useMemo(
+    () => buildColorMap(respondents.map(r => r.id)),
+    [respondents],
+  );
   const popoverParticipants = getPopoverParticipants({
     popoverDate,
     responses: plan.responses,
     hasResponseToken,
+    colorMap: respondentColorMap,
   });
   const popoverAvailableCount = popoverParticipants.filter(p => p.isAvailable).length;
   const shareUrl = buildShareUrl(planId);
@@ -141,9 +149,9 @@ function PlanResultsPage() {
             <ResultsProvider
               plan={plan}
               respondents={respondents}
+              respondentColorMap={respondentColorMap}
               bestWindow={bestWindow}
               selectedRespondentId={selectedRespondentId}
-              selectedRespondentColor={selectedRespondentColor}
               onRespondentClick={setSelectedRespondentId}
               onDateClick={handleDateClick}
             >

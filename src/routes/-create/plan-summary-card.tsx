@@ -2,6 +2,8 @@ import { ArrowRight, Save } from "lucide-react";
 import { motion } from "motion/react";
 import type { DateRange } from "react-day-picker";
 
+import { formatRangeDisplay } from "@/lib/date/formatter";
+import { toISODateString } from "@/lib/date/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -24,8 +26,8 @@ export function PlanSummaryCard({
   planId,
   hasChanges = false,
 }: PlanSummaryCardProps) {
-  const hasDateRange = Boolean(dateRange?.from) && Boolean(dateRange?.to);
-  const formattedDateRange = formatDateRange(dateRange);
+  const formattedDateRange = formatOptionalDateRange(dateRange);
+  const hasDateRange = formattedDateRange !== "";
   const isEditing = isEditMode && Boolean(planId);
 
   return (
@@ -197,10 +199,7 @@ function SaveChangesIcon({ isPending }: { isPending: boolean }) {
   return <Save className="mr-2 h-5 w-5" />;
 }
 
-function formatDateRange(dateRange: DateRange | undefined): string {
+function formatOptionalDateRange(dateRange: DateRange | undefined): string {
   if (!dateRange?.from || !dateRange.to) return "";
-  const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-  const from = dateRange.from.toLocaleDateString("en-US", options);
-  const to = dateRange.to.toLocaleDateString("en-US", options);
-  return `${from} - ${to}`;
+  return formatRangeDisplay(toISODateString(dateRange.from), toISODateString(dateRange.to));
 }

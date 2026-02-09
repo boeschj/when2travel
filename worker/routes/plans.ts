@@ -2,13 +2,16 @@ import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
-import { z } from "zod";
 
 import { planResponses, plans } from "../db/schema";
 import type { Bindings } from "../lib/env";
-import { createPlanSchema, deletePlanSchema, updatePlanSchema } from "../lib/schemas";
-
-const availableDatesSchema = z.array(z.string());
+import {
+  createPlanSchema,
+  deletePlanSchema,
+  parseAvailableDates,
+  updatePlanSchema,
+} from "../lib/schemas";
+import { verifyEditToken } from "../middleware/verify-edit-token";
 
 export const plansRoutes = new Hono<{ Bindings: Bindings }>()
   .post("/", zValidator("json", createPlanSchema), async c => {
@@ -58,7 +61,7 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
 
     const parsedResponses = responses.map(response => ({
       ...response,
-      availableDates: availableDatesSchema.parse(JSON.parse(response.availableDates)),
+      availableDates: parseAvailableDates(response.availableDates),
     }));
 
     const publicPlan = excludeEditToken(plan);
@@ -68,26 +71,17 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
       responses: parsedResponses,
     });
   })
-  .put("/:id", zValidator("json", updatePlanSchema), async c => {
+  .put("/:id", verifyEditToken("plan"), zValidator("json", updatePlanSchema), async c => {
     const db = c.var.db;
     const planId = c.req.param("id");
     const body = c.req.valid("json");
-
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
-
-    if (!plan) {
-      return c.json({ error: "Plan not found" }, 404);
-    }
-
-    if (plan.editToken !== body.editToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+    const existingPlan = c.var.verifiedPlan;
 
     const now = new Date().toISOString();
     const updateFields = excludeEditToken(body);
 
-    const mergedStartRange = updateFields.startRange ?? plan.startRange;
-    const mergedEndRange = updateFields.endRange ?? plan.endRange;
+    const mergedStartRange = updateFields.startRange ?? existingPlan.startRange;
+    const mergedEndRange = updateFields.endRange ?? existingPlan.endRange;
 
     const startDateExceedsEndDate = new Date(mergedStartRange) > new Date(mergedEndRange);
     if (startDateExceedsEndDate) {
@@ -107,22 +101,15 @@ export const plansRoutes = new Hono<{ Bindings: Bindings }>()
 
     const [updatedPlan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
 
-    return c.json(updatedPlan);
+    if (!updatedPlan) {
+      return c.json({ error: "Plan not found after update" }, 500);
+    }
+
+    return c.json(excludeEditToken(updatedPlan));
   })
-  .delete("/:id", zValidator("json", deletePlanSchema), async c => {
+  .delete("/:id", verifyEditToken("plan"), zValidator("json", deletePlanSchema), async c => {
     const db = c.var.db;
     const planId = c.req.param("id");
-    const body = c.req.valid("json");
-
-    const [plan] = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
-
-    if (!plan) {
-      return c.json({ error: "Plan not found" }, 404);
-    }
-
-    if (plan.editToken !== body.editToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
 
     await db.delete(plans).where(eq(plans.id, planId));
 

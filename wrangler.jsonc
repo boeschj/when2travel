@@ -12,6 +12,9 @@
     "run_worker_first": ["/api/*", "/plan/*"],
     "binding": "ASSETS",
   },
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
   "observability": {
     "enabled": true,
   },

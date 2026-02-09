@@ -55,6 +55,17 @@ export const deleteResponseSchema = z.object({
   editToken: z.string().min(1, "Edit token is required"),
 });
 
+export const availableDatesSchema = z.array(z.string());
+
+export function parseAvailableDates(serialized: string): string[] {
+  const parsed: unknown = JSON.parse(serialized);
+  return availableDatesSchema.parse(parsed);
+}
+
+export function serializeAvailableDates(dates: string[]): string {
+  return JSON.stringify(dates);
+}
+
 export type CreatePlanInput = z.infer<typeof createPlanSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
 export type CreateResponseInput = z.infer<typeof createResponseSchema>;

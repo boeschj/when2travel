@@ -4,4 +4,5 @@
 export interface Bindings {
   planthetrip_d1: D1Database;
   ASSETS: Fetcher;
+  ENVIRONMENT: string;
 }

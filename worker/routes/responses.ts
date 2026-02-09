@@ -2,22 +2,17 @@ import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
-import { z } from "zod";
 
 import { planResponses, plans } from "../db/schema";
 import type { Bindings } from "../lib/env";
-import { createResponseSchema, deleteResponseSchema, updateResponseSchema } from "../lib/schemas";
-
-const availableDatesSchema = z.array(z.string());
-
-function parseAvailableDates(serialized: string): string[] {
-  const parsed: unknown = JSON.parse(serialized);
-  return availableDatesSchema.parse(parsed);
-}
-
-function serializeAvailableDates(dates: string[]): string {
-  return JSON.stringify(dates);
-}
+import {
+  createResponseSchema,
+  deleteResponseSchema,
+  parseAvailableDates,
+  serializeAvailableDates,
+  updateResponseSchema,
+} from "../lib/schemas";
+import { verifyEditToken } from "../middleware/verify-edit-token";
 
 export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
   .post("/", zValidator("json", createResponseSchema), async c => {
@@ -60,25 +55,10 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
       201,
     );
   })
-  .put("/:id", zValidator("json", updateResponseSchema), async c => {
+  .put("/:id", verifyEditToken("response"), zValidator("json", updateResponseSchema), async c => {
     const db = c.var.db;
     const responseId = c.req.param("id");
     const body = c.req.valid("json");
-
-    const existingResults = await db
-      .select()
-      .from(planResponses)
-      .where(eq(planResponses.id, responseId))
-      .limit(1);
-    const existingResponse = existingResults[0];
-
-    if (!existingResponse) {
-      return c.json({ error: "Response not found" }, 404);
-    }
-
-    if (existingResponse.editToken !== body.editToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
 
     const now = new Date().toISOString();
 
@@ -94,7 +74,14 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
       .where(eq(planResponses.id, responseId));
 
     const updatedResults = await db
-      .select()
+      .select({
+        id: planResponses.id,
+        planId: planResponses.planId,
+        name: planResponses.name,
+        availableDates: planResponses.availableDates,
+        createdAt: planResponses.createdAt,
+        updatedAt: planResponses.updatedAt,
+      })
       .from(planResponses)
       .where(eq(planResponses.id, responseId))
       .limit(1);
@@ -109,27 +96,16 @@ export const responsesRoutes = new Hono<{ Bindings: Bindings }>()
       availableDates: parseAvailableDates(updatedResponse.availableDates),
     });
   })
-  .delete("/:id", zValidator("json", deleteResponseSchema), async c => {
-    const db = c.var.db;
-    const responseId = c.req.param("id");
-    const body = c.req.valid("json");
+  .delete(
+    "/:id",
+    verifyEditToken("response"),
+    zValidator("json", deleteResponseSchema),
+    async c => {
+      const db = c.var.db;
+      const responseId = c.req.param("id");
 
-    const existingResults = await db
-      .select()
-      .from(planResponses)
-      .where(eq(planResponses.id, responseId))
-      .limit(1);
-    const existingResponse = existingResults[0];
+      await db.delete(planResponses).where(eq(planResponses.id, responseId));
 
-    if (!existingResponse) {
-      return c.json({ error: "Response not found" }, 404);
-    }
-
-    if (existingResponse.editToken !== body.editToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    await db.delete(planResponses).where(eq(planResponses.id, responseId));
-
-    return c.json({ message: "Response deleted successfully" });
-  });
+      return c.json({ message: "Response deleted successfully" });
+    },
+  );

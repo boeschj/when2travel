@@ -1,37 +1,49 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import escapeHtml from "escape-html";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 
 import { plans } from "./db/schema";
 import type { Bindings } from "./lib/env";
 import { dbMiddleware } from "./middleware/db";
+import { securityHeaders } from "./middleware/security-headers";
 import { plansRoutes } from "./routes/plans";
 import { responsesRoutes } from "./routes/responses";
 
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:8787",
-  "http://localhost:8788",
+const PRODUCTION_ORIGINS = [
   "https://planthetrip.huskers15.workers.dev",
   "https://justplanthetrip.com",
   "https://www.justplanthetrip.com",
 ];
 
+const DEV_ORIGINS = ["http://localhost:5173", "http://localhost:8787", "http://localhost:8788"];
+
 const BASE_URL = "https://justplanthetrip.com";
 
 type OgVariant = "respond" | "results";
 
+function getAllowedOrigins(environment: string): string[] {
+  const isDevelopment = environment !== "production";
+  return isDevelopment ? [...PRODUCTION_ORIGINS, ...DEV_ORIGINS] : PRODUCTION_ORIGINS;
+}
+
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.use("*", logger());
+app.use("*", securityHeaders);
 app.use(
   "*",
-  cors({
-    origin: ALLOWED_ORIGINS,
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+  createMiddleware<{ Bindings: Bindings }>(async (c, next) => {
+    const allowedOrigins = getAllowedOrigins(c.env.ENVIRONMENT);
+    const corsHandler = cors({
+      origin: allowedOrigins,
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization"],
+    });
+    return corsHandler(c, next);
   }),
 );
 app.use("/api/*", dbMiddleware);
@@ -86,7 +98,15 @@ function buildOgUrl(planId: string, variant: OgVariant) {
   return `${BASE_URL}/plan/${planId}`;
 }
 
-function replaceMetaTags(html: string, title: string, description: string, url: string) {
+function replaceMetaTags(
+  html: string,
+  unsafeTitle: string,
+  unsafeDescription: string,
+  url: string,
+) {
+  const title = escapeHtml(unsafeTitle);
+  const description = escapeHtml(unsafeDescription);
+
   return html
     .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
     .replace(

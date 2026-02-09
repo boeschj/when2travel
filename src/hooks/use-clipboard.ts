@@ -78,7 +78,9 @@ interface UseShareOptions {
 }
 
 export function canShare(): boolean {
-  return typeof navigator !== "undefined" && !!navigator.share;
+  const hasNavigator = typeof navigator !== "undefined";
+  const hasShareApi = hasNavigator && !!navigator.share;
+  return hasShareApi;
 }
 
 async function copyUrlWithToast(url: string, errorMessage: string): Promise<boolean> {

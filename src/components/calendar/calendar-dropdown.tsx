@@ -35,7 +35,10 @@ export function CalendarDropdown({
 }: CalendarDropdownProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedValue = String(value);
-  const selectedOption = options?.find(opt => String(opt.value) === selectedValue);
+  const selectedOption = options?.find(opt => {
+    const optionValue = String(opt.value);
+    return optionValue === selectedValue;
+  });
 
   const handleValueChange = (newValue: string) => {
     onChange?.(createSelectChangeEvent(newValue));

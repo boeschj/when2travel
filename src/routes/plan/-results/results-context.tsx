@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 
 import type { CompatibleDateRange, PlanResponse } from "@/lib/types";
+import type { AvatarColor } from "@/lib/utils";
 
 interface Respondent {
   id: string;
@@ -19,9 +20,9 @@ interface ResultsValueContextType {
     responses: PlanResponse[] | null;
   };
   respondents: Respondent[];
+  respondentColorMap: Record<string, AvatarColor>;
   bestWindow: CompatibleDateRange | null;
   selectedRespondentId: string | null;
-  selectedRespondentColor: string | null;
 }
 
 interface ResultsActionsContextType {
@@ -40,9 +41,9 @@ export function ResultsProvider({
   children,
   plan,
   respondents,
+  respondentColorMap,
   bestWindow,
   selectedRespondentId,
-  selectedRespondentColor,
   onRespondentClick,
   onDateClick,
 }: ResultsProviderProps) {
@@ -50,11 +51,11 @@ export function ResultsProvider({
     () => ({
       plan,
       respondents,
+      respondentColorMap,
       bestWindow,
       selectedRespondentId,
-      selectedRespondentColor,
     }),
-    [plan, respondents, bestWindow, selectedRespondentId, selectedRespondentColor],
+    [plan, respondents, respondentColorMap, bestWindow, selectedRespondentId],
   );
 
   const actionsContext = useMemo<ResultsActionsContextType>(

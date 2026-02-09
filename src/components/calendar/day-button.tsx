@@ -1,6 +1,7 @@
-import { format, isSameDay } from "date-fns";
+import { isSameDay } from "date-fns";
 import type { DayButton as DayButtonType } from "react-day-picker";
 
+import { toISODateString } from "@/lib/date/types";
 import { cn } from "@/lib/utils";
 
 import { useCalendarContext } from "./calendar-context";
@@ -55,7 +56,7 @@ function useMultiselectSelectionState(
 ): SelectionState {
   const { selectedDates, rangeStart } = useCalendarContext();
 
-  const dateStr = format(day.date, "yyyy-MM-dd");
+  const dateStr = toISODateString(day.date);
   const isSelectedInContext = selectedDates?.has(dateStr) ?? false;
   const isRangeStart = rangeStart ? isSameDay(day.date, rangeStart) : false;
   const isHighlighted = isSelectedInContext || isRangeStart;

@@ -1,14 +1,15 @@
-import { format, parseISO } from "date-fns";
-
 import { TRIP_ROLES } from "@/lib/constants";
 import type { TripRole } from "@/lib/constants";
+import { formatRangeDisplay } from "@/lib/date/formatter";
+import { assertISODateString } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
 
 export function formatDateRange(startRange: string | null, endRange: string | null): string {
   if (!startRange || !endRange) return "Dates TBD";
-  const start = parseISO(startRange);
-  const end = parseISO(endRange);
-  return `${format(start, "MMM d")} - ${format(end, "MMM d")}`;
+  const start = assertISODateString(startRange);
+  const end = assertISODateString(endRange);
+  const formattedRange = formatRangeDisplay(start, end);
+  return formattedRange;
 }
 
 export function buildDeleteLabelConfig({

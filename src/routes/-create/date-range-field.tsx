@@ -5,7 +5,6 @@ import type { ChevronProps, DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { CalendarDropdown } from "@/components/calendar/calendar-dropdown";
-import { DayButton } from "@/components/calendar/day-button";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
@@ -32,10 +31,9 @@ export function DateRangeField() {
 
   const updateSelectedDateRange = (selectedRange: DateRange | undefined) => {
     if (selectedRange) {
-      const normalizedDateRange = normalizeToChronologicalDates(
-        selectedRange.from,
-        selectedRange.to,
-      );
+      const firstDate = selectedRange.from;
+      const secondDate = selectedRange.to;
+      const normalizedDateRange = normalizeToChronologicalDates(firstDate, secondDate);
       field.handleChange(normalizedDateRange);
     } else {
       clearSelection();
@@ -77,7 +75,6 @@ export function DateRangeField() {
             "p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed",
         }}
         components={{
-          DayButton,
           Dropdown: CalendarDropdown,
           Chevron: CalendarChevron,
         }}

@@ -1,6 +1,7 @@
-import { format, parseISO } from "date-fns";
 import { AlertCircle, AlertTriangle, CheckCircle2, ThumbsUp, Users } from "lucide-react";
 
+import { formatRangeDisplay } from "@/lib/date/formatter";
+import { assertISODateString } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
 
 import { RECOMMENDATION_STATUS } from "./recommendation-types";
@@ -24,9 +25,10 @@ export function buildGoogleCalendarUrl(
 }
 
 export function formatDateRangeDisplay(start: string, end: string): string {
-  const startDate = parseISO(start);
-  const endDate = parseISO(end);
-  return `${format(startDate, "MMM d")} – ${format(endDate, "MMM d")}`;
+  const startDate = assertISODateString(start);
+  const endDate = assertISODateString(end);
+  const formattedRange = formatRangeDisplay(startDate, endDate, " – ");
+  return formattedRange;
 }
 
 export function getStatusIcon(status: RecommendationStatus) {

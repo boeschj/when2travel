@@ -28,7 +28,8 @@ function useFieldIdContext() {
 function useFieldContext<TData>() {
   const fieldApi = useFormFieldContext<TData>();
   const ids = useFieldIdContext();
-  return Object.assign(fieldApi, ids);
+  const fieldWithIds = Object.assign(fieldApi, ids);
+  return fieldWithIds;
 }
 
 function FieldWrapper({ className, children, ...props }: React.ComponentProps<typeof Field>) {
@@ -103,7 +104,8 @@ function FieldErrorWrapper({
 
   if (!isTouched || isValid) return null;
 
-  const formattedErrors = errors.map(error => extractErrorMessage(error));
+  const errorMessages = errors.map(error => extractErrorMessage(error));
+  const formattedErrors = errorMessages.map(message => ({ message }));
 
   return (
     <FieldError
@@ -121,13 +123,13 @@ function FieldErrorWrapper({
  * When using Zod validation, errors are actually `StandardSchemaV1Issue` objects.
  * This function safely handles both object errors and primitive fallbacks.
  */
-function extractErrorMessage(error: unknown): { message: string } {
+function extractErrorMessage(error: unknown): string {
   const hasMessage = typeof error === "object" && error !== null && "message" in error;
   if (hasMessage) {
     const message = error.message;
-    return { message: typeof message === "string" ? message : String(message) };
+    return typeof message === "string" ? message : String(message);
   }
-  return { message: String(error) };
+  return String(error);
 }
 
 const { useAppForm, withForm } = createFormHook({
@@ -143,4 +145,11 @@ const { useAppForm, withForm } = createFormHook({
   formContext,
 });
 
-export { useAppForm, withForm, useFieldContext, useFormFieldContext, useFormContext };
+export {
+  useAppForm,
+  withForm,
+  useFieldContext,
+  useFormFieldContext,
+  useFormContext,
+  extractErrorMessage,
+};

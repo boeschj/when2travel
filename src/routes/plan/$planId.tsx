@@ -8,7 +8,8 @@ import { NotFound } from "@/components/shared/not-found";
 export const Route = createFileRoute("/plan/$planId")({
   loader: async ({ context: { queryClient }, params: { planId } }) => {
     try {
-      return await queryClient.ensureQueryData(planKeys.detail(planId));
+      const planData = await queryClient.ensureQueryData(planKeys.detail(planId));
+      return planData;
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router pattern
       if (error instanceof ApiError && error.isNotFound) throw notFound();

@@ -1,5 +1,6 @@
-import { addDays, differenceInDays, eachDayOfInterval, format, parseISO } from "date-fns";
+import { addDays, differenceInDays, eachDayOfInterval } from "date-fns";
 
+import { parseAPIDate, toISODateString } from "@/lib/date/types";
 import type { PlanResponse } from "@/lib/types";
 
 import type {
@@ -14,19 +15,22 @@ export function generateAllWindows(
   endRange: string,
   numDays: number,
 ): { start: string; end: string }[] {
-  const rangeStart = parseISO(startRange);
-  const rangeEnd = parseISO(endRange);
+  const rangeStart = parseAPIDate(startRange);
+  const rangeEnd = parseAPIDate(endRange);
   const rangeDays = differenceInDays(rangeEnd, rangeStart) + 1;
 
-  if (rangeDays < numDays) return [];
+  const hasInsufficientDays = rangeDays < numDays;
+  if (hasInsufficientDays) {
+    return [];
+  }
 
   const windows: { start: string; end: string }[] = [];
   for (let i = 0; i <= rangeDays - numDays; i++) {
     const windowStart = addDays(rangeStart, i);
     const windowEnd = addDays(windowStart, numDays - 1);
     windows.push({
-      start: format(windowStart, "yyyy-MM-dd"),
-      end: format(windowEnd, "yyyy-MM-dd"),
+      start: toISODateString(windowStart),
+      end: toISODateString(windowEnd),
     });
   }
 
@@ -40,23 +44,40 @@ export function scoreWindows(
   responses: PlanResponse[],
 ): ScoredWindow[] {
   const allWindows = generateAllWindows(startRange, endRange, numDays);
-
-  return allWindows
-    .map(w => scoreWindow(w.start, w.end, responses, startRange, endRange))
-    .sort((a, b) => b.percentage - a.percentage || a.start.localeCompare(b.start));
+  const scoredWindows = allWindows.map(w =>
+    scoreWindow({
+      start: w.start,
+      end: w.end,
+      responses,
+      planStart: startRange,
+      planEnd: endRange,
+    }),
+  );
+  const sortedWindows = [...scoredWindows].sort(
+    (a, b) => b.percentage - a.percentage || a.start.localeCompare(b.start),
+  );
+  return sortedWindows;
 }
 
-function scoreWindow(
-  start: string,
-  end: string,
-  responses: PlanResponse[],
-  planStart: string,
-  planEnd: string,
-): ScoredWindow {
+interface ScoreWindowParams {
+  start: string;
+  end: string;
+  responses: PlanResponse[];
+  planStart: string;
+  planEnd: string;
+}
+
+function scoreWindow({
+  start,
+  end,
+  responses,
+  planStart,
+  planEnd,
+}: ScoreWindowParams): ScoredWindow {
   const windowDates = eachDayOfInterval({
-    start: parseISO(start),
-    end: parseISO(end),
-  }).map(d => format(d, "yyyy-MM-dd"));
+    start: parseAPIDate(start),
+    end: parseAPIDate(end),
+  }).map(d => toISODateString(d));
 
   const totalCount = responses.length;
   const blockers: BlockerInfo[] = [];
@@ -69,7 +90,14 @@ function scoreWindow(
     if (missingDates.length === 0) {
       availableCount++;
     } else {
-      const blockerInfo = analyzeBlocker(response, start, end, planStart, planEnd, missingDates);
+      const blockerInfo = analyzeBlocker({
+        response,
+        windowStart: start,
+        windowEnd: end,
+        planStart,
+        planEnd,
+        missingDates,
+      });
       blockers.push(blockerInfo);
     }
   }
@@ -84,18 +112,27 @@ function scoreWindow(
   };
 }
 
-function analyzeBlocker(
-  response: PlanResponse,
-  windowStart: string,
-  windowEnd: string,
-  planStart: string,
-  planEnd: string,
-  missingDates: string[],
-): BlockerInfo {
+interface AnalyzeBlockerParams {
+  response: PlanResponse;
+  windowStart: string;
+  windowEnd: string;
+  planStart: string;
+  planEnd: string;
+  missingDates: string[];
+}
+
+function analyzeBlocker({
+  response,
+  windowStart,
+  windowEnd,
+  planStart,
+  planEnd,
+  missingDates,
+}: AnalyzeBlockerParams): BlockerInfo {
   const availableSet = new Set(response.availableDates);
 
-  const dayBefore = format(addDays(parseISO(windowStart), -1), "yyyy-MM-dd");
-  const dayAfter = format(addDays(parseISO(windowEnd), 1), "yyyy-MM-dd");
+  const dayBefore = toISODateString(addDays(parseAPIDate(windowStart), -1));
+  const dayAfter = toISODateString(addDays(parseAPIDate(windowEnd), 1));
 
   const beforeInRange = dayBefore >= planStart;
   const afterInRange = dayAfter <= planEnd;
@@ -131,23 +168,35 @@ function analyzeBlocker(
   };
 }
 
-export function validateShiftedWindow(
-  originalStart: string,
-  shiftDays: number,
-  direction: "earlier" | "later",
-  planStart: string,
-  planEnd: string,
-  numDays: number,
-): boolean {
-  const originalDate = parseISO(originalStart);
+interface ValidateShiftedWindowParams {
+  originalStart: string;
+  shiftDays: number;
+  direction: "earlier" | "later";
+  planStart: string;
+  planEnd: string;
+  numDays: number;
+}
+
+export function validateShiftedWindow({
+  originalStart,
+  shiftDays,
+  direction,
+  planStart,
+  planEnd,
+  numDays,
+}: ValidateShiftedWindowParams): boolean {
+  const originalDate = parseAPIDate(originalStart);
   const shiftedStart =
     direction === "earlier" ? addDays(originalDate, -shiftDays) : addDays(originalDate, shiftDays);
   const shiftedEnd = addDays(shiftedStart, numDays - 1);
 
-  const shiftedStartStr = format(shiftedStart, "yyyy-MM-dd");
-  const shiftedEndStr = format(shiftedEnd, "yyyy-MM-dd");
+  const shiftedStartStr = toISODateString(shiftedStart);
+  const shiftedEndStr = toISODateString(shiftedEnd);
 
-  return shiftedStartStr >= planStart && shiftedEndStr <= planEnd;
+  const isStartInRange = shiftedStartStr >= planStart;
+  const isEndInRange = shiftedEndStr <= planEnd;
+  const isValid = isStartInRange && isEndInRange;
+  return isValid;
 }
 
 export function findShorterPerfectWindows(
@@ -156,23 +205,30 @@ export function findShorterPerfectWindows(
   endRange: string,
   originalDuration: number,
 ): ShorterTripSuggestion | null {
-  for (let d = originalDuration - 1; d >= Math.max(1, originalDuration - 3); d--) {
+  const minDuration = Math.max(1, originalDuration - 3);
+
+  for (let d = originalDuration - 1; d >= minDuration; d--) {
     const scored = scoreWindows(startRange, endRange, d, responses);
     const perfectWindows = scored.filter(w => w.percentage === 100);
 
-    if (perfectWindows.length > 0) {
-      return {
+    const hasPerfectWindows = perfectWindows.length > 0;
+    if (hasPerfectWindows) {
+      const topThreeWindows = perfectWindows.slice(0, 3);
+      const mappedWindows = topThreeWindows.map(w => ({
+        start: w.start,
+        end: w.end,
+        percentage: 100,
+        availableCount: w.availableCount,
+        totalCount: w.totalCount,
+        missing: [],
+      }));
+
+      const suggestion: ShorterTripSuggestion = {
         duration: d,
         windowCount: perfectWindows.length,
-        windows: perfectWindows.slice(0, 3).map(w => ({
-          start: w.start,
-          end: w.end,
-          percentage: 100,
-          availableCount: w.availableCount,
-          totalCount: w.totalCount,
-          missing: [],
-        })),
+        windows: mappedWindows,
       };
+      return suggestion;
     }
   }
 
@@ -184,7 +240,10 @@ export function findConstrainingPeople(
   responses: PlanResponse[],
   numDays: number,
 ): { id: string; name: string; availableDays: number }[] {
-  if (topWindows.length < 3) return [];
+  const hasInsufficientWindows = topWindows.length < 3;
+  if (hasInsufficientWindows) {
+    return [];
+  }
 
   const blockerCounts = new Map<string, { id: string; count: number }>();
 
@@ -201,25 +260,30 @@ export function findConstrainingPeople(
 
   const constrainers: { id: string; name: string; availableDays: number }[] = [];
   for (const [name, { id, count }] of blockerCounts) {
-    if (count >= 3) {
+    const isFrequentBlocker = count >= 3;
+    if (isFrequentBlocker) {
       const response = responses.find(r => r.id === id);
       const availableDays = response?.availableDates.length ?? 0;
-      if (availableDays < numDays) {
+      const hasInsufficientDays = availableDays < numDays;
+      if (hasInsufficientDays) {
         constrainers.push({ id, name, availableDays });
       }
     }
   }
 
-  return constrainers.sort((a, b) => a.availableDays - b.availableDays);
+  const sortedConstrainers = [...constrainers].sort((a, b) => a.availableDays - b.availableDays);
+  return sortedConstrainers;
 }
 
 export function toAlternativeWindow(w: ScoredWindow): AlternativeWindow {
-  return {
+  const missingNames = w.blockers.map(b => b.name);
+  const alternativeWindow: AlternativeWindow = {
     start: w.start,
     end: w.end,
     percentage: w.percentage,
     availableCount: w.availableCount,
     totalCount: w.totalCount,
-    missing: w.blockers.map(b => b.name),
+    missing: missingNames,
   };
+  return alternativeWindow;
 }

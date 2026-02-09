@@ -26,7 +26,8 @@ interface DateRangeCheckboxItemProps {
 
 function DateRangeCheckboxItem({ range, checked, onToggle }: DateRangeCheckboxItemProps) {
   const dateRangeDisplay = formatDateRangeDisplay(range);
-  const dayCountLabel = `${range.days} ${pluralize(range.days, "day")}`;
+  const dayWord = pluralize(range.days, "day");
+  const dayCountLabel = `${range.days} ${dayWord}`;
 
   return (
     <DropdownMenuCheckboxItem

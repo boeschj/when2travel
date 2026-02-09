@@ -99,5 +99,8 @@ export function useFirstKnownPlanId(): string | null {
 }
 
 function removeKeyFromRecord(record: Record<string, string>, key: string): Record<string, string> {
-  return Object.fromEntries(Object.entries(record).filter(([k]) => k !== key));
+  const entries = Object.entries(record);
+  const filteredEntries = entries.filter(([k]) => k !== key);
+  const updatedRecord = Object.fromEntries(filteredEntries);
+  return updatedRecord;
 }

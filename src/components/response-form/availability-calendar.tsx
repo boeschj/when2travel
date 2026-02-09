@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { addMonths, isSameMonth, parseISO, startOfMonth } from "date-fns";
+import { addMonths, isSameMonth, startOfMonth } from "date-fns";
 
+import { parseAPIDate } from "@/lib/date/types";
 import { cn } from "@/lib/utils";
 import { CalendarProvider } from "@/components/calendar/calendar-context";
 import { DayButton } from "@/components/calendar/day-button";
@@ -42,16 +43,15 @@ export function AvailabilityCalendar({
   className,
   numberOfMonths = 1,
 }: AvailabilityCalendarProps) {
-  const { month: currentMonth, setMonth: setCurrentMonth } = useMonthNavigation(
-    parseISO(startRange),
-  );
+  const startDate = parseAPIDate(startRange);
+  const { month: currentMonth, setMonth: setCurrentMonth } = useMonthNavigation(startDate);
 
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   const dateRange = useMemo(
     () => ({
-      start: parseISO(startRange),
-      end: parseISO(endRange),
+      start: parseAPIDate(startRange),
+      end: parseAPIDate(endRange),
     }),
     [startRange, endRange],
   );

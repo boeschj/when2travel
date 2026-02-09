@@ -2,13 +2,15 @@ import { useResponseEditTokens } from "@/hooks/use-auth-tokens";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { client, parseErrorResponse } from "@/lib/api";
+import { formatDateFull, formatDateShort } from "@/lib/date/formatter";
+import { assertISODateString } from "@/lib/date/types";
 import { planKeys } from "@/lib/queries";
 import { getStorageRecord, STORAGE_KEYS } from "@/lib/storage";
+import type { PlanResponse, PlanWithResponses } from "@/lib/types";
 import { pluralize } from "@/lib/utils";
 import { BackgroundEffects } from "@/components/layout/background-effects";
 import { FormSection, PageLayout } from "@/components/layout/form-layout";
@@ -60,19 +62,53 @@ function MarkAvailabilityPage() {
           availableDates: [...selectedDates].sort((a, b) => a.localeCompare(b)),
         },
       });
-      if (!response.ok) throw await parseErrorResponse(response, "Failed to submit availability");
-      return response.json();
+      if (!response.ok) {
+        const error = await parseErrorResponse(response, "Failed to submit availability");
+        throw error;
+      }
+      const responseData = await response.json();
+      return responseData;
+    },
+    onMutate: async ({ name, selectedDates }) => {
+      const planDetailQueryKey = planKeys.detail(planId).queryKey;
+      await queryClient.cancelQueries({ queryKey: planDetailQueryKey });
+
+      const previousPlan = queryClient.getQueryData<PlanWithResponses>(planDetailQueryKey);
+
+      const sortedDates = [...selectedDates].sort((a, b) => a.localeCompare(b));
+      const optimisticResponse = {
+        id: `temp-${Date.now()}`,
+        planId,
+        name: name.trim(),
+        availableDates: sortedDates,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } satisfies PlanResponse;
+
+      queryClient.setQueryData<PlanWithResponses>(planDetailQueryKey, cachedPlan => {
+        if (!cachedPlan) return cachedPlan;
+        return { ...cachedPlan, responses: [...cachedPlan.responses, optimisticResponse] };
+      });
+
+      return { previousPlan, planDetailQueryKey };
     },
     onSuccess: responseData => {
       saveResponseEditToken({ responseId: responseData.id, token: responseData.editToken, planId });
-      void queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey });
       toast.success("Your availability has been submitted!");
-
       const destination = returnUrl ?? `/plan/${planId}`;
       void navigate({ to: destination });
     },
-    onError: error => {
+    onError: (error, _variables, context) => {
+      if (context?.previousPlan) {
+        queryClient.setQueryData<PlanWithResponses>(
+          context.planDetailQueryKey,
+          context.previousPlan,
+        );
+      }
       toast.error(error.message || "Failed to submit availability. Please try again.");
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: planKeys.detail(planId).queryKey });
     },
   });
 
@@ -91,8 +127,8 @@ function MarkAvailabilityPage() {
   const hasUnsavedChanges =
     form.state.isDirty && !createResponseMutation.isPending && !createResponseMutation.isSuccess;
 
-  const formattedStartDate = format(parseISO(plan.startRange), "MMM d");
-  const formattedEndDate = format(parseISO(plan.endRange), "MMM d, yyyy");
+  const formattedStartDate = formatDateShort(assertISODateString(plan.startRange));
+  const formattedEndDate = formatDateFull(assertISODateString(plan.endRange));
   const durationLabel = `${plan.numDays} ${pluralize(plan.numDays, "day")}`;
 
   const existingRespondentNames = plan.responses.map(r => r.name);

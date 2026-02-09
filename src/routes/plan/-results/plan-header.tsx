@@ -1,8 +1,10 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Calendar, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 
+import { DATE_FORMATS } from "@/lib/date/constants";
+import { parseAPIDate } from "@/lib/date/types";
 import { cn, pluralize } from "@/lib/utils";
 import {
   AlertDialog,
@@ -61,16 +63,17 @@ export function PlanHeader({
 }: PlanHeaderProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const start = parseISO(startRange);
-  const end = parseISO(endRange);
+  const start = parseAPIDate(startRange);
+  const end = parseAPIDate(endRange);
   const isDefaultVariant = variant === "default";
 
-  const formattedStart = format(start, "MMM d");
-  const formattedEnd = format(end, "MMM d");
-  const dateRange = `${formattedStart} - ${format(end, "MMM d, yyyy")}`;
+  const formattedStart = format(start, DATE_FORMATS.DISPLAY_SHORT);
+  const formattedEnd = format(end, DATE_FORMATS.DISPLAY_SHORT);
+  const dateRange = `${formattedStart} - ${format(end, DATE_FORMATS.DISPLAY_FULL)}`;
   const subtitle = `Traveling for ${numDays} days between ${formattedStart} – ${formattedEnd}`;
 
-  const deleteConfirmationMessage = buildDeleteMessage(name, deleteConfig?.responsesCount);
+  const responsesCount = deleteConfig?.responsesCount;
+  const deleteConfirmationMessage = buildDeleteMessage(name, responsesCount);
 
   let deleteButtonLabel = "Delete";
   if (deleteConfig?.isPending) {
@@ -226,6 +229,13 @@ function DeleteDialog({
 function buildDeleteMessage(name: string, responsesCount?: number) {
   const baseMessage = `This action cannot be undone. This will permanently delete the plan "${name}"`;
   const hasResponses = responsesCount !== undefined && responsesCount > 0;
-  if (!hasResponses) return `${baseMessage}.`;
-  return `${baseMessage} and all ${responsesCount} ${pluralize(responsesCount, "response")}.`;
+
+  if (!hasResponses) {
+    const messageWithoutResponses = `${baseMessage}.`;
+    return messageWithoutResponses;
+  }
+
+  const pluralizedResponse = pluralize(responsesCount, "response");
+  const messageWithResponses = `${baseMessage} and all ${responsesCount} ${pluralizedResponse}.`;
+  return messageWithResponses;
 }

@@ -2,14 +2,15 @@ import { usePlanEditTokens } from "@/hooks/use-auth-tokens";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInDays } from "date-fns";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { client, parseErrorResponse } from "@/lib/api";
-import { DATE_FORMAT, PLAN_VALIDATION } from "@/lib/constants/validation";
+import { PLAN_VALIDATION } from "@/lib/constants/validation";
+import { parseAPIDate, toISODateString } from "@/lib/date/types";
 import { ApiError } from "@/lib/errors";
 import { planKeys } from "@/lib/queries";
 import { BackgroundEffects } from "@/components/layout/background-effects";
@@ -18,7 +19,7 @@ import { NavigationBlocker } from "@/components/navigation-blocker";
 import { AppHeader } from "@/components/shared/app-header";
 import { ErrorScreen } from "@/components/shared/error-screen";
 import { NotFound } from "@/components/shared/not-found";
-import { useAppForm, withForm } from "@/components/ui/tanstack-form";
+import { extractErrorMessage, useAppForm, withForm } from "@/components/ui/tanstack-form";
 
 import { DateRangeField } from "./-create/date-range-field";
 import { DurationPicker } from "./-create/duration-picker";
@@ -43,22 +44,15 @@ const planFormSchema = z
   .object({
     tripName: z
       .string()
-      .min(1, "Trip name is required")
-      .min(
-        PLAN_VALIDATION.NAME_MIN_LENGTH,
-        `At least ${PLAN_VALIDATION.NAME_MIN_LENGTH} characters`,
-      )
-      .max(
-        PLAN_VALIDATION.NAME_MAX_LENGTH,
-        `Must be less than ${PLAN_VALIDATION.NAME_MAX_LENGTH} characters`,
-      ),
+      .min(PLAN_VALIDATION.NAME_MIN_LENGTH, "Give your trip a name")
+      .max(PLAN_VALIDATION.NAME_MAX_LENGTH, "Trip name is too long"),
     numDays: z
       .number()
-      .min(PLAN_VALIDATION.DAYS_MIN, `At least ${PLAN_VALIDATION.DAYS_MIN} day`)
-      .max(PLAN_VALIDATION.DAYS_MAX, `Cannot exceed ${PLAN_VALIDATION.DAYS_MAX} days`),
+      .min(PLAN_VALIDATION.DAYS_MIN, "Trip must be at least 1 day")
+      .max(PLAN_VALIDATION.DAYS_MAX, `Trip length cannot exceed ${PLAN_VALIDATION.DAYS_MAX} days`),
     dateRange: z.object(
       { from: z.date(), to: z.date() },
-      { error: "Please select both start and end dates" },
+      { error: "Select your possible travel dates" },
     ),
   })
   .refine(
@@ -67,7 +61,7 @@ const planFormSchema = z
       return daysInRange >= numDays;
     },
     {
-      message: "Date range must span at least as many days as trip length",
+      message: "Date range is too short for your trip length",
       path: ["dateRange"],
     },
   );
@@ -152,7 +146,6 @@ const PlanFormContent = withForm({
       <PageLayout>
         <BackgroundEffects />
         <AppHeader planId={planId} />
-
         <FormContainer>
           <FormSection className="space-y-6 text-center md:text-left">
             <PageHeading isEditMode={isEditMode} />
@@ -165,7 +158,6 @@ const PlanFormContent = withForm({
                     </field.FieldControl>
                     <TripNameEditIcon />
                   </div>
-                  <field.FieldError />
                 </field.Field>
               )}
             </form.AppField>
@@ -276,7 +268,10 @@ function useUpdatePlanForm({ planId, editToken, returnUrl, existingPlan }: UseUp
   const editDefaults: PlanFormValues = {
     tripName: existingPlan.name,
     numDays: existingPlan.numDays,
-    dateRange: { from: parseISO(existingPlan.startRange), to: parseISO(existingPlan.endRange) },
+    dateRange: {
+      from: parseAPIDate(existingPlan.startRange),
+      to: parseAPIDate(existingPlan.endRange),
+    },
   };
 
   const updatePlanMutation = useMutation({
@@ -326,6 +321,7 @@ function useUpdatePlanForm({ planId, editToken, returnUrl, existingPlan }: UseUp
       const transformed = transformFormValues(value);
       updatePlanMutation.mutate({ editToken, ...transformed });
     },
+    onSubmitInvalid: toastValidationErrors,
   });
 
   return { form, updatePlanMutation };
@@ -387,6 +383,7 @@ function useCreatePlanForm({ savePlanEditToken }: UseCreatePlanFormProps) {
       const transformed = transformFormValues(value);
       createPlanMutation.mutate(transformed);
     },
+    onSubmitInvalid: toastValidationErrors,
   });
 
   return { form, createPlanMutation };
@@ -436,14 +433,35 @@ function PermissionDeniedState() {
   );
 }
 
+/** Structural type: FormApi has 12 generic params and ValidationError resolves to `unknown`. Reads fieldMeta because Zod schema errors are routed to field-level, not form-level state.errors. */
+function toastValidationErrors({
+  formApi,
+}: {
+  formApi: { state: { fieldMeta: Record<string, { errors: unknown[] }> } };
+}) {
+  const allFieldMetadata = Object.values(formApi.state.fieldMeta);
+  const fieldErrors = allFieldMetadata.flatMap(meta => meta.errors);
+  const validErrors = fieldErrors.filter(Boolean);
+  if (validErrors.length === 0) return;
+
+  const errorMessages = validErrors.map(error => extractErrorMessage(error));
+  const uniqueMessages = [...new Set(errorMessages)];
+  const combinedMessage = uniqueMessages.join(", ");
+  toast.error(combinedMessage);
+}
+
 function transformFormValues(values: PlanFormValues) {
   const { from, to } = values.dateRange ?? {};
   if (!from || !to) throw new Error("Date range is required");
 
+  const trimmedName = values.tripName.trim();
+  const startDateString = toISODateString(from);
+  const endDateString = toISODateString(to);
+
   return {
-    name: values.tripName.trim(),
+    name: trimmedName,
     numDays: values.numDays,
-    startRange: format(from, DATE_FORMAT.ISO),
-    endRange: format(to, DATE_FORMAT.ISO),
+    startRange: startDateString,
+    endRange: endDateString,
   };
 }

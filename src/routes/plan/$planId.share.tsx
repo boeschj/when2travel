@@ -2,9 +2,10 @@ import { useCurrentUserResponse } from "@/hooks/use-auth-tokens";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { format, parseISO } from "date-fns";
 import { motion } from "motion/react";
 
+import { formatRangeDisplay } from "@/lib/date/formatter";
+import { assertISODateString } from "@/lib/date/types";
 import { planKeys } from "@/lib/queries";
 import { ErrorScreen } from "@/components/shared/error-screen";
 
@@ -26,7 +27,10 @@ function ShareTripPage() {
   const userResponse = useCurrentUserResponse(plan.responses);
 
   const hasExistingResponse = !!userResponse;
-  const formattedDateRange = formatDateRange(plan);
+  const startISO = assertISODateString(plan.startRange);
+  const endISO = assertISODateString(plan.endRange);
+  const rangeDisplay = formatRangeDisplay(startISO, endISO);
+  const formattedDateRange = `from ${rangeDisplay}`;
 
   const navigateToAddAvailability = () => {
     void navigate({
@@ -98,10 +102,4 @@ function ShareHeading({ planName, numDays, dateRange }: ShareHeadingProps) {
       </p>
     </div>
   );
-}
-
-function formatDateRange(plan: { startRange: string; endRange: string }) {
-  const start = parseISO(plan.startRange);
-  const end = parseISO(plan.endRange);
-  return `from ${format(start, "MMM d")} - ${format(end, "MMM d")}`;
 }

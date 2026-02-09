@@ -1,12 +1,9 @@
-import { format } from "date-fns";
-
+import { toISODateString } from "@/lib/date/types";
 import { buildAbsoluteUrl } from "@/lib/routes";
 import type { PlanResponse } from "@/lib/types";
+import type { AvatarColor } from "@/lib/utils";
 
 import type { Respondent } from "./results-context";
-import { getRespondentColor } from "./user-avatar";
-
-const DATE_FORMAT = "yyyy-MM-dd" as const;
 
 export interface DeleteConfig {
   onConfirm: () => void;
@@ -19,11 +16,7 @@ export interface PopoverParticipant {
   name: string;
   isAvailable: boolean;
   isCurrentUser: boolean;
-}
-
-export function getSelectedRespondentColor(respondentId: string | null): string | null {
-  if (!respondentId) return null;
-  return getRespondentColor(respondentId).hex;
+  colorHex?: string;
 }
 
 export function mapResponsesToRespondents(
@@ -59,10 +52,12 @@ export function getPopoverParticipants({
   popoverDate,
   responses,
   hasResponseToken,
+  colorMap,
 }: {
   popoverDate: Date | null;
   responses: PlanResponse[];
   hasResponseToken: (id: string) => boolean;
+  colorMap: Record<string, AvatarColor>;
 }): PopoverParticipant[] {
   if (!popoverDate) return [];
 
@@ -70,28 +65,33 @@ export function getPopoverParticipants({
     responses,
     targetDate: popoverDate,
     hasResponseToken,
+    colorMap,
   });
 }
 
 export function buildShareUrl(planId: string): string {
-  return buildAbsoluteUrl("/plan/$planId/respond", { planId });
+  const absoluteUrl = buildAbsoluteUrl("/plan/$planId/respond", { planId });
+  return absoluteUrl;
 }
 
 function mapResponsesToParticipants({
   responses,
   targetDate,
   hasResponseToken,
+  colorMap,
 }: {
   responses: PlanResponse[];
   targetDate: Date;
   hasResponseToken: (id: string) => boolean;
+  colorMap: Record<string, AvatarColor>;
 }): PopoverParticipant[] {
-  const formattedTargetDate = format(targetDate, DATE_FORMAT);
+  const formattedTargetDate = toISODateString(targetDate);
 
   return responses.map(response => ({
     id: response.id,
     name: response.name,
     isAvailable: response.availableDates.includes(formattedTargetDate),
     isCurrentUser: hasResponseToken(response.id),
+    colorHex: colorMap[response.id]?.hex,
   }));
 }

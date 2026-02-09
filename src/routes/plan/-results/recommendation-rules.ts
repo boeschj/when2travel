@@ -1,5 +1,7 @@
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInDays } from "date-fns";
 
+import { formatDateShort, formatRangeDisplay } from "@/lib/date/formatter";
+import { assertISODateString, parseAPIDate } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
 
 import { toAlternativeWindow, validateShiftedWindow } from "./recommendation-scoring";
@@ -50,7 +52,7 @@ const RULES: RecommendationRule[] = [
         status: RECOMMENDATION_STATUS.PERFECT,
         headline: "Pack your bags!",
         detail: `Everyone's in (${ctx.totalCount}/${ctx.totalCount})`,
-        recommendation: "You found the sweet spot — time to book!",
+        recommendation: "You found the sweet spot. Time to book!",
         bestWindow,
       };
     },
@@ -63,14 +65,14 @@ const RULES: RecommendationRule[] = [
       const blocker = ctx.bestWindow.blockers[0];
       if (!blocker) return false;
       if (!blocker.shiftDirection || blocker.shiftDays <= 0) return false;
-      return validateShiftedWindow(
-        ctx.bestWindow.start,
-        blocker.shiftDays,
-        blocker.shiftDirection,
-        ctx.startRange,
-        ctx.endRange,
-        ctx.numDays,
-      );
+      return validateShiftedWindow({
+        originalStart: ctx.bestWindow.start,
+        shiftDays: blocker.shiftDays,
+        direction: blocker.shiftDirection,
+        planStart: ctx.startRange,
+        planEnd: ctx.endRange,
+        numDays: ctx.numDays,
+      });
     },
     create: ctx => {
       const bestWindow = ctx.bestWindow;
@@ -81,7 +83,7 @@ const RULES: RecommendationRule[] = [
         );
       }
 
-      const missingStr = formatDateRange(blocker.missingDates);
+      const missingStr = formatMissingDateRange(blocker.missingDates);
       const shiftDir = blocker.shiftDirection === "earlier" ? "earlier" : "later";
 
       return {
@@ -106,14 +108,14 @@ const RULES: RecommendationRule[] = [
       const hasValidShift =
         blocker.shiftDirection &&
         blocker.shiftDays > 0 &&
-        validateShiftedWindow(
-          ctx.bestWindow.start,
-          blocker.shiftDays,
-          blocker.shiftDirection,
-          ctx.startRange,
-          ctx.endRange,
-          ctx.numDays,
-        );
+        validateShiftedWindow({
+          originalStart: ctx.bestWindow.start,
+          shiftDays: blocker.shiftDays,
+          direction: blocker.shiftDirection,
+          planStart: ctx.startRange,
+          planEnd: ctx.endRange,
+          numDays: ctx.numDays,
+        });
       return !hasValidShift;
     },
     create: ctx => {
@@ -125,14 +127,14 @@ const RULES: RecommendationRule[] = [
         );
       }
 
-      const missingStr = formatDateRange(blocker.missingDates);
+      const missingStr = formatMissingDateRange(blocker.missingDates);
 
       return {
         priority: 3,
         status: getStatusFromPercentage(bestWindow.percentage),
         headline: "Almost there!",
         detail: `${bestWindow.availableCount}/${ctx.totalCount} travelers ready to go`,
-        recommendation: `${blocker.name} can't make ${missingStr} — maybe they can shuffle things around?`,
+        recommendation: `${blocker.name} can't make ${missingStr}. Maybe they can shuffle things around?`,
         bestWindow,
         blockerId: blocker.id,
       };
@@ -231,12 +233,14 @@ const RULES: RecommendationRule[] = [
   {
     priority: 7,
     matches: ctx => {
-      const rangeDays = differenceInDays(parseISO(ctx.endRange), parseISO(ctx.startRange)) + 1;
+      const rangeDays =
+        differenceInDays(parseAPIDate(ctx.endRange), parseAPIDate(ctx.startRange)) + 1;
       return rangeDays < ctx.numDays * 1.5;
     },
     create: ctx => {
       const bestPct = ctx.bestWindow?.percentage ?? 0;
-      const rangeDays = differenceInDays(parseISO(ctx.endRange), parseISO(ctx.startRange)) + 1;
+      const rangeDays =
+        differenceInDays(parseAPIDate(ctx.endRange), parseAPIDate(ctx.startRange)) + 1;
 
       return {
         priority: 7,
@@ -301,7 +305,7 @@ const RULES: RecommendationRule[] = [
         status: getStatusFromPercentage(bestWindow.percentage),
         headline: "Decisions, decisions!",
         detail: `${bestWindow.availableCount}/${ctx.totalCount} can make either window`,
-        recommendation: `${formatDateRangeShort(windowA.start, windowA.end)} doesn't work for ${missingA}. ${formatDateRangeShort(windowB.start, windowB.end)} doesn't work for ${missingB}. See if either group can budge!`,
+        recommendation: `${formatWindowRange(windowA.start, windowA.end)} doesn't work for ${missingA}. ${formatWindowRange(windowB.start, windowB.end)} doesn't work for ${missingB}. See if either group can budge!`,
         bestWindow,
         alternativeWindows: comparableWindows.map(w => toAlternativeWindow(w)),
       };
@@ -325,7 +329,7 @@ const RULES: RecommendationRule[] = [
         recommendation:
           bestPct > 0
             ? `The heatmap below shows where people overlap. Play with the dates to find a better fit!`
-            : "No overlap yet — waiting for more responses or try different dates.",
+            : "No overlap yet. Waiting for more responses or try different dates.",
         bestWindow: ctx.bestWindow ?? undefined,
         alternativeWindows: alternatives.length > 0 ? alternatives : undefined,
       };
@@ -334,38 +338,48 @@ const RULES: RecommendationRule[] = [
 ];
 
 export function evaluateRules(context: RuleContext): Recommendation[] {
-  return RULES.filter(rule => rule.matches(context)).map(rule => rule.create(context));
+  const matchingRules = RULES.filter(rule => rule.matches(context));
+  const recommendations = matchingRules.map(rule => rule.create(context));
+  return recommendations;
 }
 
-function formatDateRange(dates: string[]): string {
-  if (dates.length === 0) return "";
+function formatMissingDateRange(dates: string[]): string {
+  const isEmpty = dates.length === 0;
+  if (isEmpty) {
+    return "";
+  }
 
   const first = dates[0];
-  if (!first) return "";
-  if (dates.length === 1) return formatSingleDate(first);
+  if (!first) {
+    return "";
+  }
+
+  const isSingleDate = dates.length === 1;
+  if (isSingleDate) {
+    const isoDate = assertISODateString(first);
+    const formatted = formatDateShort(isoDate);
+    return formatted;
+  }
 
   const sorted = [...dates].sort((a, b) => a.localeCompare(b));
   const sortedFirst = sorted[0];
   const sortedLast = sorted.at(-1);
-  if (!sortedFirst || !sortedLast) return "";
 
-  return `${formatSingleDate(sortedFirst)} – ${formatSingleDate(sortedLast)}`;
-}
-
-function formatSingleDate(dateStr: string): string {
-  return format(parseISO(dateStr), "MMM d");
-}
-
-function formatDateRangeShort(start: string, end: string): string {
-  const startDate = parseISO(start);
-  const endDate = parseISO(end);
-
-  const startMonth = format(startDate, "MMM");
-  const endMonth = format(endDate, "MMM");
-
-  if (startMonth === endMonth) {
-    return `${startMonth} ${format(startDate, "d")}-${format(endDate, "d")}`;
+  if (!sortedFirst || !sortedLast) {
+    return "";
   }
 
-  return `${format(startDate, "MMM d")} – ${format(endDate, "MMM d")}`;
+  const start = assertISODateString(sortedFirst);
+  const end = assertISODateString(sortedLast);
+  const formattedStart = formatDateShort(start);
+  const formattedEnd = formatDateShort(end);
+  const range = `${formattedStart} – ${formattedEnd}`;
+  return range;
+}
+
+function formatWindowRange(start: string, end: string): string {
+  const isoStart = assertISODateString(start);
+  const isoEnd = assertISODateString(end);
+  const formattedRange = formatRangeDisplay(isoStart, isoEnd, "-");
+  return formattedRange;
 }

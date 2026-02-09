@@ -1,6 +1,7 @@
-import { eachDayOfInterval, format, parseISO } from "date-fns";
+import { eachDayOfInterval } from "date-fns";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 
+import { parseAPIDate, parseISODate, toISODateString } from "@/lib/date/types";
 import type { CompatibleDateRange } from "@/lib/types";
 
 import type { Respondent } from "./results-context";
@@ -18,13 +19,13 @@ function getWindowAvailabilityStatus(
   bestWindow: CompatibleDateRange,
 ): RespondentStatus {
   const windowDates = eachDayOfInterval({
-    start: parseISO(bestWindow.start),
-    end: parseISO(bestWindow.end),
+    start: parseISODate(bestWindow.start),
+    end: parseISODate(bestWindow.end),
   });
 
   const availableDatesSet = new Set(respondent.availableDates);
   const availableDaysInWindow = windowDates.filter(date =>
-    availableDatesSet.has(format(date, "yyyy-MM-dd")),
+    availableDatesSet.has(toISODateString(date)),
   ).length;
 
   if (availableDaysInWindow === windowDates.length) return RESPONDENT_STATUS.AVAILABLE;
@@ -44,8 +45,8 @@ function getConsecutiveAvailabilityStatus({
   requiredDays: number;
 }): RespondentStatus {
   const allDates = eachDayOfInterval({
-    start: parseISO(startRange),
-    end: parseISO(endRange),
+    start: parseAPIDate(startRange),
+    end: parseAPIDate(endRange),
   });
 
   const availableDatesSet = new Set(respondent.availableDates);
@@ -53,7 +54,7 @@ function getConsecutiveAvailabilityStatus({
   let currentConsecutiveDays = 0;
 
   for (const date of allDates) {
-    if (availableDatesSet.has(format(date, "yyyy-MM-dd"))) {
+    if (availableDatesSet.has(toISODateString(date))) {
       currentConsecutiveDays++;
       maxConsecutiveDays = Math.max(maxConsecutiveDays, currentConsecutiveDays);
     } else {

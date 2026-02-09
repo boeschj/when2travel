@@ -84,6 +84,36 @@ export const ResponseForm = withForm({
 
     const handleWarningDismiss = () => setShowNoDatesWarning(false);
 
+    const nameInputSlot = (
+      <form.AppField
+        name="name"
+        validators={{
+          onSubmit: ({ value }) => validateName({ value, existingNames }),
+        }}
+      >
+        {field => {
+          const hasVisibleError = field.state.meta.isTouched && !field.state.meta.isValid;
+          let errorMessage: string | undefined;
+          if (hasVisibleError) {
+            errorMessage = String(field.state.meta.errors[0]);
+          }
+
+          return (
+            <NameInputCard
+              name={field.state.value}
+              onNameChange={field.handleChange}
+              isSubmitting={isSubmitting}
+              isEditMode={isEditMode}
+              hasChanges={form.state.isDirty}
+              error={errorMessage}
+              onDelete={onDelete}
+              isDeleting={isDeleting}
+            />
+          );
+        }}
+      </form.AppField>
+    );
+
     return (
       <form
         onSubmit={handleSubmit}
@@ -95,36 +125,9 @@ export const ResponseForm = withForm({
               startRange={startRange}
               endRange={endRange}
               numDays={numDays}
+              nameInputSlot={nameInputSlot}
             />
           )}
-        </form.AppField>
-
-        <form.AppField
-          name="name"
-          validators={{
-            onSubmit: ({ value }) => validateName(value, existingNames),
-          }}
-        >
-          {field => {
-            const hasVisibleError = field.state.meta.isTouched && !field.state.meta.isValid;
-            let errorMessage: string | undefined;
-            if (hasVisibleError) {
-              errorMessage = String(field.state.meta.errors[0]);
-            }
-
-            return (
-              <NameInputCard
-                name={field.state.value}
-                onNameChange={field.handleChange}
-                isSubmitting={isSubmitting}
-                isEditMode={isEditMode}
-                hasChanges={form.state.isDirty}
-                error={errorMessage}
-                onDelete={onDelete}
-                isDeleting={isDeleting}
-              />
-            );
-          }}
         </form.AppField>
 
         <NoDatesWarningDialog
@@ -141,9 +144,15 @@ interface DateInteractionSectionProps {
   startRange: string;
   endRange: string;
   numDays: number;
+  nameInputSlot: React.ReactNode;
 }
 
-function DateInteractionSection({ startRange, endRange, numDays }: DateInteractionSectionProps) {
+function DateInteractionSection({
+  startRange,
+  endRange,
+  numDays,
+  nameInputSlot,
+}: DateInteractionSectionProps) {
   const field = useFormFieldContext<string[]>();
 
   const {
@@ -182,12 +191,14 @@ function DateInteractionSection({ startRange, endRange, numDays }: DateInteracti
       toggleRangeSelection={toggleRangeSelection}
       deleteSelectedRanges={deleteSelectedRanges}
     >
-      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_auto]">
-        <div className="flex flex-col gap-6">
-          <SelectDatesCard />
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_auto] xl:gap-6">
+        <SelectDatesCard />
+        <div className="xl:relative xl:row-span-2">
+          <div className="xl:absolute xl:inset-0">
+            <ManageDatesCard />
+          </div>
         </div>
-
-        <ManageDatesCard />
+        {nameInputSlot}
       </div>
     </DateInteractionProvider>
   );
@@ -222,7 +233,12 @@ function NoDatesWarningDialog({ isOpen, onConfirm, onDismiss }: NoDatesWarningDi
   );
 }
 
-function validateName(value: string, existingNames: string[]): string | undefined {
+interface ValidateNameArgs {
+  value: string;
+  existingNames: string[];
+}
+
+function validateName({ value, existingNames }: ValidateNameArgs): string | undefined {
   const trimmed = value.trim();
   if (!trimmed) return "Name is required";
   if (trimmed.length < 2) return "Name must be at least 2 characters";

@@ -1,5 +1,7 @@
 import { createContext, useContext } from "react";
 
+import type { AvatarColor } from "@/lib/utils";
+
 export interface AvailabilityData {
   date: string;
   availableCount: number;
@@ -12,7 +14,7 @@ interface CalendarContextValue {
   selectedDates?: Set<string>;
   rangeStart?: Date | null;
   selectedRespondentId?: string | null;
-  selectedRespondentColor?: string | null;
+  respondentColorMap?: Record<string, AvatarColor>;
   onDateClick?: (date: Date) => void;
 }
 

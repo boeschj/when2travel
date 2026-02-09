@@ -16,11 +16,14 @@ export interface UserTrip {
 }
 
 function isNotFoundError(error: unknown): boolean {
-  return error instanceof ApiError && error.isNotFound;
+  const isApiError = error instanceof ApiError;
+  const isNotFound = isApiError && error.isNotFound;
+  return isNotFound;
 }
 
 function getRoleForPlan(planId: string, createdPlanIds: Set<string>): TripRole {
-  if (createdPlanIds.has(planId)) return TRIP_ROLES.CREATOR;
+  const isPlanCreator = createdPlanIds.has(planId);
+  if (isPlanCreator) return TRIP_ROLES.CREATOR;
   return TRIP_ROLES.RESPONDENT;
 }
 
@@ -34,11 +37,14 @@ export function useUserTrips() {
   });
 
   const deletedPlanIds = useMemo(() => {
-    return allPlanIds.filter((_, index) => {
+    const plansWithNotFoundError = allPlanIds.filter((_, index) => {
       const query = queryResults[index];
       if (!query) return false;
-      return !query.isLoading && isNotFoundError(query.error);
+      const isNotLoading = !query.isLoading;
+      const hasNotFoundError = isNotFoundError(query.error);
+      return isNotLoading && hasNotFoundError;
     });
+    return plansWithNotFoundError;
   }, [allPlanIds, queryResults]);
 
   useEffect(() => {
@@ -60,11 +66,13 @@ export function useUserTrips() {
     const { error, isLoading } = query;
     if (isLoading) return false;
     if (!error) return false;
-    return !isNotFoundError(error);
+    const isNotFound = isNotFoundError(error);
+    const isServerError = !isNotFound;
+    return isServerError;
   });
   const firstServerError = serverErrorQuery?.error ?? null;
 
-  const isLoading = queryResults.some(query => query.isLoading);
+  const hasLoadingQueries = queryResults.some(query => query.isLoading);
 
-  return { trips: resolvedTrips, isLoading, error: firstServerError };
+  return { trips: resolvedTrips, isLoading: hasLoadingQueries, error: firstServerError };
 }

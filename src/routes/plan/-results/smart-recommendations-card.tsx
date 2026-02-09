@@ -121,7 +121,7 @@ export function SmartRecommendationsCard({
         variant="action"
         className={cn("h-full p-6 md:p-8", className)}
       >
-        <CardContent className="flex flex-col items-center gap-4 p-0 text-center">
+        <CardContent className="flex h-full flex-col items-center justify-center gap-4 p-0 text-center">
           <div
             className={cn(
               "flex h-16 w-16 items-center justify-center rounded-full",

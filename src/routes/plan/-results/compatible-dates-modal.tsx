@@ -1,6 +1,8 @@
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { ThumbsUp, Users } from "lucide-react";
 
+import { formatRangeDisplay } from "@/lib/date/formatter";
+import { parseISODate } from "@/lib/date/types";
 import type { CompatibleDateRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -95,10 +97,10 @@ interface RangeCardProps {
 }
 
 function RangeCard({ range, isBestMatch, onClick }: RangeCardProps) {
-  const startDate = parseISO(range.start);
-  const endDate = parseISO(range.end);
+  const startDate = parseISODate(range.start);
+  const endDate = parseISODate(range.end);
   const durationDays = differenceInDays(endDate, startDate) + 1;
-  const formattedRange = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d")}`;
+  const formattedRange = formatRangeDisplay(range.start, range.end, " – ");
 
   return (
     <Button

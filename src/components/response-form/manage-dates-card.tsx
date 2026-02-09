@@ -15,7 +15,7 @@ export function ManageDatesCard() {
   const { toggleRangeSelection, deleteSelectedRanges } = useDateInteractionActions();
 
   return (
-    <Card className="hidden max-h-0 min-h-full w-72 flex-col overflow-hidden p-4 xl:flex">
+    <Card className="hidden h-full w-72 flex-col overflow-hidden p-4 xl:flex">
       <CardHeader
         hasSelectedRanges={hasSelectedRanges}
         onDeleteSelected={deleteSelectedRanges}

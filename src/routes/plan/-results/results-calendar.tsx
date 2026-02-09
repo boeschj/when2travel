@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { addMonths, eachDayOfInterval, format, parseISO } from "date-fns";
+import { addMonths, eachDayOfInterval, format } from "date-fns";
 
+import { DATE_FORMATS } from "@/lib/date/constants";
+import { parseAPIDate, toISODateString } from "@/lib/date/types";
 import type { PlanResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CalendarProvider, type AvailabilityData } from "@/components/calendar/calendar-context";
@@ -22,6 +24,7 @@ interface MonthPanelProps {
   dateRange: { start: Date; end: Date };
   isFirst: boolean;
   isLast: boolean;
+  isSingleVisible: boolean;
   showNavigation: boolean;
   showDivider: boolean;
   onPrevious: () => void;
@@ -34,7 +37,7 @@ export function ResultsCalendar({
   className,
   numberOfMonths = 2,
 }: ResultsCalendarProps) {
-  const { plan, selectedRespondentId, selectedRespondentColor } = useResultsValue();
+  const { plan, selectedRespondentId, respondentColorMap } = useResultsValue();
   const { onDateClick } = useResultsActions();
 
   const {
@@ -42,22 +45,22 @@ export function ResultsCalendar({
     setMonth: setCurrentMonth,
     goToPrevious,
     goToNext,
-  } = useMonthNavigation(parseISO(plan.startRange));
+  } = useMonthNavigation(parseAPIDate(plan.startRange));
 
   const dateRange = useMemo(
     () => ({
-      start: parseISO(plan.startRange),
-      end: parseISO(plan.endRange),
+      start: parseAPIDate(plan.startRange),
+      end: parseAPIDate(plan.endRange),
     }),
     [plan.startRange, plan.endRange],
   );
 
   const responses = useMemo(() => plan.responses ?? [], [plan.responses]);
 
-  const availabilityMap = useMemo(
-    () => buildAvailabilityMap(dateRange, responses),
-    [dateRange, responses],
-  );
+  const availabilityMap = useMemo(() => {
+    const map = buildAvailabilityMap(dateRange, responses);
+    return map;
+  }, [dateRange, responses]);
 
   const months = useMemo(() => {
     const result = [currentMonth];
@@ -71,10 +74,10 @@ export function ResultsCalendar({
     () => ({
       availabilityMap,
       selectedRespondentId,
-      selectedRespondentColor,
+      respondentColorMap,
       onDateClick,
     }),
-    [availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick],
+    [availabilityMap, selectedRespondentId, respondentColorMap, onDateClick],
   );
 
   const hasMultipleMonths = numberOfMonths > 1;
@@ -88,11 +91,12 @@ export function ResultsCalendar({
 
           return (
             <MonthPanel
-              key={format(month, "yyyy-MM")}
+              key={format(month, DATE_FORMATS.ISO_MONTH)}
               month={month}
               dateRange={dateRange}
               isFirst={isFirst}
               isLast={isLast}
+              isSingleVisible={isFirst && hasMultipleMonths}
               showNavigation={showNavigation}
               showDivider={isFirst && hasMultipleMonths}
               onPrevious={goToPrevious}
@@ -111,12 +115,16 @@ function MonthPanel({
   dateRange,
   isFirst,
   isLast,
+  isSingleVisible,
   showNavigation,
   showDivider,
   onPrevious,
   onNext,
   onMonthChange,
 }: MonthPanelProps) {
+  const showNextButton = showNavigation && (isLast || isSingleVisible);
+  const nextButtonHiddenOnDesktop = isSingleVisible && !isLast;
+
   return (
     <div className="flex">
       <div className={cn("flex flex-col gap-4", !isFirst && "hidden md:flex")}>
@@ -125,7 +133,8 @@ function MonthPanel({
           onPrevious={onPrevious}
           onNext={onNext}
           showPrevious={showNavigation && isFirst}
-          showNext={showNavigation && isLast}
+          showNext={showNextButton}
+          nextClassName={nextButtonHiddenOnDesktop ? "md:invisible" : undefined}
         />
 
         <Calendar
@@ -159,7 +168,7 @@ function buildAvailabilityMap(
 
   const allDates = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
   for (const date of allDates) {
-    const dateStr = format(date, "yyyy-MM-dd");
+    const dateStr = toISODateString(date);
     map.set(dateStr, {
       date: dateStr,
       availableCount: 0,

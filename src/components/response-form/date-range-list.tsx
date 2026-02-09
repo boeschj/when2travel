@@ -42,7 +42,8 @@ interface DateRangeRowProps {
 
 function DateRangeRow({ range, isSelected, onToggle }: DateRangeRowProps) {
   const dateDisplay = formatDateRangeDisplay(range);
-  const daysLabel = `${range.days} ${pluralize(range.days, "day")}`;
+  const dayWord = pluralize(range.days, "day");
+  const daysLabel = `${range.days} ${dayWord}`;
 
   return (
     <div className="bg-surface-darker/50 hover:bg-surface-darker flex items-center gap-3 rounded-lg p-3 transition-colors">

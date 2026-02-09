@@ -25,7 +25,7 @@ export function SharePanel({
   hasUserResponse,
   className,
 }: SharePanelProps) {
-  const shareLink = buildShareLink(planId);
+  const shareLink = buildAbsoluteUrl("/plan/$planId/respond", { planId });
   const showAvailabilitySection = Boolean(onAddAvailability ?? onViewAvailability);
 
   return (
@@ -179,8 +179,4 @@ function AvailabilitySection({
       )}
     </div>
   );
-}
-
-function buildShareLink(planId: string) {
-  return buildAbsoluteUrl("/plan/$planId/respond", { planId });
 }

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { differenceInDays, eachDayOfInterval, format, parseISO } from "date-fns";
+import { differenceInDays, eachDayOfInterval } from "date-fns";
 
+import type { ISODateString } from "@/lib/date/types";
+import { assertISODateString, parseAPIDate, parseISODate, toISODateString } from "@/lib/date/types";
 import type { CompatibleDateRange, PlanResponse, PlanWithResponses } from "@/lib/types";
 
 export function useCompatibleRanges(
@@ -13,8 +15,8 @@ export function useCompatibleRanges(
     const minimumTripLength = plan.numDays;
 
     const allDatesInPlanRange = eachDayOfInterval({
-      start: parseISO(plan.startRange),
-      end: parseISO(plan.endRange),
+      start: parseAPIDate(plan.startRange),
+      end: parseAPIDate(plan.endRange),
     });
 
     const respondentCountByDate = buildRespondentCountByDate({
@@ -49,16 +51,17 @@ function buildRespondentCountByDate({
 }: {
   allDatesInPlanRange: Date[];
   responses: PlanResponse[];
-}): Map<string, number> {
-  const respondentCountByDate = new Map<string, number>();
+}): Map<ISODateString, number> {
+  const respondentCountByDate = new Map<ISODateString, number>();
 
   for (const date of allDatesInPlanRange) {
-    const formattedDate = format(date, "yyyy-MM-dd");
+    const formattedDate = toISODateString(date);
     respondentCountByDate.set(formattedDate, 0);
   }
 
   for (const response of responses) {
-    for (const availableDate of response.availableDates) {
+    for (const date of response.availableDates) {
+      const availableDate = assertISODateString(date);
       const currentRespondentCount = respondentCountByDate.get(availableDate);
       if (currentRespondentCount !== undefined) {
         respondentCountByDate.set(availableDate, currentRespondentCount + 1);
@@ -70,8 +73,8 @@ function buildRespondentCountByDate({
 }
 
 interface ConsecutiveDateRange {
-  start: string;
-  end: string;
+  start: ISODateString;
+  end: ISODateString;
 }
 
 function findConsecutiveFullAvailabilityRanges({
@@ -80,15 +83,15 @@ function findConsecutiveFullAvailabilityRanges({
   totalRespondents,
 }: {
   allDatesInPlanRange: Date[];
-  respondentCountByDate: Map<string, number>;
+  respondentCountByDate: Map<ISODateString, number>;
   totalRespondents: number;
 }): ConsecutiveDateRange[] {
   const consecutiveRanges: ConsecutiveDateRange[] = [];
-  let currentRangeStart: string | null = null;
-  let currentRangeEnd: string | null = null;
+  let currentRangeStart: ISODateString | null = null;
+  let currentRangeEnd: ISODateString | null = null;
 
   for (const date of allDatesInPlanRange) {
-    const formattedDate = format(date, "yyyy-MM-dd");
+    const formattedDate = toISODateString(date);
     const respondentsAvailableOnDate = respondentCountByDate.get(formattedDate) ?? 0;
     const allRespondentsAvailable = respondentsAvailableOnDate === totalRespondents;
 
@@ -112,8 +115,8 @@ function findConsecutiveFullAvailabilityRanges({
 }
 
 function getRangeLengthInDays({ start, end }: ConsecutiveDateRange): number {
-  const startDate = parseISO(start);
-  const endDate = parseISO(end);
+  const startDate = parseISODate(start);
+  const endDate = parseISODate(end);
   const daysBetween = differenceInDays(endDate, startDate);
   const inclusiveDayCount = daysBetween + 1;
   return inclusiveDayCount;

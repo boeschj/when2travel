@@ -2,7 +2,10 @@ import { useCallback, useState } from "react";
 import { addMonths, startOfMonth, subMonths } from "date-fns";
 
 export function useMonthNavigation(initialDate: Date) {
-  const [month, setMonth] = useState(() => startOfMonth(initialDate));
+  const [month, setMonth] = useState(() => {
+    const monthStart = startOfMonth(initialDate);
+    return monthStart;
+  });
 
   const goToPrevious = useCallback(() => {
     setMonth(prev => subMonths(prev, 1));

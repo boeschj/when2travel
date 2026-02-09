@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { CalendarDays, Check, X } from "lucide-react";
 
+import { DATE_FORMATS } from "@/lib/date/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +18,7 @@ interface Participant {
   name: string;
   isAvailable: boolean;
   isCurrentUser: boolean;
+  colorHex?: string;
 }
 
 interface DateAvailabilityDialogProps {
@@ -39,7 +41,7 @@ export function DateAvailabilityDialog({
   onSelectRespondent,
 }: DateAvailabilityDialogProps) {
   const allAvailable = availableCount === totalCount;
-  const formattedDate = format(date, "MMMM d, yyyy");
+  const formattedDate = format(date, DATE_FORMATS.DISPLAY_FULL);
   const availabilityLabel = `${availableCount}/${totalCount} Available`;
 
   const handleParticipantClick = (participantId: string) => {
@@ -154,7 +156,7 @@ function ParticipantRow({ participant, onClick }: ParticipantRowProps) {
       <div className="flex items-center gap-3">
         <UserAvatar
           name={participant.name}
-          colorId={participant.id}
+          colorHex={participant.colorHex}
         />
         <span className="font-medium text-white">{displayName}</span>
       </div>

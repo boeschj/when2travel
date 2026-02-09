@@ -1,6 +1,7 @@
-import { format } from "date-fns";
 import type { DayButton as DayButtonType } from "react-day-picker";
 
+import { formatDateLong } from "@/lib/date/formatter";
+import { toISODateString } from "@/lib/date/types";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -22,10 +23,10 @@ const HEATMAP_STOPS = [
 
 export function HeatmapDayButton({ className, day, modifiers, ...props }: DayButtonProps) {
   const ref = useDayButtonFocus(modifiers[MODIFIER_KEYS.FOCUSED] ?? false);
-  const { availabilityMap, selectedRespondentId, selectedRespondentColor, onDateClick } =
+  const { availabilityMap, selectedRespondentId, respondentColorMap, onDateClick } =
     useCalendarContext();
 
-  const dateStr = format(day.date, "yyyy-MM-dd");
+  const dateStr = toISODateString(day.date);
   const data = availabilityMap?.get(dateStr);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -48,13 +49,16 @@ export function HeatmapDayButton({ className, day, modifiers, ...props }: DayBut
   const hasRespondentFilter = !!selectedRespondentId;
   const isRespondentAvailable =
     hasRespondentFilter && data.respondentIds.includes(selectedRespondentId);
+  const selectedRespondentHex = selectedRespondentId
+    ? respondentColorMap?.[selectedRespondentId]?.hex
+    : undefined;
 
   const style = hasRespondentFilter
-    ? getRespondentStyle(isRespondentAvailable, selectedRespondentColor)
+    ? getRespondentStyle(isRespondentAvailable, selectedRespondentHex)
     : getHeatmapStyle(data.availableCount, data.totalCount);
 
   const tooltipText = `${data.availableCount}/${data.totalCount} people available`;
-  const ariaLabel = `${format(day.date, "MMMM d")} - ${tooltipText}`;
+  const ariaLabel = `${formatDateLong(day.date)} - ${tooltipText}`;
   const dayNumber = day.date.getDate();
 
   return (
@@ -108,7 +112,10 @@ function getHeatmapStyle(availableCount: number, totalCount: number): React.CSSP
   }
 
   const percentage = availableCount / totalCount;
-  const stop = HEATMAP_STOPS.find(s => percentage >= s.threshold);
+  const stop = HEATMAP_STOPS.find(s => {
+    const meetsThreshold = percentage >= s.threshold;
+    return meetsThreshold;
+  });
   if (!stop) {
     return DEFAULT_HEATMAP_STYLE;
   }
@@ -120,10 +127,7 @@ function getHeatmapStyle(availableCount: number, totalCount: number): React.CSSP
   };
 }
 
-function getRespondentStyle(
-  isAvailable: boolean,
-  color: string | null | undefined,
-): React.CSSProperties {
+function getRespondentStyle(isAvailable: boolean, color: string | undefined): React.CSSProperties {
   if (!isAvailable) {
     return {
       backgroundColor: "var(--color-border)",
@@ -132,17 +136,9 @@ function getRespondentStyle(
     };
   }
 
-  if (color) {
-    return {
-      backgroundColor: color,
-      color: "var(--color-foreground)",
-      boxShadow: `0 0 10px ${color}66`,
-    };
-  }
-
   return {
-    backgroundColor: "var(--color-primary)",
+    backgroundColor: color ?? "var(--color-primary)",
     color: "var(--color-primary-foreground)",
-    boxShadow: "var(--shadow-glow-10)",
+    boxShadow: color ? `0 0 10px ${color}66` : "var(--shadow-glow-10)",
   };
 }

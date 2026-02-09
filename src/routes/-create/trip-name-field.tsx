@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
+import { useStore } from "@tanstack/react-form";
 import { Edit } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { useFormFieldContext } from "@/components/ui/tanstack-form";
 
 type TripNameInputProps = React.InputHTMLAttributes<HTMLInputElement>;
@@ -27,7 +29,17 @@ export const TripNameInput = forwardRef<HTMLInputElement, TripNameInputProps>(
 );
 
 export function TripNameEditIcon() {
+  const field = useFormFieldContext<string>();
+  const isTouched = useStore(field.store, s => s.meta.isTouched);
+  const isValid = useStore(field.store, s => s.meta.isValid);
+  const isInvalid = isTouched && !isValid;
+
   return (
-    <Edit className="text-foreground/20 group-focus-within:text-primary absolute top-1/2 right-0 h-10 w-10 -translate-y-1/2 transition-colors" />
+    <Edit
+      className={cn(
+        "absolute top-1/2 right-0 h-10 w-10 -translate-y-1/2 transition-colors",
+        isInvalid ? "text-destructive" : "text-foreground/20 group-focus-within:text-primary",
+      )}
+    />
   );
 }

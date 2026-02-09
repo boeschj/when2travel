@@ -144,14 +144,33 @@ export function formatNameList(names: string[]): string {
   const second = names[1];
   const third = names[2];
 
-  if (!first) return "";
-  if (names.length === 1) return first;
-  if (names.length === 2 && second) return `${first} and ${second}`;
-  if (names.length === 3 && second && third) return `${first}, ${second}, and ${third}`;
+  if (!first) {
+    return "";
+  }
+
+  const isSingleName = names.length === 1;
+  if (isSingleName) {
+    return first;
+  }
+
+  const isTwoNames = names.length === 2 && second;
+  if (isTwoNames) {
+    const formatted = `${first} and ${second}`;
+    return formatted;
+  }
+
+  const isThreeNames = names.length === 3 && second && third;
+  if (isThreeNames) {
+    const formatted = `${first}, ${second}, and ${third}`;
+    return formatted;
+  }
 
   const displayNames = names.slice(0, 3);
   const remaining = names.length - 3;
-  return `${displayNames.join(", ")}, and ${remaining} ${pluralize(remaining, "other")}`;
+  const joinedNames = displayNames.join(", ");
+  const pluralizedOther = pluralize(remaining, "other");
+  const formatted = `${joinedNames}, and ${remaining} ${pluralizedOther}`;
+  return formatted;
 }
 
 /** Get a short label for each priority case */

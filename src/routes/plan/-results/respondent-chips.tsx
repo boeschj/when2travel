@@ -139,8 +139,10 @@ function ScrollableChipsContainer({ children }: { children: React.ReactNode }) {
 }
 
 function RespondentChip({ respondent, status, isSelected, onClick }: RespondentChipProps) {
+  const { respondentColorMap } = useResultsValue();
   const { StatusIcon, iconClass } = STATUS_DISPLAY[status];
   const displayName = getDisplayName(respondent);
+  const colorHex = respondentColorMap[respondent.id]?.hex;
 
   const chipClassName = cn(
     "flex items-center gap-2 px-3 py-2 h-auto rounded-full flex-shrink-0",
@@ -158,7 +160,7 @@ function RespondentChip({ respondent, status, isSelected, onClick }: RespondentC
     >
       <UserAvatar
         name={respondent.name}
-        colorId={respondent.id}
+        colorHex={colorHex}
         className="size-6"
       />
       <span className="text-sm font-medium whitespace-nowrap text-white">{displayName}</span>

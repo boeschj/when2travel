@@ -37,6 +37,7 @@ pnpm cf-typegen   # Generate Cloudflare Worker types
 ### Authentication Model
 
 No user accounts. Token-based access control stored in localStorage via Jotai atoms:
+
 - `planEditTokensAtom` - Map of planId → editToken
 - `responseEditTokensAtom` - Map of responseId → editToken
 
@@ -45,6 +46,7 @@ Edit/delete operations require the correct token passed to API endpoints.
 ### API Layer
 
 Hono workers at `worker/` with routes:
+
 - `/api/plans` - CRUD for travel plans
 - `/api/responses` - CRUD for availability responses
 
@@ -73,6 +75,7 @@ src/routes/
 ```
 
 Shared components live in `src/components/`:
+
 - `ui/` - Radix-based primitives (shadcn-style)
 - `layout/` - Layout wrappers (FormContainer, FormSection)
 - `shared/` - Shared components (AppHeader, NotFound)
@@ -96,11 +99,13 @@ Shared components live in `src/components/`:
 ## Component File Splitting Rules
 
 Classify components as:
+
 - **Leaf** - Pure presentation, no hooks. Can stay in parent file.
 - **Stateful** - Has useState/useEffect/handlers. Extract to own file.
 - **Compositional** - Assembles other components. Usually the main export.
 
 Extract when:
+
 - Component is reused or could be reused elsewhere
 - File has multiple Stateful components
 - You can't identify the main render without scrolling
@@ -114,3 +119,56 @@ Extract when:
 - Store feature flag names in UPPERCASE_WITH_UNDERSCORE enums
 - Minimize feature flag usage across files to reduce undefined behavior risk
 - Consult existing naming conventions before creating new events/properties
+
+## IMPORTANT REMINDERS:
+
+- Code Comments: You tend to overuse code comments, which leaves clutter in the codebase. Your rule: NO USELESS COMMENTS. CODE SHOULD BE SELF DOCUMENTING. ONLY leave code comments when it explains intent or context impossible to convey via highly readable code.
+
+GOOD:
+``
+/\*\*
+
+- Detect browser locale and map to supported locale.
+- For now, always returns DEFAULT_LOCALE since we only support en-US.
+- When adding i18n, expand the mapping logic.
+  \*/
+  export function detectBrowserLocale(): SupportedLocale {
+  // Future: Map navigator.language to supported locales
+  // const browserLang = navigator.language;
+  // if (browserLang.startsWith('es')) return 'es-ES';
+  return DEFAULT_LOCALE;
+  }
+
+```
+
+This example uses JSDOC to explain what the function does, and includes a contextual comment about future plans for this function.
+
+BAD:
+```
+
+export function getCachedFormatter(
+locale: string,
+options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+//create a unique key for the formatter based on the locale and options
+const key = `${locale}|${JSON.stringify(options)}`;
+
+//check if the formatter is already cached
+const cached = formatterCache.get(key);
+if (cached) return cached;
+
+//if the cache is full, clear it
+if (formatterCache.size >= MAX_CACHE_SIZE) {
+formatterCache.clear();
+}
+
+//create a new formatter
+const formatter = new Intl.DateTimeFormat(locale, options);
+formatterCache.set(key, formatter);
+return formatter;
+}
+
+```
+
+This bad example includes code comments that actively harm our codebase by creating useless noise because they describe things obvious from reading the code. Reminder: DON'T DO THIS!
+```

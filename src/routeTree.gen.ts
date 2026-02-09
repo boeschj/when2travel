@@ -8,233 +8,232 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as TripsRouteImport } from './routes/trips'
-import { Route as CreateRouteImport } from './routes/create'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ResponseResponseIdRouteImport } from './routes/response/$responseId'
-import { Route as PlanPlanIdRouteImport } from './routes/plan/$planId'
-import { Route as PlanPlanIdIndexRouteImport } from './routes/plan/$planId.index'
-import { Route as ResponseResponseIdEditRouteImport } from './routes/response/$responseId.edit'
-import { Route as PlanPlanIdShareRouteImport } from './routes/plan/$planId.share'
-import { Route as PlanPlanIdRespondRouteImport } from './routes/plan/$planId.respond'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as CreateRouteImport } from "./routes/create";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as PlanPlanIdRouteImport } from "./routes/plan/$planId";
+import { Route as PlanPlanIdIndexRouteImport } from "./routes/plan/$planId.index";
+import { Route as PlanPlanIdRespondRouteImport } from "./routes/plan/$planId.respond";
+import { Route as PlanPlanIdShareRouteImport } from "./routes/plan/$planId.share";
+import { Route as ResponseResponseIdRouteImport } from "./routes/response/$responseId";
+import { Route as ResponseResponseIdEditRouteImport } from "./routes/response/$responseId.edit";
+import { Route as TripsRouteImport } from "./routes/trips";
 
 const TripsRoute = TripsRouteImport.update({
-  id: '/trips',
-  path: '/trips',
+  id: "/trips",
+  path: "/trips",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const CreateRoute = CreateRouteImport.update({
-  id: '/create',
-  path: '/create',
+  id: "/create",
+  path: "/create",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const ResponseResponseIdRoute = ResponseResponseIdRouteImport.update({
-  id: '/response/$responseId',
-  path: '/response/$responseId',
+  id: "/response/$responseId",
+  path: "/response/$responseId",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const PlanPlanIdRoute = PlanPlanIdRouteImport.update({
-  id: '/plan/$planId',
-  path: '/plan/$planId',
+  id: "/plan/$planId",
+  path: "/plan/$planId",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const PlanPlanIdIndexRoute = PlanPlanIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => PlanPlanIdRoute,
-} as any)
+} as any);
 const ResponseResponseIdEditRoute = ResponseResponseIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
+  id: "/edit",
+  path: "/edit",
   getParentRoute: () => ResponseResponseIdRoute,
-} as any)
+} as any);
 const PlanPlanIdShareRoute = PlanPlanIdShareRouteImport.update({
-  id: '/share',
-  path: '/share',
+  id: "/share",
+  path: "/share",
   getParentRoute: () => PlanPlanIdRoute,
-} as any)
+} as any);
 const PlanPlanIdRespondRoute = PlanPlanIdRespondRouteImport.update({
-  id: '/respond',
-  path: '/respond',
+  id: "/respond",
+  path: "/respond",
   getParentRoute: () => PlanPlanIdRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/trips': typeof TripsRoute
-  '/plan/$planId': typeof PlanPlanIdRouteWithChildren
-  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
-  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
-  '/plan/$planId/share': typeof PlanPlanIdShareRoute
-  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
-  '/plan/$planId/': typeof PlanPlanIdIndexRoute
+  "/": typeof IndexRoute;
+  "/create": typeof CreateRoute;
+  "/trips": typeof TripsRoute;
+  "/plan/$planId": typeof PlanPlanIdRouteWithChildren;
+  "/response/$responseId": typeof ResponseResponseIdRouteWithChildren;
+  "/plan/$planId/respond": typeof PlanPlanIdRespondRoute;
+  "/plan/$planId/share": typeof PlanPlanIdShareRoute;
+  "/response/$responseId/edit": typeof ResponseResponseIdEditRoute;
+  "/plan/$planId/": typeof PlanPlanIdIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/trips': typeof TripsRoute
-  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
-  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
-  '/plan/$planId/share': typeof PlanPlanIdShareRoute
-  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
-  '/plan/$planId': typeof PlanPlanIdIndexRoute
+  "/": typeof IndexRoute;
+  "/create": typeof CreateRoute;
+  "/trips": typeof TripsRoute;
+  "/response/$responseId": typeof ResponseResponseIdRouteWithChildren;
+  "/plan/$planId/respond": typeof PlanPlanIdRespondRoute;
+  "/plan/$planId/share": typeof PlanPlanIdShareRoute;
+  "/response/$responseId/edit": typeof ResponseResponseIdEditRoute;
+  "/plan/$planId": typeof PlanPlanIdIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/create': typeof CreateRoute
-  '/trips': typeof TripsRoute
-  '/plan/$planId': typeof PlanPlanIdRouteWithChildren
-  '/response/$responseId': typeof ResponseResponseIdRouteWithChildren
-  '/plan/$planId/respond': typeof PlanPlanIdRespondRoute
-  '/plan/$planId/share': typeof PlanPlanIdShareRoute
-  '/response/$responseId/edit': typeof ResponseResponseIdEditRoute
-  '/plan/$planId/': typeof PlanPlanIdIndexRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/create": typeof CreateRoute;
+  "/trips": typeof TripsRoute;
+  "/plan/$planId": typeof PlanPlanIdRouteWithChildren;
+  "/response/$responseId": typeof ResponseResponseIdRouteWithChildren;
+  "/plan/$planId/respond": typeof PlanPlanIdRespondRoute;
+  "/plan/$planId/share": typeof PlanPlanIdShareRoute;
+  "/response/$responseId/edit": typeof ResponseResponseIdEditRoute;
+  "/plan/$planId/": typeof PlanPlanIdIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/create'
-    | '/trips'
-    | '/plan/$planId'
-    | '/response/$responseId'
-    | '/plan/$planId/respond'
-    | '/plan/$planId/share'
-    | '/response/$responseId/edit'
-    | '/plan/$planId/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/create"
+    | "/trips"
+    | "/plan/$planId"
+    | "/response/$responseId"
+    | "/plan/$planId/respond"
+    | "/plan/$planId/share"
+    | "/response/$responseId/edit"
+    | "/plan/$planId/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/create'
-    | '/trips'
-    | '/response/$responseId'
-    | '/plan/$planId/respond'
-    | '/plan/$planId/share'
-    | '/response/$responseId/edit'
-    | '/plan/$planId'
+    | "/"
+    | "/create"
+    | "/trips"
+    | "/response/$responseId"
+    | "/plan/$planId/respond"
+    | "/plan/$planId/share"
+    | "/response/$responseId/edit"
+    | "/plan/$planId";
   id:
-    | '__root__'
-    | '/'
-    | '/create'
-    | '/trips'
-    | '/plan/$planId'
-    | '/response/$responseId'
-    | '/plan/$planId/respond'
-    | '/plan/$planId/share'
-    | '/response/$responseId/edit'
-    | '/plan/$planId/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/create"
+    | "/trips"
+    | "/plan/$planId"
+    | "/response/$responseId"
+    | "/plan/$planId/respond"
+    | "/plan/$planId/share"
+    | "/response/$responseId/edit"
+    | "/plan/$planId/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CreateRoute: typeof CreateRoute
-  TripsRoute: typeof TripsRoute
-  PlanPlanIdRoute: typeof PlanPlanIdRouteWithChildren
-  ResponseResponseIdRoute: typeof ResponseResponseIdRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  CreateRoute: typeof CreateRoute;
+  TripsRoute: typeof TripsRoute;
+  PlanPlanIdRoute: typeof PlanPlanIdRouteWithChildren;
+  ResponseResponseIdRoute: typeof ResponseResponseIdRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/trips': {
-      id: '/trips'
-      path: '/trips'
-      fullPath: '/trips'
-      preLoaderRoute: typeof TripsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create': {
-      id: '/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof CreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/response/$responseId': {
-      id: '/response/$responseId'
-      path: '/response/$responseId'
-      fullPath: '/response/$responseId'
-      preLoaderRoute: typeof ResponseResponseIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan/$planId': {
-      id: '/plan/$planId'
-      path: '/plan/$planId'
-      fullPath: '/plan/$planId'
-      preLoaderRoute: typeof PlanPlanIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan/$planId/': {
-      id: '/plan/$planId/'
-      path: '/'
-      fullPath: '/plan/$planId/'
-      preLoaderRoute: typeof PlanPlanIdIndexRouteImport
-      parentRoute: typeof PlanPlanIdRoute
-    }
-    '/response/$responseId/edit': {
-      id: '/response/$responseId/edit'
-      path: '/edit'
-      fullPath: '/response/$responseId/edit'
-      preLoaderRoute: typeof ResponseResponseIdEditRouteImport
-      parentRoute: typeof ResponseResponseIdRoute
-    }
-    '/plan/$planId/share': {
-      id: '/plan/$planId/share'
-      path: '/share'
-      fullPath: '/plan/$planId/share'
-      preLoaderRoute: typeof PlanPlanIdShareRouteImport
-      parentRoute: typeof PlanPlanIdRoute
-    }
-    '/plan/$planId/respond': {
-      id: '/plan/$planId/respond'
-      path: '/respond'
-      fullPath: '/plan/$planId/respond'
-      preLoaderRoute: typeof PlanPlanIdRespondRouteImport
-      parentRoute: typeof PlanPlanIdRoute
-    }
+    "/trips": {
+      id: "/trips";
+      path: "/trips";
+      fullPath: "/trips";
+      preLoaderRoute: typeof TripsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/create": {
+      id: "/create";
+      path: "/create";
+      fullPath: "/create";
+      preLoaderRoute: typeof CreateRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/response/$responseId": {
+      id: "/response/$responseId";
+      path: "/response/$responseId";
+      fullPath: "/response/$responseId";
+      preLoaderRoute: typeof ResponseResponseIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/plan/$planId": {
+      id: "/plan/$planId";
+      path: "/plan/$planId";
+      fullPath: "/plan/$planId";
+      preLoaderRoute: typeof PlanPlanIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/plan/$planId/": {
+      id: "/plan/$planId/";
+      path: "/";
+      fullPath: "/plan/$planId/";
+      preLoaderRoute: typeof PlanPlanIdIndexRouteImport;
+      parentRoute: typeof PlanPlanIdRoute;
+    };
+    "/response/$responseId/edit": {
+      id: "/response/$responseId/edit";
+      path: "/edit";
+      fullPath: "/response/$responseId/edit";
+      preLoaderRoute: typeof ResponseResponseIdEditRouteImport;
+      parentRoute: typeof ResponseResponseIdRoute;
+    };
+    "/plan/$planId/share": {
+      id: "/plan/$planId/share";
+      path: "/share";
+      fullPath: "/plan/$planId/share";
+      preLoaderRoute: typeof PlanPlanIdShareRouteImport;
+      parentRoute: typeof PlanPlanIdRoute;
+    };
+    "/plan/$planId/respond": {
+      id: "/plan/$planId/respond";
+      path: "/respond";
+      fullPath: "/plan/$planId/respond";
+      preLoaderRoute: typeof PlanPlanIdRespondRouteImport;
+      parentRoute: typeof PlanPlanIdRoute;
+    };
   }
 }
 
 interface PlanPlanIdRouteChildren {
-  PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute
-  PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute
-  PlanPlanIdIndexRoute: typeof PlanPlanIdIndexRoute
+  PlanPlanIdRespondRoute: typeof PlanPlanIdRespondRoute;
+  PlanPlanIdShareRoute: typeof PlanPlanIdShareRoute;
+  PlanPlanIdIndexRoute: typeof PlanPlanIdIndexRoute;
 }
 
 const PlanPlanIdRouteChildren: PlanPlanIdRouteChildren = {
   PlanPlanIdRespondRoute: PlanPlanIdRespondRoute,
   PlanPlanIdShareRoute: PlanPlanIdShareRoute,
   PlanPlanIdIndexRoute: PlanPlanIdIndexRoute,
-}
+};
 
-const PlanPlanIdRouteWithChildren = PlanPlanIdRoute._addFileChildren(
-  PlanPlanIdRouteChildren,
-)
+const PlanPlanIdRouteWithChildren = PlanPlanIdRoute._addFileChildren(PlanPlanIdRouteChildren);
 
 interface ResponseResponseIdRouteChildren {
-  ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute
+  ResponseResponseIdEditRoute: typeof ResponseResponseIdEditRoute;
 }
 
 const ResponseResponseIdRouteChildren: ResponseResponseIdRouteChildren = {
   ResponseResponseIdEditRoute: ResponseResponseIdEditRoute,
-}
+};
 
-const ResponseResponseIdRouteWithChildren =
-  ResponseResponseIdRoute._addFileChildren(ResponseResponseIdRouteChildren)
+const ResponseResponseIdRouteWithChildren = ResponseResponseIdRoute._addFileChildren(
+  ResponseResponseIdRouteChildren,
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -242,7 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   TripsRoute: TripsRoute,
   PlanPlanIdRoute: PlanPlanIdRouteWithChildren,
   ResponseResponseIdRoute: ResponseResponseIdRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

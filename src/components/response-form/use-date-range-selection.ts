@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { eachDayOfInterval, isWithinInterval } from "date-fns";
 
-import { addDateStringsToSet, formatDateString } from "./date-range-utilities";
+import { toISODateString } from "@/lib/date/types";
 
 const DATE_STATUS = {
   available: "available",
@@ -29,10 +29,12 @@ export function useDateRangeSelection({
 
   const toggleDateSelection = useCallback(
     (date: Date) => {
-      if (!isWithinInterval(date, dateRange)) return;
+      const isOutOfBounds = !isWithinInterval(date, dateRange);
+      if (isOutOfBounds) return;
 
-      const dateStr = formatDateString(date);
-      const isClickingRangeStart = rangeStart !== null && formatDateString(rangeStart) === dateStr;
+      const dateStr = toISODateString(date);
+      const rangeStartStr = rangeStart === null ? null : toISODateString(rangeStart);
+      const isClickingRangeStart = rangeStartStr === dateStr;
 
       if (isClickingRangeStart) {
         resetRangeStart();
@@ -68,8 +70,9 @@ export function useDateRangeSelection({
         rangeEndDate = rangeStart;
       }
 
-      const datesInRange = eachDayOfInterval({ start: rangeStartDate, end: rangeEndDate });
-      const rangeDateStrings = datesInRange.map(d => formatDateString(d));
+      const interval = { start: rangeStartDate, end: rangeEndDate };
+      const datesInRange = eachDayOfInterval(interval);
+      const rangeDateStrings = datesInRange.map(d => toISODateString(d));
       const withRangeDates = addDateStringsToSet(selectedDatesSet, rangeDateStrings);
       const updatedDateStrings = [...withRangeDates];
       onDatesChange(updatedDateStrings);
@@ -95,3 +98,11 @@ export function useDateRangeSelection({
 
 export { DATE_STATUS };
 export type { DateStatus };
+
+function addDateStringsToSet(dateStringSet: Set<string>, dateStrings: string[]): Set<string> {
+  const updatedSet = new Set(dateStringSet);
+  for (const dateString of dateStrings) {
+    updatedSet.add(dateString);
+  }
+  return updatedSet;
+}

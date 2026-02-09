@@ -1,12 +1,7 @@
 import { useCallback, useState } from "react";
 
+import { expandRange } from "@/lib/date/range";
 import type { DateRange } from "@/lib/types";
-
-import {
-  addDateStringsToSet,
-  expandRangeToDates,
-  removeDateStringsFromSet,
-} from "./date-range-utilities";
 
 interface UseRangeSelectionProps {
   availableRanges: DateRange[];
@@ -43,8 +38,10 @@ export function useRangeSelection({
     const allRangesSelected = selectedRangeIds.size === totalRangeCount;
 
     if (allRangesSelected) {
-      onDatesChange([]);
-      setSelectedRangeIds(new Set());
+      const emptyDates: string[] = [];
+      const emptyRangeIds = new Set<string>();
+      onDatesChange(emptyDates);
+      setSelectedRangeIds(emptyRangeIds);
       return;
     }
 
@@ -53,20 +50,27 @@ export function useRangeSelection({
     for (const rangeId of selectedRangeIds) {
       const availableRange = availableRanges.find(r => r.id === rangeId);
       if (availableRange) {
-        const rangeDateStrings = expandRangeToDates(availableRange);
-        updatedDateStringSet = removeDateStringsFromSet(updatedDateStringSet, rangeDateStrings);
+        const rangeDateStrings = expandRange(availableRange);
+        updatedDateStringSet = removeDateStringsFromSet({
+          dateStringSet: updatedDateStringSet,
+          dateStrings: rangeDateStrings,
+        });
       }
 
       const unavailableRange = unavailableRanges.find(r => r.id === rangeId);
       if (unavailableRange) {
-        const rangeDateStrings = expandRangeToDates(unavailableRange);
-        updatedDateStringSet = addDateStringsToSet(updatedDateStringSet, rangeDateStrings);
+        const rangeDateStrings = expandRange(unavailableRange);
+        updatedDateStringSet = addDateStringsToSet({
+          dateStringSet: updatedDateStringSet,
+          dateStrings: rangeDateStrings,
+        });
       }
     }
 
     const updatedDateStrings = [...updatedDateStringSet];
+    const emptyRangeIds = new Set<string>();
     onDatesChange(updatedDateStrings);
-    setSelectedRangeIds(new Set());
+    setSelectedRangeIds(emptyRangeIds);
   }, [
     selectedRangeIds,
     totalRangeCount,
@@ -77,4 +81,25 @@ export function useRangeSelection({
   ]);
 
   return { selectedRangeIds, hasSelectedRanges, toggleRangeSelection, deleteSelectedRanges };
+}
+
+interface DateStringSetArgs {
+  dateStringSet: Set<string>;
+  dateStrings: string[];
+}
+
+function addDateStringsToSet({ dateStringSet, dateStrings }: DateStringSetArgs): Set<string> {
+  const updatedSet = new Set(dateStringSet);
+  for (const dateString of dateStrings) {
+    updatedSet.add(dateString);
+  }
+  return updatedSet;
+}
+
+function removeDateStringsFromSet({ dateStringSet, dateStrings }: DateStringSetArgs): Set<string> {
+  const updatedSet = new Set(dateStringSet);
+  for (const dateString of dateStrings) {
+    updatedSet.delete(dateString);
+  }
+  return updatedSet;
 }

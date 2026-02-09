@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { eachDayOfInterval, parseISO } from "date-fns";
 
+import { expandRange } from "@/lib/date/range";
+import { assertISODateString, parseAPIDate } from "@/lib/date/types";
+import type { DateRange } from "@/lib/types";
 import { groupDatesIntoRanges } from "@/lib/utils";
 
-import { countCompatibleWindows, formatDateString } from "./date-range-utilities";
 import { DATE_STATUS, useDateRangeSelection } from "./use-date-range-selection";
 import { useRangeSelection } from "./use-range-selection";
 
@@ -23,15 +24,15 @@ export function useDateInteraction({
   onDatesChange,
 }: UseDateInteractionProps) {
   const allTripDates = useMemo(() => {
-    const start = parseISO(startRange);
-    const end = parseISO(endRange);
-    const datesInInterval = eachDayOfInterval({ start, end });
-    const dateStrings = datesInInterval.map(d => formatDateString(d));
-    return dateStrings;
+    const start = assertISODateString(startRange);
+    const end = assertISODateString(endRange);
+    const dateRange = { start, end };
+    const expandedDates = expandRange(dateRange);
+    return expandedDates;
   }, [startRange, endRange]);
 
-  const dateRangeStart = parseISO(startRange);
-  const dateRangeEnd = parseISO(endRange);
+  const dateRangeStart = parseAPIDate(startRange);
+  const dateRangeEnd = parseAPIDate(endRange);
   const dateRange = { start: dateRangeStart, end: dateRangeEnd };
 
   const selectedDatesSet = useMemo(() => new Set(selectedDates), [selectedDates]);
@@ -45,9 +46,18 @@ export function useDateInteraction({
 
   const unavailableDates = allTripDates.filter(date => !selectedDatesSet.has(date));
 
-  const availableRanges = groupDatesIntoRanges(selectedDates, DATE_STATUS.available);
-  const unavailableRanges = groupDatesIntoRanges(unavailableDates, DATE_STATUS.unavailable);
-  const compatibleWindowsCount = countCompatibleWindows(availableRanges, numDays);
+  const availableRanges = groupDatesIntoRanges({
+    dates: selectedDates,
+    status: DATE_STATUS.available,
+  });
+  const unavailableRanges = groupDatesIntoRanges({
+    dates: unavailableDates,
+    status: DATE_STATUS.unavailable,
+  });
+  const compatibleWindowsCount = countCompatibleWindows({
+    ranges: availableRanges,
+    minDays: numDays,
+  });
 
   const { selectedRangeIds, hasSelectedRanges, toggleRangeSelection, deleteSelectedRanges } =
     useRangeSelection({
@@ -73,3 +83,20 @@ export function useDateInteraction({
 }
 
 export { type DateStatus, DATE_STATUS } from "./use-date-range-selection";
+
+interface CountCompatibleWindowsArgs {
+  ranges: DateRange[];
+  minDays: number;
+}
+
+function countCompatibleWindows({ ranges, minDays }: CountCompatibleWindowsArgs): number {
+  const rangesLongEnough = ranges.filter(range => range.days >= minDays);
+
+  const totalWindows = rangesLongEnough.reduce((windowCount, range) => {
+    const windowsInRange = range.days - minDays + 1;
+    const updatedCount = windowCount + windowsInRange;
+    return updatedCount;
+  }, 0);
+
+  return totalWindows;
+}

@@ -21,6 +21,7 @@ export class ApiError extends Error {
 
   static async fromResponse(response: Response): Promise<ApiError> {
     const message = await response.text().catch(() => "Unknown error");
-    return new ApiError(response.status, message);
+    const error = new ApiError(response.status, message);
+    return error;
   }
 }

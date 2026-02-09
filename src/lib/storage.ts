@@ -29,10 +29,8 @@ function parseStorageValue<K extends StorageKey>(
 ): { success: true; data: StorageValue<K> } | { success: false } {
   if (raw === null) return { success: false };
 
-  const jsonParseResult = z
-    .string()
-    .transform((val): unknown => JSON.parse(val))
-    .safeParse(raw);
+  const jsonParser = z.string().transform((val): unknown => JSON.parse(val));
+  const jsonParseResult = jsonParser.safeParse(raw);
   if (!jsonParseResult.success) return { success: false };
 
   const schema = STORAGE_SCHEMAS[key];
@@ -40,16 +38,22 @@ function parseStorageValue<K extends StorageKey>(
   if (!validationResult.success) return { success: false };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod safeParse returns z.infer<schema> but doesn't narrow based on generic key K
-  return { success: true, data: validationResult.data as StorageValue<K> };
+  const typedData = validationResult.data as StorageValue<K>;
+  return { success: true, data: typedData };
 }
 
 export function createStorageAtom<K extends StorageKey>(key: K, defaultValue: StorageValue<K>) {
-  const isValid = (value: unknown): value is StorageValue<K> =>
-    STORAGE_SCHEMAS[key].safeParse(value).success;
+  const schema = STORAGE_SCHEMAS[key];
+  const isValid = (value: unknown): value is StorageValue<K> => {
+    const parseResult = schema.safeParse(value);
+    return parseResult.success;
+  };
 
-  const storage = withStorageValidator(isValid)(createJSONStorage());
+  const jsonStorage = createJSONStorage();
+  const storage = withStorageValidator(isValid)(jsonStorage);
 
-  return atomWithStorage(key, defaultValue, storage, { getOnInit: true });
+  const atom = atomWithStorage(key, defaultValue, storage, { getOnInit: true });
+  return atom;
 }
 
 export type RecordStorageKey = {
@@ -59,7 +63,8 @@ export type RecordStorageKey = {
 const EMPTY_RECORD: Record<string, string> = {};
 
 export function getStorageRecord(key: RecordStorageKey): Record<string, string> {
-  const result = parseStorageValue(key, localStorage.getItem(key));
+  const rawValue = localStorage.getItem(key);
+  const result = parseStorageValue(key, rawValue);
   if (!result.success) return EMPTY_RECORD;
   return result.data;
 }

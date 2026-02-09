@@ -4,7 +4,3 @@ export const PLAN_VALIDATION = {
   DAYS_MIN: 1,
   DAYS_MAX: 60,
 } as const;
-
-export const DATE_FORMAT = {
-  ISO: "yyyy-MM-dd",
-} as const;

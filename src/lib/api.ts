@@ -20,5 +20,6 @@ export async function parseErrorResponse(
 ): Promise<ApiError> {
   const body = await response.json().catch(() => null);
   const message = isErrorBody(body) ? body.error : fallback;
-  return new ApiError(response.status, message);
+  const error = new ApiError(response.status, message);
+  return error;
 }

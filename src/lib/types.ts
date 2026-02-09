@@ -1,6 +1,7 @@
 import type { InferResponseType } from "hono/client";
 
 import type { client } from "./api";
+import type { ISODateString } from "./date/types";
 
 type Client = typeof client;
 
@@ -13,21 +14,21 @@ export type PlanWithResponses = Extract<
 export type PlanResponse = NonNullable<PlanWithResponses["responses"]>[number];
 
 export interface CompatibleDateRange {
-  start: string;
-  end: string;
+  start: ISODateString;
+  end: ISODateString;
   availableCount: number;
   totalCount: number;
 }
 
 export interface ResponseFormData {
   name: string;
-  availableDates: string[];
+  availableDates: ISODateString[];
 }
 
 export interface DateRange {
   id: string;
-  start: string;
-  end: string;
+  start: ISODateString;
+  end: ISODateString;
   days: number;
   status: "available" | "unavailable";
 }

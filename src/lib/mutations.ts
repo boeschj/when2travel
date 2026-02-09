@@ -23,8 +23,12 @@ export function useDeletePlan({ onSuccess }: UseDeletePlanOptions) {
         param: { id: planId },
         json: { editToken },
       });
-      if (!response.ok) throw await parseErrorResponse(response, "Failed to delete plan");
-      return response.json();
+      if (!response.ok) {
+        const error = await parseErrorResponse(response, "Failed to delete plan");
+        throw error;
+      }
+      const data = await response.json();
+      return data;
     },
     onSuccess: (_data, planId) => {
       removePlanEditToken(planId);
@@ -59,8 +63,12 @@ export function useDeleteResponse({ onSuccess }: UseDeleteResponseOptions) {
         param: { id: responseId },
         json: { editToken },
       });
-      if (!response.ok) throw await parseErrorResponse(response, "Failed to delete response");
-      return response.json();
+      if (!response.ok) {
+        const error = await parseErrorResponse(response, "Failed to delete response");
+        throw error;
+      }
+      const data = await response.json();
+      return data;
     },
     onSuccess: (_data, { responseId, planId }) => {
       removeResponseToken(responseId);
@@ -101,8 +109,12 @@ export function useUpdateResponse({ onSuccess }: UseUpdateResponseOptions) {
           editToken,
         },
       });
-      if (!response.ok) throw await parseErrorResponse(response, "Failed to update response");
-      return response.json();
+      if (!response.ok) {
+        const error = await parseErrorResponse(response, "Failed to update response");
+        throw error;
+      }
+      const data = await response.json();
+      return data;
     },
     onMutate: async ({ responseId, planId, name, selectedDates }) => {
       const planDetailQueryKey = planKeys.detail(planId).queryKey;

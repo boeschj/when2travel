@@ -46,11 +46,13 @@ type RecordStorageValue = StorageValue<RecordStorageKey>;
 function omitKeys(record: RecordStorageValue, keysToRemove: string[]): RecordStorageValue {
   const keysToRemoveSet = new Set(keysToRemove);
   const entries = Object.entries(record).filter(([key]) => !keysToRemoveSet.has(key));
-  return Object.fromEntries(entries);
+  const filtered = Object.fromEntries(entries);
+  return filtered;
 }
 
 function getKeysByValues(record: RecordStorageValue, valuesToMatch: string[]) {
   const entries = Object.entries(record);
   const matchingEntries = entries.filter(([, value]) => valuesToMatch.includes(value));
-  return matchingEntries.map(([key]) => key);
+  const keys = matchingEntries.map(([key]) => key);
+  return keys;
 }

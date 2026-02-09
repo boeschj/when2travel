@@ -7,8 +7,10 @@ const STALE_TIME_MS = 1000 * 60 * 5;
 const MAX_SERVER_RETRIES = 3;
 
 function shouldRetry(failureCount: number, error: Error): boolean {
-  if (error instanceof ApiError && error.isClientError) return false;
-  return failureCount < MAX_SERVER_RETRIES;
+  const isClientError = error instanceof ApiError && error.isClientError;
+  if (isClientError) return false;
+  const shouldContinueRetrying = failureCount < MAX_SERVER_RETRIES;
+  return shouldContinueRetrying;
 }
 
 export const queryClient = new QueryClient({

@@ -8,9 +8,11 @@ async function fetchPlanById(planId: string) {
     param: { id: planId },
   });
   if (!response.ok) {
-    throw await ApiError.fromResponse(response);
+    const error = await ApiError.fromResponse(response);
+    throw error;
   }
-  return response.json();
+  const data = await response.json();
+  return data;
 }
 
 export const planKeys = createQueryKeys("plans", {

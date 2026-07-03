@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+PR_NUMBER="${1:?usage: gh-reply <pr-number> <comment-id> <body>}"
+COMMENT_ID="${2:?usage: gh-reply <pr-number> <comment-id> <body>}"
+BODY="${3:?usage: gh-reply <pr-number> <comment-id> <body>}"
+
+REPO_SLUG=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+
+exec gh api \
+  --method POST \
+  "repos/$REPO_SLUG/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
+  -f body="$BODY"

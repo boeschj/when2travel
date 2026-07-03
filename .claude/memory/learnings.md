@@ -99,8 +99,17 @@ Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESL
 - hits: 1
 
 ## pool-workers-config-subpath-gone
+
 - type: tooling
 - insight: @cloudflare/vitest-pool-workers 0.18 exports cloudflareTest, readD1Migrations, and D1Migration from the package ROOT; the /config subpath in official docs examples no longer exists. Also worker-configuration.d.ts goes stale silently; rerun pnpm cf-typegen after wrangler.jsonc changes.
 - evidence: when2travel Phase 7 2026-07-03, esbuild "Missing ./config specifier" + empty Cloudflare.Env until cf-typegen.
+- confidence: high
+- hits: 1
+
+## parallel-batch-mixed-sync-async
+
+- type: tooling
+- insight: A parallel subagent batch can return mixed sync/async results even with run_in_background false on each; leads must wait for completion notifications instead of polling for done-marker files (a guessed .done path burned a full timeout). Encoded in review-lead.md.
+- evidence: Real-wiring review run 2026-07-03, plans.test.ts auditor launched detached, exit 143 poll loop.
 - confidence: high
 - hits: 1

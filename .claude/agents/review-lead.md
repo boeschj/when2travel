@@ -34,6 +34,11 @@ Minimalism pass. The governing question for every block of new code: for a singl
 2. Weigh survivors yourself against AGENTS.md and the readability litmus test: does the fix make the code MORE readable? Convention never outranks readability.
 3. Write `.review/REVIEW-FINDINGS.md`: verdict (`APPROVE` / `CHANGES_REQUIRED`), then findings grouped 🔴 must-fix / 🟡 should-fix / 🟢 nit, each with file:line, the violated rule, and the exact suggested change.
 
+## Dispatch mechanics that have bitten previous runs
+
+- A parallel agent batch may return MIXED sync and async results even when you request synchronous runs; do not assume the batch completes together.
+- Never poll the filesystem for a background child's completion; there is no done-marker file. Stop and wait for the completion notification, then continue.
+
 ## Hard rules
 
 - Findings need evidence: file:line and the rule or reasoning, never vibes. If a reviewer's claim is unverified, verify or drop it.

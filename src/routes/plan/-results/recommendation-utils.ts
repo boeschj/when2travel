@@ -1,25 +1,36 @@
+import { addDays } from "date-fns";
 import { AlertCircle, AlertTriangle, CheckCircle2, ThumbsUp, Users } from "lucide-react";
 
-import { formatRangeDisplay } from "@/lib/date/formatter";
-import { assertISODateString } from "@/lib/date/types";
+import { formatDateShort, formatRangeDisplay } from "@/lib/date/formatter";
+import type { ISODateString } from "@/lib/date/types";
+import { assertISODateString, parseISODate, toISODateString } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
 
-import { RECOMMENDATION_STATUS } from "./recommendation-types";
-import type { RecommendationStatus } from "./recommendation-types";
+import type { ScoredWindow } from "./availability-analysis";
+import type { Recommendation, RecommendationStatus } from "./recommendation-types";
+import { RECOMMENDATION_KIND, RECOMMENDATION_STATUS } from "./recommendation-types";
 
-function formatDateForCalendar(iso: string): string {
+function toGoogleCalendarDate(iso: ISODateString): string {
   return iso.replaceAll("-", "");
 }
 
+/**
+ * Google Calendar all-day events treat the end date as exclusive,
+ * so the trip's inclusive end date must be pushed forward one day.
+ */
 export function buildGoogleCalendarUrl(
   planName: string,
   startDate: string,
   endDate: string,
 ): string {
+  const start = assertISODateString(startDate);
+  const inclusiveEnd = assertISODateString(endDate);
+  const exclusiveEnd = toISODateString(addDays(parseISODate(inclusiveEnd), 1));
+
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: planName,
-    dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
+    dates: `${toGoogleCalendarDate(start)}/${toGoogleCalendarDate(exclusiveEnd)}`,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
@@ -79,49 +90,57 @@ export function getStatusStyles(status: RecommendationStatus): {
   }
 }
 
-export function derivePersonalizedCTA({
-  isCurrentUserBlocker,
-  isCurrentUserConstrainer,
-  priority,
-  blockerShiftDirection,
-}: {
-  isCurrentUserBlocker: boolean;
-  isCurrentUserConstrainer: boolean;
-  priority: number;
-  blockerShiftDirection?: string;
-}): {
+export interface PersonalizedCTA {
   label: string;
-  emphasis: boolean;
-} | null {
-  if (isCurrentUserBlocker) {
-    if (priority === 2 && blockerShiftDirection) {
-      const directionLabel = blockerShiftDirection === "earlier" ? "Earlier" : "Later";
-      return { label: `Shift Your Dates ${directionLabel}`, emphasis: true };
-    }
-    if (priority === 3) {
-      return { label: "Update Your Dates", emphasis: true };
+}
+
+export function derivePersonalizedCTA({
+  recommendation,
+  currentUserResponseId,
+}: {
+  recommendation: Recommendation;
+  currentUserResponseId: string | undefined;
+}): PersonalizedCTA | null {
+  if (!currentUserResponseId) {
+    return null;
+  }
+
+  const isUnlockForCurrentUser =
+    recommendation.kind === RECOMMENDATION_KIND.UNLOCK &&
+    recommendation.blockerId === currentUserResponseId;
+  if (isUnlockForCurrentUser) {
+    return buildUnlockCTA(recommendation.datesToFree);
+  }
+
+  if (recommendation.kind === RECOMMENDATION_KIND.CONSTRAINED_SCHEDULE) {
+    const isCurrentUserConstrainer = recommendation.constrainers.some(
+      constrainer => constrainer.id === currentUserResponseId,
+    );
+    if (isCurrentUserConstrainer) {
+      return { label: "Add More Dates" };
     }
   }
-  if (isCurrentUserConstrainer && priority === 5) {
-    return { label: "Add More Dates", emphasis: true };
-  }
+
   return null;
 }
 
-interface BestWindow {
-  totalCount: number;
-  availableCount: number;
-}
-
-export function deriveAvailabilityText(
-  bestWindow: BestWindow | undefined,
-  isPerfect: boolean,
-): string | null {
-  if (!bestWindow) return null;
-
-  if (isPerfect) {
-    return `All ${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, "person", "people")} available`;
+export function deriveAvailabilityText(bestWindow: ScoredWindow | null): string | null {
+  if (!bestWindow) {
+    return null;
   }
 
-  return `${bestWindow.availableCount}/${bestWindow.totalCount} ${pluralize(bestWindow.totalCount, "person", "people")} available`;
+  const peopleLabel = pluralize(bestWindow.totalCount, "person", "people");
+  if (bestWindow.isPerfect) {
+    return `All ${bestWindow.totalCount} ${peopleLabel} available`;
+  }
+  return `${bestWindow.availableCount}/${bestWindow.totalCount} ${peopleLabel} available`;
+}
+
+function buildUnlockCTA(datesToFree: ISODateString[]): PersonalizedCTA {
+  const [onlyDate] = datesToFree;
+  const isSingleDate = datesToFree.length === 1 && onlyDate;
+  if (isSingleDate) {
+    return { label: `Free Up ${formatDateShort(onlyDate)}` };
+  }
+  return { label: "Update Your Dates" };
 }

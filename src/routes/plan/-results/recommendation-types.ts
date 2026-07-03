@@ -1,11 +1,12 @@
-/**
- * Smart Recommendations Type Definitions
- *
- * Types for the recommendation algorithm that analyzes availability
- * and provides actionable guidance when perfect alignment doesn't exist.
- */
-
+import type { ISODateString } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
+
+import type {
+  AlternativeWindow,
+  Constrainer,
+  ScoredWindow,
+  ShorterTripSuggestion,
+} from "./availability-analysis";
 
 export const RECOMMENDATION_STATUS = {
   PERFECT: "perfect",
@@ -18,131 +19,94 @@ export const RECOMMENDATION_STATUS = {
 export type RecommendationStatus =
   (typeof RECOMMENDATION_STATUS)[keyof typeof RECOMMENDATION_STATUS];
 
-export const RECOMMENDATION_PRIORITY = {
-  PERFECT_MATCH: 1,
-  SHIFT_WINDOW: 2,
-  SINGLE_BLOCKER: 3,
-  DURATION_TOO_LONG: 4,
-  SCHEDULE_CONFLICT: 5,
-  GOOD_ENOUGH: 6,
-  EXPAND_RANGE: 7,
-  MULTIPLE_OPTIONS: 8,
-  GENERAL: 9,
-} as const;
-
-/** Priority levels for recommendation cases (P1 highest, P9 fallback) */
-export type RecommendationPriority =
-  (typeof RECOMMENDATION_PRIORITY)[keyof typeof RECOMMENDATION_PRIORITY];
-
-/** Information about a respondent blocking a specific window */
-export interface BlockerInfo {
-  id: string;
-  name: string;
-  /** Dates within the window the blocker is missing */
-  missingDates: string[];
-  /** Count of missing dates */
-  missingCount: number;
-  /** Whether blocker has availability the day before window starts */
-  hasAdjacentBefore: boolean;
-  /** Whether blocker has availability the day after window ends */
-  hasAdjacentAfter: boolean;
-  /** Suggested shift direction if adjacent availability exists */
-  shiftDirection: "earlier" | "later" | null;
-  /** Number of days to shift to potentially align everyone */
-  shiftDays: number;
-}
-
-/** A window scored with availability percentage and blocker details */
-export interface ScoredWindow {
-  start: string;
-  end: string;
-  availableCount: number;
-  totalCount: number;
-  percentage: number;
-  blockers: BlockerInfo[];
-}
-
-/** Alternative window shown in recommendations (simplified view) */
-export interface AlternativeWindow {
-  start: string;
-  end: string;
-  percentage: number;
-  availableCount: number;
-  totalCount: number;
-  /** Names of respondents who can't make this window */
-  missing: string[];
-}
-
-/** Suggestion for shorter trip duration (P4 case) */
-export interface ShorterTripSuggestion {
-  /** The shorter duration that unlocks perfect windows */
-  duration: number;
-  /** Number of perfect windows at this duration */
-  windowCount: number;
-  /** The actual windows (max 3) */
-  windows: AlternativeWindow[];
-}
-
-/** The recommendation output from the algorithm */
-export interface Recommendation {
-  /** Priority case that matched (1-9) */
-  priority: RecommendationPriority;
-  /** Status derived from best window percentage */
-  status: RecommendationStatus;
-  /** Main headline (e.g., "All set.", "Almost there.") */
-  headline: string;
-  /** Detail line (e.g., "80% of respondents (4/5) can make it") */
-  detail: string;
-  /** Actionable recommendation text */
-  recommendation: string;
-  /** Optional secondary text */
-  secondary?: string;
-  /** Alternative windows to show (max 3) */
-  alternativeWindows?: AlternativeWindow[];
-  /** For P4: shorter trip suggestion with edit CTA data */
-  shorterTripSuggestion?: ShorterTripSuggestion;
-  /** Best window data for UI rendering */
-  bestWindow?: ScoredWindow;
-  /** For P2/P3: ID of the single blocker (for personalized CTA) */
-  blockerId?: string;
-  /** For P2: suggested shift direction for the blocker */
-  blockerShiftDirection?: "earlier" | "later";
-  /** For P5: formatted string of constraining person name(s) */
-  constrainingPerson?: string;
-  /** For P5: IDs of the constraining people (for personalized CTA) */
-  constrainingPersonIds?: string[];
-}
-
-/** Result from the smart recommendation hook including alternatives */
-export interface RecommendationResult {
-  /** The primary recommendation (highest priority match) */
-  primary: Recommendation;
-  /** Other recommendations that also matched (lower priority) */
-  alternatives: Recommendation[];
-}
-
-/** Status thresholds for percentage-to-status mapping */
 export const STATUS_THRESHOLDS = {
-  PERFECT: 100,
   GREAT: 80,
   GOOD: 67,
   POSSIBLE: 50,
 } as const;
 
-/** Get status from percentage */
-export function getStatusFromPercentage(percentage: number): RecommendationStatus {
-  if (percentage >= STATUS_THRESHOLDS.PERFECT) return RECOMMENDATION_STATUS.PERFECT;
-  if (percentage >= STATUS_THRESHOLDS.GREAT) return RECOMMENDATION_STATUS.GREAT;
-  if (percentage >= STATUS_THRESHOLDS.GOOD) return RECOMMENDATION_STATUS.GOOD;
-  if (percentage >= STATUS_THRESHOLDS.POSSIBLE) return RECOMMENDATION_STATUS.POSSIBLE;
+export const RECOMMENDATION_KIND = {
+  PERFECT_MATCH: "perfect-match",
+  UNLOCK: "unlock",
+  SHORTER_TRIP: "shorter-trip",
+  CONSTRAINED_SCHEDULE: "constrained-schedule",
+  GOOD_ENOUGH: "good-enough",
+  CRAMPED_RANGE: "cramped-range",
+  EXPLORING: "exploring",
+} as const;
+
+export type RecommendationKind = (typeof RECOMMENDATION_KIND)[keyof typeof RECOMMENDATION_KIND];
+
+interface RecommendationBase {
+  status: RecommendationStatus;
+  headline: string;
+  advice: string;
+  bestWindow: ScoredWindow | null;
+}
+
+export interface PerfectMatchRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.PERFECT_MATCH;
+  bestWindow: ScoredWindow;
+}
+
+export interface UnlockRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.UNLOCK;
+  bestWindow: ScoredWindow;
+  blockerId: string;
+  blockerName: string;
+  datesToFree: ISODateString[];
+}
+
+export interface ShorterTripRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.SHORTER_TRIP;
+  suggestion: ShorterTripSuggestion;
+}
+
+export interface ConstrainedScheduleRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.CONSTRAINED_SCHEDULE;
+  constrainers: Constrainer[];
+}
+
+export interface GoodEnoughRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.GOOD_ENOUGH;
+  bestWindow: ScoredWindow;
+}
+
+export interface CrampedRangeRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.CRAMPED_RANGE;
+}
+
+export interface ExploringRecommendation extends RecommendationBase {
+  kind: typeof RECOMMENDATION_KIND.EXPLORING;
+}
+
+export type Recommendation =
+  | PerfectMatchRecommendation
+  | UnlockRecommendation
+  | ShorterTripRecommendation
+  | ConstrainedScheduleRecommendation
+  | GoodEnoughRecommendation
+  | CrampedRangeRecommendation
+  | ExploringRecommendation;
+
+export interface RecommendationResult {
+  primary: Recommendation;
+  alternativeWindows: AlternativeWindow[];
+}
+
+export function getWindowStatus(window: ScoredWindow | null): RecommendationStatus {
+  if (!window) return RECOMMENDATION_STATUS.UNLIKELY;
+  if (window.isPerfect) return RECOMMENDATION_STATUS.PERFECT;
+  if (window.percentage >= STATUS_THRESHOLDS.GREAT) return RECOMMENDATION_STATUS.GREAT;
+  if (window.percentage >= STATUS_THRESHOLDS.GOOD) return RECOMMENDATION_STATUS.GOOD;
+  if (window.percentage >= STATUS_THRESHOLDS.POSSIBLE) return RECOMMENDATION_STATUS.POSSIBLE;
   return RECOMMENDATION_STATUS.UNLIKELY;
 }
 
-/** Format a list of names with truncation (max 3 shown) */
+const MAX_LISTED_NAMES = 3;
+
 export function formatNameList(names: string[]): string {
-  const first = names[0];
-  const second = names[1];
-  const third = names[2];
+  const [first, second, third] = names;
 
   if (!first) {
     return "";
@@ -159,52 +123,16 @@ export function formatNameList(names: string[]): string {
     return formatted;
   }
 
-  const isThreeNames = names.length === 3 && second && third;
+  const isThreeNames = names.length === MAX_LISTED_NAMES && second && third;
   if (isThreeNames) {
     const formatted = `${first}, ${second}, and ${third}`;
     return formatted;
   }
 
-  const displayNames = names.slice(0, 3);
-  const remaining = names.length - 3;
+  const displayNames = names.slice(0, MAX_LISTED_NAMES);
+  const remaining = names.length - MAX_LISTED_NAMES;
   const joinedNames = displayNames.join(", ");
   const pluralizedOther = pluralize(remaining, "other");
   const formatted = `${joinedNames}, and ${remaining} ${pluralizedOther}`;
   return formatted;
-}
-
-/** Get a short label for each priority case */
-export function getPriorityLabel(priority: RecommendationPriority): string {
-  switch (priority) {
-    case 1: {
-      return "Perfect Match";
-    }
-    case 2: {
-      return "Shift Window";
-    }
-    case 3: {
-      return "Single Blocker";
-    }
-    case 4: {
-      return "Shorter Trip";
-    }
-    case 5: {
-      return "Schedule Conflict";
-    }
-    case 6: {
-      return "Good Enough";
-    }
-    case 7: {
-      return "Expand Range";
-    }
-    case 8: {
-      return "Multiple Options";
-    }
-    case 9: {
-      return "General";
-    }
-    default: {
-      return "Suggestion";
-    }
-  }
 }

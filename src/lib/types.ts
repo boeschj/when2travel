@@ -13,13 +13,6 @@ export type PlanWithResponses = Extract<
 
 export type PlanResponse = NonNullable<PlanWithResponses["responses"]>[number];
 
-export interface CompatibleDateRange {
-  start: ISODateString;
-  end: ISODateString;
-  availableCount: number;
-  totalCount: number;
-}
-
 export interface ResponseFormData {
   name: string;
   availableDates: ISODateString[];

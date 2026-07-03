@@ -33,8 +33,7 @@ import {
   mapResponsesToRespondents,
 } from "./-results/results-page-utils";
 import { SmartRecommendationsCard } from "./-results/smart-recommendations-card";
-import { useCompatibleRanges } from "./-results/use-compatible-ranges";
-import { useSmartRecommendation } from "./-results/use-smart-recommendation";
+import { useAvailabilityAnalysis } from "./-results/use-availability-analysis";
 
 export const Route = createFileRoute("/plan/$planId/")({
   component: PlanResultsPage,
@@ -59,11 +58,11 @@ function PlanResultsPage() {
     },
   });
 
-  const compatibleRanges = useCompatibleRanges(plan);
-  const recommendation = useSmartRecommendation(plan);
+  const availability = useAvailabilityAnalysis(plan);
   const currentUserResponse = useCurrentUserResponse(plan.responses);
 
-  const bestWindow = compatibleRanges[0] ?? null;
+  const recommendation = availability?.recommendation ?? null;
+  const bestWindow = availability?.recommendedWindow ?? null;
   const respondents = useMemo(
     () => mapResponsesToRespondents(plan.responses, hasResponseToken),
     [plan.responses, hasResponseToken],

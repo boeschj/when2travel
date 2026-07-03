@@ -8,12 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 import { AlternativeSuggestionsModal } from "./alternative-suggestions-modal";
-import { RECOMMENDATION_PRIORITY, RECOMMENDATION_STATUS } from "./recommendation-types";
-import type {
-  AlternativeWindow,
-  RecommendationPriority,
-  RecommendationResult,
-} from "./recommendation-types";
+import type { AlternativeWindow, ShorterTripSuggestion } from "./availability-analysis";
+import type { Recommendation, RecommendationResult } from "./recommendation-types";
+import { RECOMMENDATION_KIND } from "./recommendation-types";
 import {
   buildGoogleCalendarUrl,
   deriveAvailabilityText,
@@ -22,6 +19,7 @@ import {
   getStatusIcon,
   getStatusStyles,
 } from "./recommendation-utils";
+import type { PersonalizedCTA } from "./recommendation-utils";
 
 const ACTION_MODE = {
   DURATION_EDIT: "duration_edit",
@@ -31,11 +29,11 @@ const ACTION_MODE = {
   GENERIC_EDIT: "generic_edit",
 } as const;
 
+type ActionMode = (typeof ACTION_MODE)[keyof typeof ACTION_MODE];
+
 function handleCheckFlights() {
   window.open("https://www.google.com/travel/flights", "_blank", "noopener,noreferrer");
 }
-
-type ActionMode = (typeof ACTION_MODE)[keyof typeof ACTION_MODE];
 
 interface SmartRecommendationsCardProps {
   recommendationResult: RecommendationResult;
@@ -61,48 +59,42 @@ export function SmartRecommendationsCard({
   className,
 }: SmartRecommendationsCardProps) {
   const { share } = useShare();
-  const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
+  const [isAlternativesModalOpen, setIsAlternativesModalOpen] = useState(false);
 
-  const { primary: recommendation, alternatives } = recommendationResult;
-  const { status, headline, bestWindow, priority, shorterTripSuggestion } = recommendation;
+  const { primary, alternativeWindows } = recommendationResult;
+  const isPerfect = primary.kind === RECOMMENDATION_KIND.PERFECT_MATCH;
+  const shorterTripSuggestion = getShorterTripSuggestion(primary);
 
-  const StatusIcon = getStatusIcon(status);
-  const statusStyles = getStatusStyles(status);
-  const hasAlternatives = alternatives.length > 0;
-  const isPerfect = status === RECOMMENDATION_STATUS.PERFECT;
-  const needsSuggestions = !isPerfect;
+  const StatusIcon = getStatusIcon(primary.status);
+  const statusStyles = getStatusStyles(primary.status);
 
-  const isCurrentUserBlocker = currentUserResponseId === recommendation.blockerId;
-  const isCurrentUserConstrainer =
-    !!currentUserResponseId &&
-    !!recommendation.constrainingPersonIds?.includes(currentUserResponseId);
   const personalizedCTA = derivePersonalizedCTA({
-    isCurrentUserBlocker,
-    isCurrentUserConstrainer,
-    priority,
-    blockerShiftDirection: recommendation.blockerShiftDirection,
+    recommendation: primary,
+    currentUserResponseId,
   });
-
-  const isDurationTooLong = priority === RECOMMENDATION_PRIORITY.DURATION_TOO_LONG;
   const actionMode = deriveActionMode({
-    priority,
-    isPerfect,
+    primary,
     hasResponded,
-    hasShorterTripSuggestion: !!shorterTripSuggestion,
     hasEditDurationCallback: !!onEditDuration,
     personalizedCTA,
   });
 
-  const dateRangeDisplay = bestWindow && formatDateRangeDisplay(bestWindow.start, bestWindow.end);
-  const availabilityText = deriveAvailabilityText(bestWindow, isPerfect);
+  const dateRangeDisplay =
+    primary.bestWindow && formatDateRangeDisplay(primary.bestWindow.start, primary.bestWindow.end);
+  const availabilityText = deriveAvailabilityText(primary.bestWindow);
 
-  const showAlternativeWindows =
-    needsSuggestions && !!recommendation.alternativeWindows?.length && !isDurationTooLong;
-  const showShorterTripWindows = needsSuggestions && isDurationTooLong && !!shorterTripSuggestion;
+  const hasAlternatives = alternativeWindows.length > 0;
+  const showAdviceBox = !isPerfect;
+  const showAlternativeWindows = !isPerfect && !shorterTripSuggestion && hasAlternatives;
+  const showShorterTripWindows = !!shorterTripSuggestion;
 
   const handleAddToCalendar = () => {
-    if (!bestWindow) return;
-    const calendarUrl = buildGoogleCalendarUrl(planName, bestWindow.start, bestWindow.end);
+    if (!primary.bestWindow) return;
+    const calendarUrl = buildGoogleCalendarUrl(
+      planName,
+      primary.bestWindow.start,
+      primary.bestWindow.end,
+    );
     window.open(calendarUrl, "_blank");
   };
 
@@ -113,7 +105,7 @@ export function SmartRecommendationsCard({
     void share({ title: planName, text: shareText, url: globalThis.location.href });
   };
 
-  const handleOpenSuggestions = () => setIsSuggestionsModalOpen(true);
+  const handleOpenAlternatives = () => setIsAlternativesModalOpen(true);
 
   return (
     <>
@@ -130,7 +122,7 @@ export function SmartRecommendationsCard({
           >
             <StatusIcon className={cn("h-8 w-8", statusStyles.iconColor)} />
           </div>
-          <h2 className="text-foreground text-2xl font-bold md:text-3xl">{headline}</h2>
+          <h2 className="text-foreground text-2xl font-bold md:text-3xl">{primary.headline}</h2>
           <p className="text-text-secondary text-lg">Your ideal trip dates are:</p>
           {dateRangeDisplay && (
             <h3 className="text-foreground text-4xl font-black tracking-tight md:text-5xl lg:text-5xl">
@@ -146,18 +138,15 @@ export function SmartRecommendationsCard({
             />
           )}
 
-          {needsSuggestions && (
-            <SuggestionBox
-              recommendationText={recommendation.recommendation}
-              secondaryText={recommendation.secondary}
+          {showAdviceBox && (
+            <AdviceBox
+              adviceText={primary.advice}
               hasAlternatives={hasAlternatives}
-              onSeeAlternatives={handleOpenSuggestions}
+              onSeeAlternatives={handleOpenAlternatives}
             />
           )}
 
-          {showAlternativeWindows && recommendation.alternativeWindows && (
-            <AlternativeWindowsList windows={recommendation.alternativeWindows} />
-          )}
+          {showAlternativeWindows && <AlternativeWindowsList windows={alternativeWindows} />}
 
           {showShorterTripWindows && (
             <div className="w-full max-w-lg">
@@ -217,9 +206,9 @@ export function SmartRecommendationsCard({
       </Card>
 
       <AlternativeSuggestionsModal
-        open={isSuggestionsModalOpen}
-        onOpenChange={setIsSuggestionsModalOpen}
-        alternatives={alternatives}
+        open={isAlternativesModalOpen}
+        onOpenChange={setIsAlternativesModalOpen}
+        alternatives={alternativeWindows}
       />
     </>
   );
@@ -247,23 +236,16 @@ function AvailabilitySection({ icon: Icon, iconColor, text }: AvailabilitySectio
   );
 }
 
-interface SuggestionBoxProps {
-  recommendationText: string;
-  secondaryText?: string;
+interface AdviceBoxProps {
+  adviceText: string;
   hasAlternatives: boolean;
   onSeeAlternatives: () => void;
 }
 
-function SuggestionBox({
-  recommendationText,
-  secondaryText,
-  hasAlternatives,
-  onSeeAlternatives,
-}: SuggestionBoxProps) {
+function AdviceBox({ adviceText, hasAlternatives, onSeeAlternatives }: AdviceBoxProps) {
   return (
     <div className="bg-surface-darker w-full max-w-lg rounded-lg p-4 text-left">
-      <p className="text-foreground">{recommendationText}</p>
-      {secondaryText && <p className="text-text-secondary mt-2 text-sm">{secondaryText}</p>}
+      <p className="text-foreground">{adviceText}</p>
       {hasAlternatives && (
         <Button
           variant="link"
@@ -496,33 +478,37 @@ function GenericEditActions({
   );
 }
 
+function getShorterTripSuggestion(recommendation: Recommendation): ShorterTripSuggestion | null {
+  if (recommendation.kind !== RECOMMENDATION_KIND.SHORTER_TRIP) {
+    return null;
+  }
+  return recommendation.suggestion;
+}
+
 function deriveActionMode({
-  priority,
-  isPerfect,
+  primary,
   hasResponded,
-  hasShorterTripSuggestion,
   hasEditDurationCallback,
   personalizedCTA,
 }: {
-  priority: RecommendationPriority;
-  isPerfect: boolean;
+  primary: Recommendation;
   hasResponded: boolean;
-  hasShorterTripSuggestion: boolean;
   hasEditDurationCallback: boolean;
-  personalizedCTA: { label: string } | null;
+  personalizedCTA: PersonalizedCTA | null;
 }): ActionMode {
-  const isDurationTooLong = priority === RECOMMENDATION_PRIORITY.DURATION_TOO_LONG;
+  const isShorterTrip = primary.kind === RECOMMENDATION_KIND.SHORTER_TRIP;
+  const isPerfect = primary.kind === RECOMMENDATION_KIND.PERFECT_MATCH;
 
-  if (isDurationTooLong && hasShorterTripSuggestion && hasEditDurationCallback) {
+  if (isShorterTrip && hasEditDurationCallback) {
     return ACTION_MODE.DURATION_EDIT;
   }
   if (isPerfect && hasResponded) {
     return ACTION_MODE.PERFECT_MATCH;
   }
-  if (!hasResponded && !isDurationTooLong) {
+  if (!hasResponded && !isShorterTrip) {
     return ACTION_MODE.ADD_DATES;
   }
-  if (hasResponded && !isPerfect && personalizedCTA && !isDurationTooLong) {
+  if (hasResponded && personalizedCTA) {
     return ACTION_MODE.BLOCKER_CTA;
   }
   return ACTION_MODE.GENERIC_EDIT;

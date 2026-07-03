@@ -1,385 +1,295 @@
 import { differenceInDays } from "date-fns";
 
 import { formatDateShort, formatRangeDisplay } from "@/lib/date/formatter";
-import { assertISODateString, parseAPIDate } from "@/lib/date/types";
+import type { ISODateString } from "@/lib/date/types";
+import { parseISODate } from "@/lib/date/types";
 import { pluralize } from "@/lib/utils";
 
-import { toAlternativeWindow, validateShiftedWindow } from "./recommendation-scoring";
 import type {
-  Recommendation,
-  RecommendationPriority,
+  AlternativeWindow,
+  AvailabilityAnalysis,
   ScoredWindow,
-  ShorterTripSuggestion,
+} from "./availability-analysis";
+import { toAlternativeWindow } from "./availability-analysis";
+import type {
+  ConstrainedScheduleRecommendation,
+  CrampedRangeRecommendation,
+  ExploringRecommendation,
+  GoodEnoughRecommendation,
+  PerfectMatchRecommendation,
+  Recommendation,
+  ShorterTripRecommendation,
+  UnlockRecommendation,
 } from "./recommendation-types";
 import {
   formatNameList,
-  getStatusFromPercentage,
+  getWindowStatus,
+  RECOMMENDATION_KIND,
   RECOMMENDATION_STATUS,
+  STATUS_THRESHOLDS,
 } from "./recommendation-types";
 
-export interface RuleContext {
-  bestWindow: ScoredWindow | null;
-  scoredWindows: ScoredWindow[];
-  totalCount: number;
-  responses: { id: string; name: string; availableDates: string[] }[];
-  numDays: number;
-  startRange: string;
-  endRange: string;
-  shorterTrip: ShorterTripSuggestion | null;
-  constrainers: { id: string; name: string; availableDays: number }[];
-}
+const CRAMPED_RANGE_RATIO = 1.5;
+const MAX_ALTERNATIVE_WINDOWS = 3;
+const MAX_LISTED_DATES = 3;
 
-interface RecommendationRule {
-  priority: RecommendationPriority;
-  matches: (ctx: RuleContext) => boolean;
-  create: (ctx: RuleContext) => Recommendation;
-}
+type RecommendationRule = (analysis: AvailabilityAnalysis) => Recommendation | null;
 
-const RULES: RecommendationRule[] = [
-  {
-    priority: 1,
-    matches: ctx => ctx.bestWindow?.percentage === 100,
-    create: ctx => {
-      const bestWindow = ctx.bestWindow;
-      if (!bestWindow) {
-        throw new Error(
-          "P1 rule invariant violated: matches() should guarantee bestWindow exists with 100%",
-        );
-      }
-
-      return {
-        priority: 1,
-        status: RECOMMENDATION_STATUS.PERFECT,
-        headline: "Pack your bags!",
-        detail: `Everyone's in (${ctx.totalCount}/${ctx.totalCount})`,
-        recommendation: "You found the sweet spot. Time to book!",
-        bestWindow,
-      };
-    },
-  },
-
-  {
-    priority: 2,
-    matches: ctx => {
-      if (ctx.bestWindow?.blockers.length !== 1) return false;
-      const blocker = ctx.bestWindow.blockers[0];
-      if (!blocker) return false;
-      if (!blocker.shiftDirection || blocker.shiftDays <= 0) return false;
-      return validateShiftedWindow({
-        originalStart: ctx.bestWindow.start,
-        shiftDays: blocker.shiftDays,
-        direction: blocker.shiftDirection,
-        planStart: ctx.startRange,
-        planEnd: ctx.endRange,
-        numDays: ctx.numDays,
-      });
-    },
-    create: ctx => {
-      const bestWindow = ctx.bestWindow;
-      const blocker = bestWindow?.blockers[0];
-      if (!bestWindow || !blocker) {
-        throw new Error(
-          "P2 rule invariant violated: matches() should guarantee bestWindow and blocker exist",
-        );
-      }
-
-      const missingStr = formatMissingDateRange(blocker.missingDates);
-      const shiftDir = blocker.shiftDirection === "earlier" ? "earlier" : "later";
-
-      return {
-        priority: 2,
-        status: getStatusFromPercentage(bestWindow.percentage),
-        headline: "So close!",
-        detail: `${bestWindow.availableCount}/${ctx.totalCount} travelers ready to go`,
-        recommendation: `${blocker.name} can't make ${missingStr}, but shifting ${blocker.shiftDays} ${pluralize(blocker.shiftDays, "day")} ${shiftDir} could get everyone on board.`,
-        bestWindow,
-        blockerId: blocker.id,
-        blockerShiftDirection: blocker.shiftDirection ?? undefined,
-      };
-    },
-  },
-
-  {
-    priority: 3,
-    matches: ctx => {
-      if (ctx.bestWindow?.blockers.length !== 1) return false;
-      const blocker = ctx.bestWindow.blockers[0];
-      if (!blocker) return false;
-      const hasValidShift =
-        blocker.shiftDirection &&
-        blocker.shiftDays > 0 &&
-        validateShiftedWindow({
-          originalStart: ctx.bestWindow.start,
-          shiftDays: blocker.shiftDays,
-          direction: blocker.shiftDirection,
-          planStart: ctx.startRange,
-          planEnd: ctx.endRange,
-          numDays: ctx.numDays,
-        });
-      return !hasValidShift;
-    },
-    create: ctx => {
-      const bestWindow = ctx.bestWindow;
-      const blocker = bestWindow?.blockers[0];
-      if (!bestWindow || !blocker) {
-        throw new Error(
-          "P3 rule invariant violated: matches() should guarantee bestWindow and blocker exist",
-        );
-      }
-
-      const missingStr = formatMissingDateRange(blocker.missingDates);
-
-      return {
-        priority: 3,
-        status: getStatusFromPercentage(bestWindow.percentage),
-        headline: "Almost there!",
-        detail: `${bestWindow.availableCount}/${ctx.totalCount} travelers ready to go`,
-        recommendation: `${blocker.name} can't make ${missingStr}. Maybe they can shuffle things around?`,
-        bestWindow,
-        blockerId: blocker.id,
-      };
-    },
-  },
-
-  {
-    priority: 4,
-    matches: ctx => ctx.shorterTrip !== null,
-    create: ctx => {
-      const shorterTrip = ctx.shorterTrip;
-      if (!shorterTrip) {
-        throw new Error(
-          "P4 rule invariant violated: matches() should guarantee shorterTrip exists",
-        );
-      }
-
-      const bestPct = ctx.bestWindow?.percentage ?? 0;
-      const hasSingleWindow = shorterTrip.windowCount === 1;
-      const windowCountText = hasSingleWindow
-        ? "There's a"
-        : `There are ${shorterTrip.windowCount}`;
-
-      return {
-        priority: 4,
-        status: getStatusFromPercentage(bestPct),
-        headline: "Quick trip, anyone?",
-        detail: ctx.bestWindow
-          ? `${ctx.numDays} days is tricky, but ${shorterTrip.duration} days works perfectly`
-          : `${ctx.numDays} days doesn't quite fit, but ${shorterTrip.duration} days does`,
-        recommendation: `Good news! ${windowCountText} perfect ${shorterTrip.duration}-day ${pluralize(shorterTrip.windowCount, "window")} where everyone's free.`,
-        shorterTripSuggestion: shorterTrip,
-        bestWindow: ctx.bestWindow ?? undefined,
-        alternativeWindows: shorterTrip.windows,
-      };
-    },
-  },
-
-  {
-    priority: 5,
-    matches: ctx => ctx.constrainers.length > 0,
-    create: ctx => {
-      const bestPct = ctx.bestWindow?.percentage ?? 0;
-      const names = ctx.constrainers.map(c => c.name);
-      const ids = ctx.constrainers.map(c => c.id);
-
-      const firstConstrainer = ctx.constrainers[0];
-      const recommendation =
-        ctx.constrainers.length === 1 && firstConstrainer
-          ? `${firstConstrainer.name} only has ${firstConstrainer.availableDays} ${pluralize(firstConstrainer.availableDays, "day")} free, which limits the options. Worth checking if they can open up more dates!`
-          : `Some people have limited availability. Check the calendar to resolve scheduling conflicts!`;
-
-      return {
-        priority: 5,
-        status: getStatusFromPercentage(bestPct),
-        headline: "We have a majority!",
-        detail: ctx.bestWindow
-          ? `Best window fits ${ctx.bestWindow.availableCount}/${ctx.totalCount} travelers`
-          : "Still looking for overlap",
-        recommendation,
-        bestWindow: ctx.bestWindow ?? undefined,
-        constrainingPerson: formatNameList(names),
-        constrainingPersonIds: ids,
-      };
-    },
-  },
-
-  {
-    priority: 6,
-    matches: ctx => (ctx.bestWindow?.percentage ?? 0) >= 80,
-    create: ctx => {
-      const bestWindow = ctx.bestWindow;
-      if (!bestWindow) {
-        throw new Error(
-          "P6 rule invariant violated: matches() should guarantee bestWindow exists with >= 80%",
-        );
-      }
-
-      const alternatives = ctx.scoredWindows
-        .filter(w => w.start !== bestWindow.start)
-        .slice(0, 3)
-        .map(w => toAlternativeWindow(w));
-
-      return {
-        priority: 6,
-        status: getStatusFromPercentage(bestWindow.percentage),
-        headline: "Looking good!",
-        detail: `${bestWindow.availableCount}/${ctx.totalCount} travelers can make it`,
-        recommendation: `This is your best window! You could also try tweaking the date range to get everyone aligned.`,
-        bestWindow,
-        alternativeWindows: alternatives.length > 0 ? alternatives : undefined,
-      };
-    },
-  },
-
-  {
-    priority: 7,
-    matches: ctx => {
-      const rangeDays =
-        differenceInDays(parseAPIDate(ctx.endRange), parseAPIDate(ctx.startRange)) + 1;
-      return rangeDays < ctx.numDays * 1.5;
-    },
-    create: ctx => {
-      const bestPct = ctx.bestWindow?.percentage ?? 0;
-      const rangeDays =
-        differenceInDays(parseAPIDate(ctx.endRange), parseAPIDate(ctx.startRange)) + 1;
-
-      return {
-        priority: 7,
-        status: getStatusFromPercentage(bestPct),
-        headline: "Feeling cramped 😅",
-        detail: ctx.bestWindow
-          ? `Best window fits ${ctx.bestWindow.availableCount}/${ctx.totalCount} travelers`
-          : "No windows found yet",
-        recommendation: `Fitting ${ctx.numDays} days into a ${rangeDays}-day window is tight! Try expanding the date range for more flexibility.`,
-        bestWindow: ctx.bestWindow ?? undefined,
-      };
-    },
-  },
-
-  {
-    priority: 8,
-    matches: ctx => {
-      const bestWindow = ctx.bestWindow;
-      if (!bestWindow) return false;
-
-      const bestPct = bestWindow.percentage;
-      const comparableWindows = ctx.scoredWindows.filter(
-        w => Math.abs(w.percentage - bestPct) <= 5,
-      );
-      if (comparableWindows.length < 2) return false;
-
-      const windowA = comparableWindows[0];
-      const windowB = comparableWindows[1];
-      if (!windowA || !windowB) return false;
-
-      const blockersA = new Set(windowA.blockers.map(b => b.name));
-      const blockersB = new Set(windowB.blockers.map(b => b.name));
-      const hasDifferentBlockers =
-        ![...blockersA].every(name => blockersB.has(name)) ||
-        ![...blockersB].every(name => blockersA.has(name));
-
-      return hasDifferentBlockers;
-    },
-    create: ctx => {
-      const bestWindow = ctx.bestWindow;
-      if (!bestWindow) {
-        throw new Error("P8 rule invariant violated: matches() should guarantee bestWindow exists");
-      }
-
-      const comparableWindows = ctx.scoredWindows
-        .filter(w => Math.abs(w.percentage - bestWindow.percentage) <= 5)
-        .slice(0, 2);
-
-      const windowA = comparableWindows[0];
-      const windowB = comparableWindows[1];
-      if (!windowA || !windowB) {
-        throw new Error(
-          "P8 rule invariant violated: matches() should guarantee two comparable windows exist",
-        );
-      }
-
-      const missingA = formatNameList(windowA.blockers.map(b => b.name));
-      const missingB = formatNameList(windowB.blockers.map(b => b.name));
-
-      return {
-        priority: 8,
-        status: getStatusFromPercentage(bestWindow.percentage),
-        headline: "Decisions, decisions!",
-        detail: `${bestWindow.availableCount}/${ctx.totalCount} can make either window`,
-        recommendation: `${formatWindowRange(windowA.start, windowA.end)} doesn't work for ${missingA}. ${formatWindowRange(windowB.start, windowB.end)} doesn't work for ${missingB}. See if either group can budge!`,
-        bestWindow,
-        alternativeWindows: comparableWindows.map(w => toAlternativeWindow(w)),
-      };
-    },
-  },
-
-  {
-    priority: 9,
-    matches: () => true,
-    create: ctx => {
-      const bestPct = ctx.bestWindow?.percentage ?? 0;
-      const alternatives = ctx.scoredWindows.slice(0, 3).map(w => toAlternativeWindow(w));
-
-      return {
-        priority: 9,
-        status: getStatusFromPercentage(bestPct),
-        headline: "Still exploring 🏔️",
-        detail: ctx.bestWindow
-          ? `Best window fits ${ctx.bestWindow.availableCount}/${ctx.totalCount} travelers`
-          : "Waiting for the stars to align",
-        recommendation:
-          bestPct > 0
-            ? `The heatmap below shows where people overlap. Play with the dates to find a better fit!`
-            : "No overlap yet. Waiting for more responses or try different dates.",
-        bestWindow: ctx.bestWindow ?? undefined,
-        alternativeWindows: alternatives.length > 0 ? alternatives : undefined,
-      };
-    },
-  },
+const PRIORITIZED_RULES: RecommendationRule[] = [
+  recommendPerfectMatch,
+  recommendUnlock,
+  recommendShorterTrip,
+  recommendConstrainedSchedule,
+  recommendGoodEnough,
+  recommendCrampedRange,
 ];
 
-export function evaluateRules(context: RuleContext): Recommendation[] {
-  const matchingRules = RULES.filter(rule => rule.matches(context));
-  const recommendations = matchingRules.map(rule => rule.create(context));
-  return recommendations;
+export function deriveRecommendation(analysis: AvailabilityAnalysis): Recommendation {
+  for (const rule of PRIORITIZED_RULES) {
+    const recommendation = rule(analysis);
+    if (recommendation) {
+      return recommendation;
+    }
+  }
+  return recommendExploring(analysis);
 }
 
-function formatMissingDateRange(dates: string[]): string {
-  const isEmpty = dates.length === 0;
-  if (isEmpty) {
+export function buildAlternativeWindows(analysis: AvailabilityAnalysis): AlternativeWindow[] {
+  const { scoredWindows, bestWindow } = analysis;
+  if (!bestWindow) {
+    return [];
+  }
+
+  const seenBlockerSignatures = new Set([getBlockerSignature(bestWindow)]);
+  const alternativeWindows: AlternativeWindow[] = [];
+
+  for (const window of scoredWindows) {
+    const hasEnoughAlternatives = alternativeWindows.length >= MAX_ALTERNATIVE_WINDOWS;
+    if (hasEnoughAlternatives) {
+      break;
+    }
+
+    const isUseless = window.availableCount === 0;
+    if (isUseless) {
+      continue;
+    }
+
+    const signature = getBlockerSignature(window);
+    const isSameOptionShifted = seenBlockerSignatures.has(signature);
+    if (isSameOptionShifted) {
+      continue;
+    }
+
+    seenBlockerSignatures.add(signature);
+    alternativeWindows.push(toAlternativeWindow(window));
+  }
+
+  return alternativeWindows;
+}
+
+function recommendPerfectMatch(analysis: AvailabilityAnalysis): PerfectMatchRecommendation | null {
+  const { bestWindow } = analysis;
+  if (!bestWindow?.isPerfect) {
+    return null;
+  }
+
+  return {
+    kind: RECOMMENDATION_KIND.PERFECT_MATCH,
+    status: RECOMMENDATION_STATUS.PERFECT,
+    headline: "Pack your bags!",
+    advice: "You found the sweet spot. Time to book!",
+    bestWindow,
+  };
+}
+
+function recommendUnlock(analysis: AvailabilityAnalysis): UnlockRecommendation | null {
+  const unlock = analysis.bestUnlock;
+  if (!unlock) {
+    return null;
+  }
+
+  const missingDatesDisplay = formatDateList(unlock.datesToFree);
+  const daysToFree = pluralize(unlock.datesToFree.length, "that day", "those days");
+
+  return {
+    kind: RECOMMENDATION_KIND.UNLOCK,
+    status: getWindowStatus(unlock.window),
+    headline: "So close!",
+    advice: `${unlock.blockerName} can't make ${missingDatesDisplay}. If they can free ${daysToFree} up, everyone's in.`,
+    bestWindow: unlock.window,
+    blockerId: unlock.blockerId,
+    blockerName: unlock.blockerName,
+    datesToFree: unlock.datesToFree,
+  };
+}
+
+function recommendShorterTrip(analysis: AvailabilityAnalysis): ShorterTripRecommendation | null {
+  const suggestion = analysis.shorterTripSuggestion;
+  if (!suggestion) {
+    return null;
+  }
+
+  const hasSingleWindow = suggestion.windowCount === 1;
+  const windowCountText = hasSingleWindow ? "There's a" : `There are ${suggestion.windowCount}`;
+  const pluralizedWindow = pluralize(suggestion.windowCount, "window");
+
+  return {
+    kind: RECOMMENDATION_KIND.SHORTER_TRIP,
+    status: getWindowStatus(analysis.bestWindow),
+    headline: "Quick trip, anyone?",
+    advice: `${analysis.numDays} days doesn't quite fit everyone, but ${suggestion.duration} days works perfectly. ${windowCountText} ${suggestion.duration}-day ${pluralizedWindow} where everyone's free.`,
+    bestWindow: analysis.bestWindow,
+    suggestion,
+  };
+}
+
+function recommendConstrainedSchedule(
+  analysis: AvailabilityAnalysis,
+): ConstrainedScheduleRecommendation | null {
+  const { constrainers, bestWindow, numDays } = analysis;
+  if (constrainers.length === 0) {
+    return null;
+  }
+
+  const bestPercentage = bestWindow?.percentage ?? 0;
+  const hasMajority = bestPercentage >= STATUS_THRESHOLDS.POSSIBLE;
+  const headline = hasMajority ? "We have a majority!" : "Tricky schedules!";
+
+  return {
+    kind: RECOMMENDATION_KIND.CONSTRAINED_SCHEDULE,
+    status: getWindowStatus(bestWindow),
+    headline,
+    advice: buildConstrainerAdvice({ constrainers, numDays }),
+    bestWindow,
+    constrainers,
+  };
+}
+
+function recommendGoodEnough(analysis: AvailabilityAnalysis): GoodEnoughRecommendation | null {
+  const { bestWindow } = analysis;
+  if (!bestWindow) {
+    return null;
+  }
+
+  const isGoodEnough = bestWindow.percentage >= STATUS_THRESHOLDS.GREAT;
+  if (!isGoodEnough) {
+    return null;
+  }
+
+  return {
+    kind: RECOMMENDATION_KIND.GOOD_ENOUGH,
+    status: getWindowStatus(bestWindow),
+    headline: "Looking good!",
+    advice:
+      "This is your best window! You could also try tweaking the date range to get everyone aligned.",
+    bestWindow,
+  };
+}
+
+function recommendCrampedRange(analysis: AvailabilityAnalysis): CrampedRangeRecommendation | null {
+  const { rangeLengthInDays, numDays, bestWindow } = analysis;
+
+  const isCramped = rangeLengthInDays < numDays * CRAMPED_RANGE_RATIO;
+  if (!isCramped) {
+    return null;
+  }
+
+  return {
+    kind: RECOMMENDATION_KIND.CRAMPED_RANGE,
+    status: getWindowStatus(bestWindow),
+    headline: "Feeling cramped 😅",
+    advice: `Fitting ${numDays} days into a ${rangeLengthInDays}-day window is tight! Try expanding the date range for more flexibility.`,
+    bestWindow,
+  };
+}
+
+function recommendExploring(analysis: AvailabilityAnalysis): ExploringRecommendation {
+  const { bestWindow } = analysis;
+  const hasAnyOverlap = (bestWindow?.availableCount ?? 0) > 0;
+
+  const overlapAdvice =
+    "The heatmap below shows where people overlap. Play with the dates to find a better fit!";
+  const noOverlapAdvice = "No overlap yet. Waiting for more responses or try different dates.";
+
+  let advice = noOverlapAdvice;
+  if (hasAnyOverlap) {
+    advice = overlapAdvice;
+  }
+
+  return {
+    kind: RECOMMENDATION_KIND.EXPLORING,
+    status: getWindowStatus(bestWindow),
+    headline: "Still exploring 🏔️",
+    advice,
+    bestWindow,
+  };
+}
+
+function buildConstrainerAdvice({
+  constrainers,
+  numDays,
+}: {
+  constrainers: AvailabilityAnalysis["constrainers"];
+  numDays: number;
+}): string {
+  const [firstConstrainer] = constrainers;
+  const isSingleConstrainer = constrainers.length === 1;
+
+  if (isSingleConstrainer && firstConstrainer) {
+    const hasNoAvailability = firstConstrainer.maxConsecutiveDays === 0;
+    if (hasNoAvailability) {
+      return `${firstConstrainer.name} hasn't marked any available dates yet. Nudge them to fill in the calendar!`;
+    }
+
+    const pluralizedDay = pluralize(firstConstrainer.maxConsecutiveDays, "day");
+    return `${firstConstrainer.name} can only do ${firstConstrainer.maxConsecutiveDays} ${pluralizedDay} in a row, which rules out a ${numDays}-day trip. Worth checking if they can open up more dates!`;
+  }
+
+  const names = formatNameList(constrainers.map(constrainer => constrainer.name));
+  return `${names} can't fit ${numDays} days in a row yet. Worth checking if they can open up more dates!`;
+}
+
+export function formatDateList(dates: ISODateString[]): string {
+  const sortedDates = [...dates].sort((firstDate, secondDate) =>
+    firstDate.localeCompare(secondDate),
+  );
+  const [firstDate, secondDate, thirdDate] = sortedDates;
+  const lastDate = sortedDates.at(-1);
+
+  if (!firstDate || !lastDate) {
     return "";
   }
 
-  const first = dates[0];
-  if (!first) {
-    return "";
-  }
-
-  const isSingleDate = dates.length === 1;
+  const isSingleDate = sortedDates.length === 1;
   if (isSingleDate) {
-    const isoDate = assertISODateString(first);
-    const formatted = formatDateShort(isoDate);
-    return formatted;
+    return formatDateShort(firstDate);
   }
 
-  const sorted = [...dates].sort((a, b) => a.localeCompare(b));
-  const sortedFirst = sorted[0];
-  const sortedLast = sorted.at(-1);
-
-  if (!sortedFirst || !sortedLast) {
-    return "";
+  const spanInDays = differenceInDays(parseISODate(lastDate), parseISODate(firstDate)) + 1;
+  const isContiguous = spanInDays === sortedDates.length;
+  if (isContiguous) {
+    return formatRangeDisplay(firstDate, lastDate, " – ");
   }
 
-  const start = assertISODateString(sortedFirst);
-  const end = assertISODateString(sortedLast);
-  const formattedStart = formatDateShort(start);
-  const formattedEnd = formatDateShort(end);
-  const range = `${formattedStart} – ${formattedEnd}`;
-  return range;
+  const isTwoDates = sortedDates.length === 2 && secondDate;
+  if (isTwoDates) {
+    return `${formatDateShort(firstDate)} and ${formatDateShort(secondDate)}`;
+  }
+
+  const isThreeDates = sortedDates.length === MAX_LISTED_DATES && secondDate && thirdDate;
+  if (isThreeDates) {
+    return `${formatDateShort(firstDate)}, ${formatDateShort(secondDate)}, and ${formatDateShort(thirdDate)}`;
+  }
+
+  const listedDates = sortedDates.slice(0, MAX_LISTED_DATES).map(date => formatDateShort(date));
+  const remainingCount = sortedDates.length - MAX_LISTED_DATES;
+  return `${listedDates.join(", ")}, and ${remainingCount} more`;
 }
 
-function formatWindowRange(start: string, end: string): string {
-  const isoStart = assertISODateString(start);
-  const isoEnd = assertISODateString(end);
-  const formattedRange = formatRangeDisplay(isoStart, isoEnd, "-");
-  return formattedRange;
+function getBlockerSignature(window: ScoredWindow): string {
+  const blockerIds = window.blockers.map(blocker => blocker.id);
+  const sortedBlockerIds = [...blockerIds].sort((firstId, secondId) =>
+    firstId.localeCompare(secondId),
+  );
+  return sortedBlockerIds.join("|");
 }

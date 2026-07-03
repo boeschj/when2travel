@@ -1,9 +1,10 @@
 import { eachDayOfInterval } from "date-fns";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 
-import { parseAPIDate, parseISODate, toISODateString } from "@/lib/date/types";
-import type { CompatibleDateRange } from "@/lib/types";
+import { parseISODate, toISODateString } from "@/lib/date/types";
 
+import type { DateWindow } from "./availability-analysis";
+import { getMaxConsecutiveAvailableDays } from "./availability-analysis";
 import type { Respondent } from "./results-context";
 
 export const RESPONDENT_STATUS = {
@@ -16,7 +17,7 @@ export type RespondentStatus = (typeof RESPONDENT_STATUS)[keyof typeof RESPONDEN
 
 function getWindowAvailabilityStatus(
   respondent: Respondent,
-  bestWindow: CompatibleDateRange,
+  bestWindow: DateWindow,
 ): RespondentStatus {
   const windowDates = eachDayOfInterval({
     start: parseISODate(bestWindow.start),
@@ -44,23 +45,11 @@ function getConsecutiveAvailabilityStatus({
   endRange: string;
   requiredDays: number;
 }): RespondentStatus {
-  const allDates = eachDayOfInterval({
-    start: parseAPIDate(startRange),
-    end: parseAPIDate(endRange),
+  const maxConsecutiveDays = getMaxConsecutiveAvailableDays({
+    availableDates: respondent.availableDates,
+    startRange,
+    endRange,
   });
-
-  const availableDatesSet = new Set(respondent.availableDates);
-  let maxConsecutiveDays = 0;
-  let currentConsecutiveDays = 0;
-
-  for (const date of allDates) {
-    if (availableDatesSet.has(toISODateString(date))) {
-      currentConsecutiveDays++;
-      maxConsecutiveDays = Math.max(maxConsecutiveDays, currentConsecutiveDays);
-    } else {
-      currentConsecutiveDays = 0;
-    }
-  }
 
   if (maxConsecutiveDays >= requiredDays) return RESPONDENT_STATUS.AVAILABLE;
   if (maxConsecutiveDays > 0) return RESPONDENT_STATUS.PARTIAL;
@@ -69,7 +58,7 @@ function getConsecutiveAvailabilityStatus({
 
 interface GetRespondentStatusInput {
   respondent: Respondent;
-  bestWindow: CompatibleDateRange | null;
+  bestWindow: DateWindow | null;
   startRange: string;
   endRange: string;
   requiredDays: number;

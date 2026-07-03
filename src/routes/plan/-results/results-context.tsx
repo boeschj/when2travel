@@ -1,8 +1,10 @@
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 
-import type { CompatibleDateRange, PlanResponse } from "@/lib/types";
+import type { PlanResponse } from "@/lib/types";
 import type { AvatarColor } from "@/lib/utils";
+
+import type { ScoredWindow } from "./availability-analysis";
 
 interface Respondent {
   id: string;
@@ -21,7 +23,7 @@ interface ResultsValueContextType {
   };
   respondents: Respondent[];
   respondentColorMap: Record<string, AvatarColor>;
-  bestWindow: CompatibleDateRange | null;
+  bestWindow: ScoredWindow | null;
   selectedRespondentId: string | null;
 }
 

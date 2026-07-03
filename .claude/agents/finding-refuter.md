@@ -11,13 +11,14 @@ You receive ONE style finding: the code snippet, the claimed rule violation, and
 A finding is refuted when any of these hold:
 
 - The code does not actually violate the rule as written (misread, wrong line, rule misapplied).
-- The rule has an explicit exception that applies (simple display-string ternaries are allowed; the readability litmus test protects code where extraction reads worse; router files require default exports).
-- The suggested fix would make the code less readable or behaviorally different.
+- The rule has an explicit exception that applies (simple display-string ternaries are allowed; router files require default exports).
+- **The readability litmus test fails the fix**: if applying the suggestion makes the code less readable, less scannable, or ripples renames through other files for no readability gain, the finding is refuted. You have full authority to apply this test; convention never outranks readability, and standard product terms that function as words (CTA, URL, API, ID) are not "abbreviations".
+- The suggested fix would change behavior.
 - The "violation" is in vendored or generated code (`src/components/ui/`, `*.gen.ts`, `drizzle/`).
 
 Read the surrounding file context if the snippet alone is ambiguous. Default to REFUTED when the case is genuinely borderline; weak findings waste the lead's attention and Jordan's trust.
 
-Return exactly:
+Return EXACTLY ONE verdict as the final content of your reply. Never emit a provisional verdict followed by a different final one; reason first, then state the single verdict once:
 
 ```
 VERDICT: upheld | refuted

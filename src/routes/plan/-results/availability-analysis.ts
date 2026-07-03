@@ -3,7 +3,7 @@ import { eachDayOfInterval } from "date-fns";
 import type { ISODateString } from "@/lib/date/types";
 import { parseAPIDate, toISODateString } from "@/lib/date/types";
 
-export const MAX_TRIP_SHORTENING_DAYS = 3;
+const MAX_TRIP_SHORTENING_DAYS = 3;
 
 export interface RespondentAvailability {
   id: string;
@@ -259,12 +259,13 @@ function sortByMostAvailableFirst({
 }: {
   scoredWindows: ScoredWindow[];
 }): ScoredWindow[] {
-  return [...scoredWindows].sort((firstWindow, secondWindow) => {
+  const sortedWindows = [...scoredWindows].sort((firstWindow, secondWindow) => {
     if (secondWindow.availableCount !== firstWindow.availableCount) {
       return secondWindow.availableCount - firstWindow.availableCount;
     }
     return firstWindow.start.localeCompare(secondWindow.start);
   });
+  return sortedWindows;
 }
 
 function findFullAvailabilityRuns({

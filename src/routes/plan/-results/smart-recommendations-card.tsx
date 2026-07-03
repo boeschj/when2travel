@@ -31,10 +31,6 @@ const ACTION_MODE = {
 
 type ActionMode = (typeof ACTION_MODE)[keyof typeof ACTION_MODE];
 
-function handleCheckFlights() {
-  window.open("https://www.google.com/travel/flights", "_blank", "noopener,noreferrer");
-}
-
 interface SmartRecommendationsCardProps {
   recommendationResult: RecommendationResult;
   planName: string;
@@ -90,11 +86,11 @@ export function SmartRecommendationsCard({
 
   const handleAddToCalendar = () => {
     if (!primary.bestWindow) return;
-    const calendarUrl = buildGoogleCalendarUrl(
+    const calendarUrl = buildGoogleCalendarUrl({
       planName,
-      primary.bestWindow.start,
-      primary.bestWindow.end,
-    );
+      startDate: primary.bestWindow.start,
+      endDate: primary.bestWindow.end,
+    });
     window.open(calendarUrl, "_blank");
   };
 
@@ -298,16 +294,14 @@ function AdviceBox({ adviceText, hasAlternatives, onSeeAlternatives }: AdviceBox
 function AlternativeWindowsList({ windows }: { windows: AlternativeWindow[] }) {
   if (windows.length === 0) return null;
 
+  const formattedWindows = windows
+    .map(window => `${formatDateRangeDisplay(window.start, window.end)} (${window.percentage}%)`)
+    .join(", ");
+
   return (
     <div className="text-text-secondary text-sm">
       <span className="font-medium">Other options: </span>
-      {windows.map((alternativeWindow, index) => (
-        <span key={`${alternativeWindow.start}-${alternativeWindow.end}`}>
-          {index > 0 && ", "}
-          {formatDateRangeDisplay(alternativeWindow.start, alternativeWindow.end)} (
-          {alternativeWindow.percentage}%)
-        </span>
-      ))}
+      {formattedWindows}
     </div>
   );
 }
@@ -369,7 +363,7 @@ function PerfectMatchActions({
           onClick={onAddToCalendar}
           variant="outline"
           size="lg"
-          className="border-border hover:border-primary hover:text-primary h-auto rounded-full py-3 font-semibold"
+          className={OUTLINE_BUTTON_CLASS}
         >
           <Calendar className="mr-2 h-4 w-4" />
           Add to Cal
@@ -378,7 +372,7 @@ function PerfectMatchActions({
           onClick={onShare}
           variant="outline"
           size="lg"
-          className="border-border hover:border-primary hover:text-primary h-auto rounded-full py-3 font-semibold"
+          className={OUTLINE_BUTTON_CLASS}
         >
           <Share2 className="mr-2 h-4 w-4" />
           Share
@@ -512,6 +506,10 @@ function GenericEditActions({
       />
     </>
   );
+}
+
+function handleCheckFlights() {
+  window.open("https://www.google.com/travel/flights", "_blank", "noopener,noreferrer");
 }
 
 function getShorterTripSuggestion(recommendation: Recommendation): ShorterTripSuggestion | null {

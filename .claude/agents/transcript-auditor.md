@@ -29,6 +29,7 @@ Two artifacts, nothing else:
 
 ```markdown
 ## <short-key>
+
 - type: correction | recurring-finding | ci-fix | thrashing | convention | tooling
 - insight: <one sentence>
 - evidence: <session file + verbatim quote or command>

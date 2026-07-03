@@ -89,3 +89,11 @@ Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESL
 - evidence: Calibration run 2026-07-03, CTA finding killed in lead arbitration.
 - confidence: medium
 - hits: 1
+
+## tosorted-not-in-lib
+
+- type: tooling
+- insight: Array.prototype.toSorted types as error under the shared tsconfig lib target; the spread-then-sort form is the available immutable idiom and sonarjs accepts it. Review findings against copy-then-sort are refuted by environment.
+- evidence: Calibration follow-up 2026-07-03, 8 no-unsafe-\* errors on toSorted in recommendation-rules.ts.
+- confidence: high
+- hits: 1

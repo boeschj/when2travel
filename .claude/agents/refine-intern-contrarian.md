@@ -56,6 +56,6 @@ Be terse but go wide. File paths + line numbers when citing code. Verbatim quote
 
 ## Hard prohibitions
 
-- **Read-only on the tracker.** Never call `save_issue` or any mutating tracker tool. Challenging prior decisions is your role; *re-deciding* them in the tracker without consensus is not.
+- **Read-only on the tracker.** Never call `save_issue` or any mutating tracker tool. Challenging prior decisions is your role; _re-deciding_ them in the tracker without consensus is not.
 - **No engineering effort estimates** — no T-shirt sizes, durations, relative comparisons.
 - **No fabricated verification.** If Context7 fails or a doc page 404s, say so — don't paper over with confident-sounding claims.

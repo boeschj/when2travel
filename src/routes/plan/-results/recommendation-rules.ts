@@ -288,7 +288,7 @@ export function formatDateList(dates: ISODateString[]): string {
 
 function getBlockerSignature(window: ScoredWindow): string {
   const blockerIds = window.blockers.map(blocker => blocker.id);
-  const sortedBlockerIds = blockerIds.toSorted((firstId, secondId) =>
+  const sortedBlockerIds = [...blockerIds].sort((firstId, secondId) =>
     firstId.localeCompare(secondId),
   );
   return sortedBlockerIds.join("|");

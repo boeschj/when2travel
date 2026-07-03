@@ -24,7 +24,7 @@ We are building an MVP and refining tickets. During this process we make enginee
 ## Required tool usage
 
 1. **Read the ticket first** via the tracker MCP (`mcp__claude_ai_Linear__get_issue` for Linear). Do not reason about it from the user's prompt alone.
-2. **Step 0 — platform canonical docs.** For any platform-integration question (Supabase, PowerSync, Apple, Stripe, etc.), check the platform's canonical docs for the *exact* scenario BEFORE architectural reasoning. WebFetch the docs page. Quote verbatim when load-bearing. Past refinements have been embarrassed by missing native platform patterns that would have eliminated entire bespoke designs — do not repeat that failure.
+2. **Step 0 — platform canonical docs.** For any platform-integration question (Supabase, PowerSync, Apple, Stripe, etc.), check the platform's canonical docs for the _exact_ scenario BEFORE architectural reasoning. WebFetch the docs page. Quote verbatim when load-bearing. Past refinements have been embarrassed by missing native platform patterns that would have eliminated entire bespoke designs — do not repeat that failure.
 3. **Context7** for any third-party library you reference or recommend, even ones already locked in by prior architecture decisions. Use `resolve-library-id` then `query-docs`. If Context7 quota fails or the doc fetch fails, **say so explicitly** rather than fabricating "verified" claims.
 4. **Read the actual code** the ticket touches. File paths + line numbers are your default citation form.
 

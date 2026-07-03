@@ -1,6 +1,6 @@
 # Learnings staging queue
 
-Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESLint, or hooks. The transcript-auditor appends and increments `hits`; promotion (hits >= 2 or high confidence) happens through a diff Jordan approves. Seeded from Jordan's Mendpath memory store (transferable entries only).
+Append-only candidates for promotion into CLAUDE.md, rules files, ESLint, or hooks. The transcript-auditor appends and increments `hits`; promotion (hits >= 2 or high confidence) happens through a diff Jordan approves. Seeded from Jordan's Mendpath memory store (transferable entries only).
 
 ## no-consulting-jargon
 
@@ -74,10 +74,10 @@ Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESL
 - confidence: high
 - hits: 1
 
-## refuter-single-verdict
+## voter-single-verdict
 
 - type: tooling
-- insight: Refuter agents must state exactly one verdict at the end of the reply; a calibration refuter emitted "upheld" then "refuted" in one response and only auditor judgment saved the finding. Fixed in finding-refuter.md.
+- insight: Leaf review agents must state exactly one verdict at the end of the reply; a calibration agent emitted two contradictory verdicts in one response and only auditor judgment saved the finding. Carried into style-voter.md as the single-vote contract.
 - evidence: Calibration run 2026-07-03, availability-analysis auditor report.
 - confidence: high
 - hits: 1
@@ -85,7 +85,7 @@ Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESL
 ## standard-terms-are-not-abbreviations
 
 - type: convention
-- insight: Product-standard terms functioning as words (CTA, URL, API, ID) do not violate the full-words naming rule; renames like personalizedCallToActionLabel fail the readability litmus. Refuters now hold this authority explicitly.
+- insight: Product-standard terms functioning as words (CTA, URL, API, ID) do not violate the full-words naming rule; renames like personalizedCallToActionLabel fail the readability litmus. Voters hold this authority explicitly.
 - evidence: Calibration run 2026-07-03, CTA finding killed in lead arbitration.
 - confidence: medium
 - hits: 1

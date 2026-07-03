@@ -30,9 +30,9 @@ Minimalism pass. The governing question for every block of new code: for a singl
 
 ## Phase: style
 
-1. Spawn one `style-auditor` per changed file (parallel batch). They return findings JSON; refuted findings are already killed by their refuters.
-2. Weigh survivors yourself against AGENTS.md and the readability litmus test: does the fix make the code MORE readable? Convention never outranks readability.
-3. Write `.review/REVIEW-FINDINGS.md`: verdict (`APPROVE` / `CHANGES_REQUIRED`), then findings grouped 🔴 must-fix / 🟡 should-fix / 🟢 nit, each with file:line, the violated rule, and the exact suggested change.
+1. Spawn one `style-auditor` per changed file (parallel batch). Each auditor dispatches three `style-voter` haiku agents per function with differently framed prompts and returns the per-file consensus JSON with vote counts.
+2. Weigh the consensus findings yourself against the rule files and the readability litmus test: does the fix make the code MORE readable? Convention never outranks readability. Weight 3/3 votes above 2/3; treat 1/3-verified findings with extra scrutiny.
+3. Write `.review/REVIEW-FINDINGS.md`: verdict (`APPROVE` / `CHANGES_REQUIRED`), then findings grouped 🔴 must-fix / 🟡 should-fix / 🟢 nit, each with file:line, the violated rule, vote count, and the exact suggested change.
 
 ## Dispatch mechanics that have bitten previous runs
 

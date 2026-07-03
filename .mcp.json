@@ -7,9 +7,31 @@
         "Authorization": "Bearer ${LINEAR_API_KEY}"
       }
     },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_AGENT_TOKEN}",
+        "X-MCP-Toolsets": "repos,issues,pull_requests"
+      }
+    },
     "grep": {
       "type": "http",
       "url": "https://mcp.grep.app"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
     }
   }
 }

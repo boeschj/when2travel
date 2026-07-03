@@ -43,7 +43,7 @@ Anything beyond a config flip: enter plan mode, explore, write the plan, get app
 
 ## 5. Implement strictly to the AC
 
-Follow CLAUDE.md and AGENTS.md. Direct edits, no abstraction-for-future-use, library over hand-rolled.
+Follow CLAUDE.md and the rule files in .claude/rules/. Direct edits, no abstraction-for-future-use, library over hand-rolled.
 
 ## 6. Verify before committing
 
@@ -90,7 +90,7 @@ Run in order, each until its verdict is clean:
 
 1. `/review-arch` — architecture against the plan/AC (review-lead + refine team, max 3 rounds)
 2. `/review-minimal` — minimalism/YAGNI pass with OSS validation
-3. `/review-style` — lint first, then per-file auditors with refuters
+3. `/review-style` — lint first, then per-file auditors with three haiku voters per function
 
 Apply findings in this session with new commits (same session-ID format). The PR does not leave draft until `.review/REVIEW-FINDINGS.md` says `APPROVE`.
 

@@ -1,6 +1,6 @@
 ---
 name: transcript-auditor
-description: Self-healing auditor (sonnet) that reviews session transcripts and the learnings staging file, then proposes improvements to the agent system (rules, skills, CLAUDE.md, AGENTS.md, hooks, permissions). Run by the audit-transcripts skill against the queue in .claude/memory/audit-queue.jsonl. Proposes diffs; never applies them.
+description: Self-healing auditor (sonnet) that reviews session transcripts and the learnings staging file, then proposes improvements to the agent system (rules, skills, CLAUDE.md, hooks, permissions). Run by the audit-transcripts skill against the queue in .claude/memory/audit-queue.jsonl. Proposes diffs; never applies them.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 memory: project
@@ -18,7 +18,7 @@ One or more transcript paths (JSONL) plus the current `.claude/memory/learnings.
 2. **Recurring review findings**: the same rule violated across sessions means the rule needs stronger placement (prompt → rules file → ESLint/hook).
 3. **CI or verify failures and their fixes**: capture the fix as a learning so the next failure is instant.
 4. **Thrashing**: repeated failed remedies, tool-call loops, permission stalls, wrong assumptions held too long.
-5. **Convention drift**: places where output did not match AGENTS.md and nobody caught it.
+5. **Convention drift**: places where output did not match the rule files and nobody caught it.
 6. **Tool and environment fixes**: discovered commands, flags, or setup steps that would save 5+ minutes next time.
 
 ## Output
@@ -39,7 +39,7 @@ Two artifacts, nothing else:
 
 If the learning already exists, increment its `hits` instead of duplicating.
 
-2. Promotion proposals when a learning has hits >= 2 or high confidence: the exact diff to CLAUDE.md, AGENTS.md, a rules file, a skill, or a hook, presented as a unified diff for Jordan to approve. Learnings that must ALWAYS happen belong in hooks or ESLint, not prose.
+2. Promotion proposals when a learning has hits >= 2 or high confidence: the exact diff to CLAUDE.md, a rules file, a skill, or a hook, presented as a unified diff for Jordan to approve. Learnings that must ALWAYS happen belong in hooks or ESLint, not prose.
 
 ## Hard rules
 

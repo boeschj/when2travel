@@ -37,7 +37,7 @@ pnpm cf-typegen       # Generate Cloudflare Worker types
 
 ## Boundaries
 
-**Always**: run `pnpm verify` before committing; write code per AGENTS.md (the style law of this repo); spawned subagents read CLAUDE.md and AGENTS.md; run seeded browser QA before opening a UI-touching PR; commit granularly with subjects that state strictly WHAT changed.
+**Always**: run `pnpm verify` before committing; write code per the rule files in `.claude/rules/`; spawned subagents read CLAUDE.md and the rule files; run seeded browser QA before opening a UI-touching PR; commit granularly with subjects that state strictly WHAT changed.
 
 **Ask Jordan first**: new dependencies, schema or migration changes, anything product-level (copy, UX behavior, scope). Engineering decisions are yours; pick the option with fewer moving parts.
 
@@ -137,4 +137,4 @@ Extract when:
 
 ## Code Style
 
-All style rules live in [AGENTS.md](AGENTS.md): naming, function shape, types, component anatomy, comment policy, vocabulary bans, commit format. Path-scoped rules for the worker and React layers live in `.claude/rules/`. Read them before writing code; leave every touched file fully conformant.
+All style rules live in the rule files at `.claude/rules/`: `code-patterns.md` (naming, functions, types), `conventions.md` (vocabulary, docs, dependencies, commits), `react-patterns.md`, and `worker-d1.md`. They load automatically by path. Leave every touched file fully conformant.

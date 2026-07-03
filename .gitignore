@@ -33,3 +33,4 @@ dist-ssr
 !.env.example
 
 .playwright-mcp/*
+.gstack/

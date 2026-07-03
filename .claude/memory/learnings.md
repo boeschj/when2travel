@@ -97,3 +97,10 @@ Append-only candidates for promotion into CLAUDE.md, AGENTS.md, rules files, ESL
 - evidence: Calibration follow-up 2026-07-03, 8 no-unsafe-\* errors on toSorted in recommendation-rules.ts.
 - confidence: high
 - hits: 1
+
+## pool-workers-config-subpath-gone
+- type: tooling
+- insight: @cloudflare/vitest-pool-workers 0.18 exports cloudflareTest, readD1Migrations, and D1Migration from the package ROOT; the /config subpath in official docs examples no longer exists. Also worker-configuration.d.ts goes stale silently; rerun pnpm cf-typegen after wrangler.jsonc changes.
+- evidence: when2travel Phase 7 2026-07-03, esbuild "Missing ./config specifier" + empty Cloudflare.Env until cf-typegen.
+- confidence: high
+- hits: 1

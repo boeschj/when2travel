@@ -157,51 +157,17 @@ export function SmartRecommendationsCard({
             </div>
           )}
 
-          <div className="flex w-full max-w-lg flex-col gap-3 pt-2">
-            {actionMode === ACTION_MODE.DURATION_EDIT &&
-              shorterTripSuggestion &&
-              onEditDuration && (
-                <DurationEditActions
-                  duration={shorterTripSuggestion.duration}
-                  onEditDuration={onEditDuration}
-                  onEditAvailability={onEditAvailability}
-                />
-              )}
-
-            {actionMode === ACTION_MODE.PERFECT_MATCH && (
-              <PerfectMatchActions
-                onCheckFlights={handleCheckFlights}
-                onAddToCalendar={handleAddToCalendar}
-                onShare={handleShare}
-              />
-            )}
-
-            {actionMode === ACTION_MODE.ADD_DATES && (
-              <AddDatesActions
-                onEditAvailability={onEditAvailability}
-                onShare={handleShare}
-              />
-            )}
-
-            {actionMode === ACTION_MODE.BLOCKER_CTA && personalizedCTA && (
-              <BlockerActions
-                label={personalizedCTA.label}
-                isCreator={isCreator}
-                onEditAvailability={onEditAvailability}
-                onEditPlan={onEditPlan}
-                onShare={handleShare}
-              />
-            )}
-
-            {actionMode === ACTION_MODE.GENERIC_EDIT && (
-              <GenericEditActions
-                isCreator={isCreator}
-                onEditAvailability={onEditAvailability}
-                onEditPlan={onEditPlan}
-                onShare={handleShare}
-              />
-            )}
-          </div>
+          <RecommendationActions
+            actionMode={actionMode}
+            shorterTripDuration={shorterTripSuggestion?.duration}
+            personalizedCTALabel={personalizedCTA?.label}
+            isCreator={isCreator}
+            onEditDuration={onEditDuration}
+            onEditAvailability={onEditAvailability}
+            onEditPlan={onEditPlan}
+            onShare={handleShare}
+            onAddToCalendar={handleAddToCalendar}
+          />
         </CardContent>
       </Card>
 
@@ -216,6 +182,76 @@ export function SmartRecommendationsCard({
 
 const OUTLINE_BUTTON_CLASS =
   "w-full border-border hover:border-primary hover:text-primary font-semibold rounded-full h-auto py-3";
+
+interface RecommendationActionsProps {
+  actionMode: ActionMode;
+  shorterTripDuration: number | undefined;
+  personalizedCTALabel: string | undefined;
+  isCreator: boolean;
+  onEditDuration: (() => void) | undefined;
+  onEditAvailability: () => void;
+  onEditPlan: () => void;
+  onShare: () => void;
+  onAddToCalendar: () => void;
+}
+
+function RecommendationActions({
+  actionMode,
+  shorterTripDuration,
+  personalizedCTALabel,
+  isCreator,
+  onEditDuration,
+  onEditAvailability,
+  onEditPlan,
+  onShare,
+  onAddToCalendar,
+}: RecommendationActionsProps) {
+  return (
+    <div className="flex w-full max-w-lg flex-col gap-3 pt-2">
+      {actionMode === ACTION_MODE.DURATION_EDIT && shorterTripDuration && onEditDuration && (
+        <DurationEditActions
+          duration={shorterTripDuration}
+          onEditDuration={onEditDuration}
+          onEditAvailability={onEditAvailability}
+        />
+      )}
+
+      {actionMode === ACTION_MODE.PERFECT_MATCH && (
+        <PerfectMatchActions
+          onCheckFlights={handleCheckFlights}
+          onAddToCalendar={onAddToCalendar}
+          onShare={onShare}
+        />
+      )}
+
+      {actionMode === ACTION_MODE.ADD_DATES && (
+        <AddDatesActions
+          onEditAvailability={onEditAvailability}
+          onShare={onShare}
+        />
+      )}
+
+      {actionMode === ACTION_MODE.BLOCKER_CTA && personalizedCTALabel && (
+        <BlockerActions
+          label={personalizedCTALabel}
+          isCreator={isCreator}
+          onEditAvailability={onEditAvailability}
+          onEditPlan={onEditPlan}
+          onShare={onShare}
+        />
+      )}
+
+      {actionMode === ACTION_MODE.GENERIC_EDIT && (
+        <GenericEditActions
+          isCreator={isCreator}
+          onEditAvailability={onEditAvailability}
+          onEditPlan={onEditPlan}
+          onShare={onShare}
+        />
+      )}
+    </div>
+  );
+}
 
 interface AvailabilitySectionProps {
   icon: React.ElementType;

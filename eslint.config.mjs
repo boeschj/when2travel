@@ -14,6 +14,17 @@ export default [
   {
     rules: {
       "react-refresh/only-export-components": "off",
+      "no-nested-ternary": "error",
+      complexity: ["error", { max: 13 }],
+      "max-depth": ["error", 3],
+      "max-lines-per-function": ["error", { max: 130, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    files: ["src/components/ui/**", "**/*.test.ts"],
+    rules: {
+      complexity: "off",
+      "max-lines-per-function": "off",
     },
   },
   {

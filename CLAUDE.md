@@ -19,18 +19,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm dev          # Start Vite dev server
-pnpm build        # TypeScript check + Vite build
-pnpm typecheck    # TypeScript compiler check only
-pnpm lint         # ESLint
-pnpm format       # Prettier format
-pnpm format:check # Check formatting compliance
-pnpm deploy       # Build and deploy via Wrangler
-pnpm db:generate  # Generate Drizzle migrations
-pnpm db:migrate   # Run Drizzle migrations
-pnpm db:studio    # Open Drizzle Studio for database inspection
-pnpm cf-typegen   # Generate Cloudflare Worker types
+pnpm verify           # format:check + lint + typecheck + test. Run before every commit.
+pnpm dev              # Vite dev server on :5173 against LOCAL D1 (--port <n> --strictPort in worktrees)
+pnpm db:migrate:local # Apply Drizzle migrations to local D1 (once per fresh clone/worktree)
+pnpm seed:qa          # Seed QA scenarios via the real API (--base for non-default ports)
+pnpm test             # Vitest
+pnpm build            # TypeScript check + Vite build
+pnpm typecheck        # TypeScript compiler check only
+pnpm lint             # ESLint
+pnpm format           # Prettier format
+pnpm deploy           # Build and deploy via Wrangler (human only)
+pnpm db:generate      # Generate Drizzle migrations
+pnpm db:migrate       # Run Drizzle migrations against PROD (human only)
+pnpm db:studio        # Drizzle Studio for prod data inspection (read-only use)
+pnpm cf-typegen       # Generate Cloudflare Worker types
 ```
+
+## Boundaries
+
+**Always**: run `pnpm verify` before committing; write code per AGENTS.md (the style law of this repo); spawned subagents read CLAUDE.md and AGENTS.md; run seeded browser QA before opening a UI-touching PR; commit granularly with subjects that state strictly WHAT changed.
+
+**Ask Jordan first**: new dependencies, schema or migration changes, anything product-level (copy, UX behavior, scope). Engineering decisions are yours; pick the option with fewer moving parts.
+
+**Never**: `wrangler d1 execute --remote` or any write to prod data; `pnpm deploy`/`wrangler deploy`; merge PRs; force-push; edit generated migrations; repeat a debugging remedy that already failed (find the root cause instead); start a dev server on a port that is already serving one.
+
+## Dev Environment
+
+Dev and tests are hermetic: local D1 under `.wrangler/state/`, migrated via `pnpm db:migrate:local`, seeded via `pnpm seed:qa`. Prod data is reachable only through `pnpm db:studio` (read) and `pnpm db:migrate` (human-run migrations). Secrets live in `.dev.vars`/`.env*`, which agents must not read.
 
 ## Architecture
 
@@ -120,55 +135,6 @@ Extract when:
 - Minimize feature flag usage across files to reduce undefined behavior risk
 - Consult existing naming conventions before creating new events/properties
 
-## IMPORTANT REMINDERS:
+## Code Style
 
-- Code Comments: You tend to overuse code comments, which leaves clutter in the codebase. Your rule: NO USELESS COMMENTS. CODE SHOULD BE SELF DOCUMENTING. ONLY leave code comments when it explains intent or context impossible to convey via highly readable code.
-
-GOOD:
-``
-/\*\*
-
-- Detect browser locale and map to supported locale.
-- For now, always returns DEFAULT_LOCALE since we only support en-US.
-- When adding i18n, expand the mapping logic.
-  \*/
-  export function detectBrowserLocale(): SupportedLocale {
-  // Future: Map navigator.language to supported locales
-  // const browserLang = navigator.language;
-  // if (browserLang.startsWith('es')) return 'es-ES';
-  return DEFAULT_LOCALE;
-  }
-
-```
-
-This example uses JSDOC to explain what the function does, and includes a contextual comment about future plans for this function.
-
-BAD:
-```
-
-export function getCachedFormatter(
-locale: string,
-options: Intl.DateTimeFormatOptions,
-): Intl.DateTimeFormat {
-//create a unique key for the formatter based on the locale and options
-const key = `${locale}|${JSON.stringify(options)}`;
-
-//check if the formatter is already cached
-const cached = formatterCache.get(key);
-if (cached) return cached;
-
-//if the cache is full, clear it
-if (formatterCache.size >= MAX_CACHE_SIZE) {
-formatterCache.clear();
-}
-
-//create a new formatter
-const formatter = new Intl.DateTimeFormat(locale, options);
-formatterCache.set(key, formatter);
-return formatter;
-}
-
-```
-
-This bad example includes code comments that actively harm our codebase by creating useless noise because they describe things obvious from reading the code. Reminder: DON'T DO THIS!
-```
+All style rules live in [AGENTS.md](AGENTS.md): naming, function shape, types, component anatomy, comment policy, vocabulary bans, commit format. Path-scoped rules for the worker and React layers live in `.claude/rules/`. Read them before writing code; leave every touched file fully conformant.

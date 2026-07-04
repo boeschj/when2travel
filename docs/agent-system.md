@@ -9,7 +9,7 @@ This repo carries an autonomous ticket-to-merge agent system in `.claude/`. A fr
 3. `npm i -g typescript-language-server typescript` (the LSP plugin needs the binary on PATH).
 4. Environment variables (shell profile):
    - `LINEAR_API_KEY`: a scoped Linear personal API key (issue read/write + comment create).
-   - `GITHUB_AGENT_TOKEN`: a fine-grained PAT restricted to THIS repository only (Contents, Pull requests, Issues: read/write). This powers the GitHub MCP server so agent GitHub access is repo-scoped instead of riding the developer's full keyring auth; `gh` CLI remains the fallback for anything the MCP lacks.
+   - `PLANTHETRIP_AGENT_TOKEN`: a fine-grained PAT restricted to THIS repository only (Contents, Pull requests, Issues: read/write; Actions: read). Powers the GitHub MCP server so agent GitHub access is repo-scoped instead of riding the developer's full keyring auth; `gh` CLI remains the fallback for anything the MCP lacks. Convention: one such token per repo, named `<REPO>_AGENT_TOKEN`.
    - `CONTEXT7_API_KEY`: free key from context7.com (current library docs).
    - `FIRECRAWL_API_KEY`: firecrawl.dev key (web research).
    - `NTFY_TOPIC` (optional): an unguessable ntfy.sh topic for phone pushes when the agent is blocked.

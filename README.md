@@ -67,3 +67,15 @@ export default tseslint.config([
   },
 ]);
 ```
+
+## Agentic loop
+
+This repo carries an autonomous ticket-to-merge agent system in `.claude/`. Setup and full usage: [docs/agent-system.md](docs/agent-system.md).
+
+```bash
+./scripts/agent                        # interactive session with iMessage escalation
+./scripts/pickup-ticket.sh <TICKET-ID> # headless: ticket -> reviewed draft PR
+./scripts/babysit-pr.sh <pr-number>    # local CI/review-comment babysitter
+```
+
+Inside any session, `/ship-ticket <TICKET-ID>` runs the same pipeline interactively. Running several sessions at once: give each ticket its own worktree (the pipeline does this itself) and enable the channel flag on only one session so phone messages have a single destination.

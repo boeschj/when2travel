@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+CHANNEL="${CLAUDE_CHANNELS:-plugin:imessage@claude-plugins-official}"
+
+exec claude --channels "$CHANNEL" "$@"

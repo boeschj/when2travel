@@ -26,6 +26,19 @@ Never run `claude --bare` in this repo: it silently disables the entire in-repo 
 
 Interactive equivalent: `/ship-ticket <TICKET-ID>`. The review pipeline is `/review-arch` then `/review-minimal` then `/review-style`; findings land in `.review/`. Learnings drain via `/audit-transcripts`.
 
+## Overnight runs with iMessage escalation
+
+Channels only work in sessions started with the `--channels` flag; installing the plugin alone does nothing. One-time: `/plugin install imessage@claude-plugins-official`, then grant the Full Disk Access prompt on first read and the Automation prompt on first reply.
+
+```bash
+caffeinate -dims &                                            # keep the Mac awake
+tmux new -s agent                                             # survive the terminal closing
+export CLAUDE_CHANNELS="plugin:imessage@claude-plugins-official"
+./scripts/pickup-ticket.sh <TICKET-ID>                        # picks the flag up automatically
+```
+
+Text yourself from any Apple ID device to reach the session; self-messages need no allowlist. Add no other senders: anyone on the allowlist can approve permission prompts.
+
 Merging is always human. The agent stops at an approved, green PR and notifies.
 
 ## Owner setup (Jordan, once)

@@ -24,13 +24,12 @@ Prod data is never touched by dev or tests. Deploys: `pnpm deploy` (human only).
 
 This repo carries an autonomous ticket-to-merge agent system in `.claude/`: a ticket comes in from Linear, gets built in a worktree, passes a three-phase review (architecture, minimalism, per-function style), and lands as a PR that babysits itself to your approval.
 
-```bash
-./scripts/agent                        # interactive session with iMessage escalation
-./scripts/pickup-ticket.sh <TICKET-ID> # headless: ticket -> reviewed draft PR
-./scripts/babysit-pr.sh <pr-number>    # local CI/review-comment babysitter
-```
+The entry points are skills, invoked in any session:
 
-Inside any session, `/ship-ticket <TICKET-ID>` runs the same pipeline interactively. Review findings land in `.review/`; learnings drain via `/audit-transcripts`. Merging is always human.
+- `/feature-dev <idea>` - no ticket yet: refine with the agent team, write the Linear ticket, then run the full pipeline
+- `/ship-ticket <TICKET-ID>` - existing ticket: worktree, build to AC, three-phase review, draft PR, babysit to merge
+
+Review findings land in `.review/`; learnings drain via `/audit-transcripts`. Merging is always human. Optional wrappers for unattended use: `./scripts/agent` (session with iMessage escalation), `./scripts/pickup-ticket.sh <TICKET-ID>` (headless run with cost logging), `./scripts/babysit-pr.sh <pr>` (CI/comment poller).
 
 ### Per-machine setup (once)
 

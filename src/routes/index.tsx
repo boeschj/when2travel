@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { BackgroundGradients } from "./-index/background-gradients";
-import { CtaSection } from "./-index/cta-section";
-import { FeaturesSection } from "./-index/features-section";
-import { Footer } from "./-index/footer";
-import { Header } from "./-index/header";
-import { Hero } from "./-index/hero";
+import { FaqSection } from "./-index/faq-section";
+import { FeaturesBento } from "./-index/features-bento";
+import { LandingFooter } from "./-index/landing-footer";
+import { LandingHero } from "./-index/landing-hero";
+import { LandingNav } from "./-index/landing-nav";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -13,21 +12,20 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-black">
+    <div className="ptt-landing relative min-h-screen w-full overflow-x-hidden bg-[var(--ptt-cream)] text-[var(--ptt-ink)]">
       <a
         href="#main-content"
-        className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:rounded-full focus:px-4 focus:py-2 focus:font-bold"
+        className="sr-only rounded-full bg-[var(--ptt-brand)] px-4 py-2 font-bold text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100]"
       >
         Skip to main content
       </a>
-      <BackgroundGradients />
-      <Header />
+      <LandingNav />
       <main id="main-content">
-        <Hero />
-        <FeaturesSection />
-        <CtaSection />
+        <LandingHero />
+        <FeaturesBento />
+        <FaqSection />
       </main>
-      <Footer />
+      <LandingFooter />
     </div>
   );
 }

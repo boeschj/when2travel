@@ -147,6 +147,30 @@
   }
 }
 
+/* Landing page palette. The marketing page is a bespoke light "cream" surface
+   that sits apart from the app's dark theme, so its colors are scoped here
+   rather than derived from the app design tokens. */
+@layer base {
+  .ptt-landing {
+    --ptt-cream: #edebe4;
+    --ptt-surface: #ffffff;
+    --ptt-ink: #0c2013;
+    --ptt-ink-soft: #33463b;
+    --ptt-muted: #5a6e60;
+    --ptt-faint: #8a9c90;
+    --ptt-brand: #16a34a;
+    --ptt-brand-strong: #128b3f;
+    --ptt-brand-light: #22c55e;
+    --ptt-card-border: #e3e0d7;
+    --ptt-green-border: #e1efe2;
+    --ptt-green-line: #dcebdd;
+    --ptt-green-tint: #f1f8f1;
+    --ptt-green-tint-strong: #ecf6ee;
+    --ptt-sample: #f6f5f0;
+    --ptt-sample-border: #e7e4db;
+  }
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,

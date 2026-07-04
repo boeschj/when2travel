@@ -271,13 +271,13 @@ export function formatDateList(dates: ISODateString[]): string {
     return formatRangeDisplay(firstDate, lastDate, " – ");
   }
 
-  const isTwoDates = sortedDates.length === 2 && secondDate;
-  if (isTwoDates) {
+  const isTwoDates = sortedDates.length === 2;
+  if (isTwoDates && secondDate) {
     return `${formatDateShort(firstDate)} and ${formatDateShort(secondDate)}`;
   }
 
-  const isThreeDates = sortedDates.length === MAX_LISTED_DATES && secondDate && thirdDate;
-  if (isThreeDates) {
+  const isThreeDates = sortedDates.length === MAX_LISTED_DATES;
+  if (isThreeDates && secondDate && thirdDate) {
     return `${formatDateShort(firstDate)}, ${formatDateShort(secondDate)}, and ${formatDateShort(thirdDate)}`;
   }
 

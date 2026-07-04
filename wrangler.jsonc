@@ -23,7 +23,7 @@
       "binding": "planthetrip_d1",
       "database_name": "planthetrip_d1",
       "database_id": "db381639-a15e-42e5-ac2b-1e86c884d8dc",
-      "remote": true,
+      "migrations_dir": "drizzle",
     },
   ],
   "routes": [

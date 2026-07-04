@@ -18,11 +18,15 @@ function toGoogleCalendarDate(iso: ISODateString): string {
  * Google Calendar all-day events treat the end date as exclusive,
  * so the trip's inclusive end date must be pushed forward one day.
  */
-export function buildGoogleCalendarUrl(
-  planName: string,
-  startDate: string,
-  endDate: string,
-): string {
+export function buildGoogleCalendarUrl({
+  planName,
+  startDate,
+  endDate,
+}: {
+  planName: string;
+  startDate: string;
+  endDate: string;
+}): string {
   const start = assertISODateString(startDate);
   const inclusiveEnd = assertISODateString(endDate);
   const exclusiveEnd = toISODateString(addDays(parseISODate(inclusiveEnd), 1));

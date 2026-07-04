@@ -1,0 +1,115 @@
+# Learnings staging queue
+
+Append-only candidates for promotion into CLAUDE.md, rules files, ESLint, or hooks. The transcript-auditor appends and increments `hits`; promotion (hits >= 2 or high confidence) happens through a diff Jordan approves. Seeded from Jordan's Mendpath memory store (transferable entries only).
+
+## no-consulting-jargon
+
+- type: correction
+- insight: The words "gate", "canonical", and "chrome" are banned in every context, written or spoken; use words a human would say out loud.
+- evidence: Mendpath memory feedback_avoid_consulting_jargon.md; enforced repeatedly in review.
+- confidence: high
+- hits: 3
+
+## no-documenting-absent-things
+
+- type: correction
+- insight: Never write "why we don't have X" sections; absence is its own answer and git history covers the why.
+- evidence: Mendpath memory feedback_do_not_document_absent_things.md.
+- confidence: high
+- hits: 2
+
+## docs-free-of-implementation-details
+
+- type: correction
+- insight: CLAUDE.md and READMEs carry no ticket refs, no "when ticket X lands do Y", no deferred-AC notes; those live in Linear or memory.
+- evidence: Mendpath memory feedback_claude_md_no_implementation_details.md; "NEVER DOCUMENT IMPLEMENTATION DETAILS" (Mendpath PR #13).
+- confidence: high
+- hits: 3
+
+## commits-are-changelogs
+
+- type: correction
+- insight: Commit and PR bodies are bullets of WHAT changed only; no reasoning, no scoped-out items, no internal process; treat as public.
+- evidence: Mendpath memory feedback_commit_messages_changelog_only.md.
+- confidence: high
+- hits: 2
+
+## useeffect-needs-proof
+
+- type: correction
+- insight: useEffect requires docs-level justification; phase/step UIs are separate components dispatched through a lookup map; library over hand-rolled always.
+- evidence: Mendpath memory feedback_avoid_useeffect_hand_code_phase_patterns.md; when2travel CLAUDE.md antipatterns.
+- confidence: high
+- hits: 2
+
+## subagents-inherit-the-ruleset
+
+- type: convention
+- insight: Every code-writing delegate reads root CLAUDE.md and AGENTS.md and follows ship-ticket; standards do not transfer by osmosis.
+- evidence: Mendpath memory feedback_subagents_must_use_ship_ticket_and_claude_md.md.
+- confidence: high
+- hits: 2
+
+## date-fns-universally
+
+- type: convention
+- insight: date-fns for all date formatting and manipulation; never hand-roll date strings; this repo additionally brands dates as ISODateString via src/lib/date/types.ts.
+- evidence: Mendpath memory feedback_use_date_fns_universally.md; when2travel src/lib/date.
+- confidence: high
+- hits: 2
+
+## refinement-reversals-are-success
+
+- type: convention
+- insight: A decision reversed during refinement or review is the system working; only post-implementation misses count as process failures. Do not defend a position to avoid a reversal.
+- evidence: Mendpath memory feedback_refinement_reversals_are_success.md.
+- confidence: medium
+- hits: 1
+
+## dev-d1-was-remote
+
+- type: ci-fix
+- insight: The D1 binding once carried remote:true, sending dev-server writes to production and breaking dev on wrangler token expiry; dev and tests must stay on local miniflare state.
+- evidence: when2travel session 2026-07-02: three QA plans written to prod; fixed by removing remote:true and adding migrations_dir.
+- confidence: high
+- hits: 1
+
+## voter-single-verdict
+
+- type: tooling
+- insight: Leaf review agents must state exactly one verdict at the end of the reply; a calibration agent emitted two contradictory verdicts in one response and only auditor judgment saved the finding. Carried into style-voter.md as the single-vote contract.
+- evidence: Calibration run 2026-07-03, availability-analysis auditor report.
+- confidence: high
+- hits: 1
+
+## standard-terms-are-not-abbreviations
+
+- type: convention
+- insight: Product-standard terms functioning as words (CTA, URL, API, ID) do not violate the full-words naming rule; renames like personalizedCallToActionLabel fail the readability litmus. Voters hold this authority explicitly.
+- evidence: Calibration run 2026-07-03, CTA finding killed in lead arbitration.
+- confidence: medium
+- hits: 1
+
+## tosorted-not-in-lib
+
+- type: tooling
+- insight: Array.prototype.toSorted types as error under the shared tsconfig lib target; the spread-then-sort form is the available immutable idiom and sonarjs accepts it. Review findings against copy-then-sort are refuted by environment.
+- evidence: Calibration follow-up 2026-07-03, 8 no-unsafe-\* errors on toSorted in recommendation-rules.ts.
+- confidence: high
+- hits: 1
+
+## pool-workers-config-subpath-gone
+
+- type: tooling
+- insight: @cloudflare/vitest-pool-workers 0.18 exports cloudflareTest, readD1Migrations, and D1Migration from the package ROOT; the /config subpath in official docs examples no longer exists. Also worker-configuration.d.ts goes stale silently; rerun pnpm cf-typegen after wrangler.jsonc changes.
+- evidence: when2travel Phase 7 2026-07-03, esbuild "Missing ./config specifier" + empty Cloudflare.Env until cf-typegen.
+- confidence: high
+- hits: 1
+
+## parallel-batch-mixed-sync-async
+
+- type: tooling
+- insight: A parallel subagent batch can return mixed sync/async results even with run_in_background false on each; leads must wait for completion notifications instead of polling for done-marker files (a guessed .done path burned a full timeout). Encoded in review-lead.md.
+- evidence: Real-wiring review run 2026-07-03, plans.test.ts auditor launched detached, exit 143 poll loop.
+- confidence: high
+- hits: 1

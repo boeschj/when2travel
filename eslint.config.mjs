@@ -6,6 +6,7 @@ export default [
     ignores: [
       "dist/**",
       ".wrangler/**",
+      ".claude/worktrees/**",
       "worker-configuration.d.ts",
       "src/routeTree.gen.ts",
       "drizzle.config.ts",

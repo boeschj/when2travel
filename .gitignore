@@ -36,3 +36,4 @@ dist-ssr
 .gstack/
 .review/
 .claude/memory/audit-queue.jsonl
+.claude/worktrees/

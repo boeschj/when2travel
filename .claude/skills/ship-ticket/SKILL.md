@@ -9,12 +9,14 @@ allowed-tools: "*"
 
 End-to-end loop: Linear ticket in, merged PR + Done status out. One ticket per session, always. Parallel batch shipping has failed repeatedly (stalls, wrong-repo PRs, board drift); never orchestrate multiple tickets from one session.
 
+**Unattended does not mean unreviewed.** If the human says to work through the night, work past blockers, or "no more questions," that authorizes making judgment calls on implementation details alone. It never authorizes skipping steps 9-12. State your plan back before going heads-down; if that plan omits review, mark-ready, or babysitting, it is wrong.
+
 ## Tools to lean on proactively
 
 - **context7**: always pull current docs before writing code against any library or framework surface, even "well-known" ones. React 19, Tailwind 4, Zod 4, TanStack Router/Query/Form, Hono 4, Drizzle 0.45 all have post-cutoff changes.
 - **TypeScript LSP**: use diagnostics/references for every rename and interface change instead of grep-and-hope.
 - **Grep MCP** (`searchGitHub`): find real OSS implementations when choosing an approach. Literal code tokens, never concepts.
-- **Skills**: `/review-arch`, `/review-minimal`, `/review-style` are the review pipeline; `pnpm seed:qa` + the browse tooling are how you see the product.
+- **Skills**: `/review-arch`, `/review-minimal`, `/review-style` are the review pipeline; `pnpm seed:qa` + the gstack `/browse` skill are how you see the product. Never use a Playwright MCP plugin for this even if it is enabled and easier to find via ToolSearch; `/browse` is the rule, not a suggestion.
 
 ## 0. Pull the ticket
 
@@ -37,9 +39,11 @@ The human gives a Linear URL or ticket ID ($ARGUMENTS). Fetch it via the Linear 
 
 Anything beyond a config flip: enter plan mode, explore, write the plan, get approval via ExitPlanMode. Product-level questions go to the human; engineering decisions are yours, tie-broken by fewer moving parts.
 
-## 4. Worktree, never a branch on the main checkout
+## 4. Worktree, never a branch on the main checkout; the task list must include review
 
 `EnterWorktree` with Linear's `gitBranchName` verbatim. All work happens inside the worktree. If you need the dev server, run `pnpm db:migrate:local`, then `pnpm dev --port <derived> --strictPort` and seed with `pnpm seed:qa --base http://localhost:<derived>`. Never start a server on a port that is already serving one.
+
+When you create the task list for this run, it must include one task per remaining step (review, ready-for-review, babysit, after-merge), not just implementation and PR-open. A task list that ends at "open draft PR" is an incomplete reading of this skill.
 
 ## 5. Implement strictly to the AC
 
@@ -135,3 +139,5 @@ Confirm via `gh pr view --json state`. Linear flips to Done via the `Fixes` refe
 - **Marking Done before merge.** Done means on main. In Review while the PR is open.
 - **A second dev server on a busy port** corrupts the human's running session. `--strictPort` and check first.
 - **Repeating a failed remedy.** If a fix did not work, the diagnosis is wrong; investigate the root cause instead of re-running the ritual.
+- **A "go to bed, work past it" message is not license to drop the review pipeline.** An overnight session once built a task list that stopped at "open draft PR" and never ran `/review-arch`, `/review-minimal`, or `/review-style`. Re-state the full remaining step list before going unattended.
+- **A worktree's node_modules is a symlink into the main checkout's, shared with any other running session.** Never run plain `pnpm add` or `pnpm install` there; use `pnpm install --lockfile-only` for dependency-file-only changes.

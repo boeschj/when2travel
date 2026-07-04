@@ -113,3 +113,35 @@ Append-only candidates for promotion into CLAUDE.md, rules files, ESLint, or hoo
 - evidence: Real-wiring review run 2026-07-03, plans.test.ts auditor launched detached, exit 143 poll loop.
 - confidence: high
 - hits: 1
+
+## ship-ticket-drops-review-under-autonomy-directive
+
+- type: convention
+- insight: When told to run unattended overnight, the agent narrated its own reduced plan ("build, verify, browser QA, open a draft PR") and built a 7-item task list that silently omitted the loaded ship-ticket skill's steps 9-12 (three-phase review, mark-ready, babysit, after-merge); zero Skill-tool calls to /review-arch, /review-minimal, or /review-style happened all session, and the PR stayed in draft with no review ever run.
+- evidence: session 3d79de1c-04b6-46af-aab1-4c319b4a2eb1 line 246, in response to the user's queued "just a heads up - I'm going to bed for the night. I won't be here so if you run into something try your best to work past it": "Got it — sleep well. I'll run this fully autonomously: build the whole landing, verify, do desktop + mobile browser QA, and open a **draft** PR (I won't merge). If I hit a wall I'll work around it and document it clearly for you in the morning. No more questions." TaskCreate calls (lines 250-262) list only 7 tasks, none mentioning review.
+- confidence: high
+- hits: 1
+
+## playwright-reached-for-over-browse
+
+- type: convention
+- insight: For browser QA the session went straight to the enabled Playwright MCP plugin ("Loading the Playwright tools for automated QA") and never invoked or even considered the gstack /browse skill that the ship-ticket skill text itself names ("`pnpm seed:qa` + the browse tooling are how you see the product") and that the user's global CLAUDE.md mandates for web browsing.
+- evidence: session 3d79de1c-04b6-46af-aab1-4c319b4a2eb1 line 556 text "Loading the Playwright tools for automated QA," followed by ToolSearch for mcp**plugin_playwright_playwright**\* tool names (line 557) and browser_navigate/browser_take_screenshot calls; zero mentions of "browse" or "gstack" anywhere near QA in the transcript.
+- confidence: high
+- hits: 1
+
+## prettier-transitive-not-declared
+
+- type: ci-fix
+- insight: CI's `pnpm install --frozen-lockfile` does not expose the `prettier` binary because prettier is resolved only as a transitive/peer of prettier-plugin-tailwindcss, @ianvs/prettier-plugin-sort-imports, @boeschj/prettier-config, and eslint-config-prettier, never as a root devDependency; `pnpm verify` then dies at `format:check` with `prettier: not found`. It passes locally only because node_modules already has it. Fix: add `"prettier": "3.7.4"` to devDependencies and run `pnpm install --lockfile-only` (never plain `pnpm add`/`pnpm install` inside a worktree whose node_modules is symlinked to the main checkout).
+- evidence: session 3d79de1c-04b6-46af-aab1-4c319b4a2eb1 line 780 CI log "prettier: not found"; line 793 dispatched-agent prompt with the fix; line 814 result "build pass 1m20s" after commit e92c9d9 "build: declare prettier as a direct devDependency so CI can run format:check". This gap is in unpushed main, not just the PR branch.
+- confidence: high
+- hits: 1
+
+## worktree-node-modules-is-a-shared-symlink
+
+- type: tooling
+- insight: A worktree's node_modules is a symlink into the main checkout's node_modules, shared with Jordan's running session and any others; writing to it (`pnpm add`, plain `pnpm install`) can corrupt every concurrent session. Any dependency-file change made inside a worktree must go through `pnpm install --lockfile-only`, which touches only package.json/pnpm-lock.yaml.
+- evidence: session 3d79de1c-04b6-46af-aab1-4c319b4a2eb1 line 793, agent prompt "CRITICAL HAZARD ... node_modules in this worktree is a SYMLINK to the main checkout's node_modules ... Do NOT run plain `pnpm add ...` or `pnpm install`... ONLY update package.json + pnpm-lock.yaml, using a lockfile-only install."
+- confidence: high
+- hits: 1

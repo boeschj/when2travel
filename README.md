@@ -1,72 +1,24 @@
-# React + TypeScript + Vite
+# PlanTheTrip
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Group trip coordination without the group-chat chaos: create a plan with a date range, share one link, everyone marks their availability, and a heatmap plus a recommendation engine surface the dates that actually work. No accounts; edit access rides share links.
 
-Currently, two official plugins are available:
+Live at [justplanthetrip.com](https://justplanthetrip.com).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## Expanding the ESLint configuration
+React 19 + TypeScript + Vite 7, TanStack Router/Query/Form, Tailwind 4, Jotai, Zod. API is Hono on Cloudflare Workers with D1 (SQLite) via Drizzle, typed end to end through Hono RPC. Vitest for unit and worker integration tests. pnpm.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Development
 
-```js
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+pnpm install
+pnpm db:migrate:local   # once per clone: apply migrations to local D1
+pnpm dev                # http://localhost:5173 against local D1
+pnpm seed:qa            # named availability scenarios via the real API
+pnpm verify             # format + lint + typecheck + tests; run before every commit
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactDom from "eslint-plugin-react-dom";
-import reactX from "eslint-plugin-react-x";
-
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+Prod data is never touched by dev or tests. Deploys: `pnpm deploy` (human only).
 
 ## Agentic loop
 

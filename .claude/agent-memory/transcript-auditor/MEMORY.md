@@ -1,2 +1,0 @@
-- [Overnight ship-ticket first run](overnight_ship_ticket_first_run.md) — why review never ran; root causes beyond the known hook gap
-- [Jordan wants autonomous product calls flagged, not asked or hidden](jordan_wants_autonomous_product_calls_flagged.md) — unattended UX-fork handling that worked

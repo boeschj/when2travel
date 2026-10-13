@@ -147,27 +147,63 @@
   }
 }
 
-/* Landing page palette. The marketing page is a bespoke light "cream" surface
-   that sits apart from the app's dark theme, so its colors are scoped here
-   rather than derived from the app design tokens. */
-@layer base {
-  .ptt-landing {
-    --ptt-cream: #edebe4;
-    --ptt-surface: #ffffff;
-    --ptt-ink: #0c2013;
-    --ptt-ink-soft: #33463b;
-    --ptt-muted: #5a6e60;
-    --ptt-faint: #8a9c90;
-    --ptt-brand: #16a34a;
-    --ptt-brand-strong: #128b3f;
-    --ptt-brand-light: #22c55e;
-    --ptt-card-border: #e3e0d7;
-    --ptt-green-border: #e1efe2;
-    --ptt-green-line: #dcebdd;
-    --ptt-green-tint: #f1f8f1;
-    --ptt-green-tint-strong: #ecf6ee;
-    --ptt-sample: #f6f5f0;
-    --ptt-sample-border: #e7e4db;
+@utility bg-felt-texture {
+  background-color: #162514;
+  background-image:
+    radial-gradient(ellipse 60% 45% at 50% 48%, rgba(70, 236, 19, 0.06), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 4px);
+}
+
+@utility shadow-object {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 30px 50px -18px rgba(0, 0, 0, 0.8),
+    0 70px 100px -50px rgba(0, 0, 0, 0.75);
+}
+
+/* iOS Messages bubble tails: a bubble-colored curve masked by a screen-colored curve. */
+@utility ios-tail-incoming {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    height: 20px;
+  }
+  &::before {
+    left: -7px;
+    width: 20px;
+    background: var(--ios-bubble);
+    border-bottom-right-radius: 16px 14px;
+  }
+  &::after {
+    left: -26px;
+    width: 26px;
+    background: var(--ios-screen);
+    border-bottom-right-radius: 10px;
+  }
+}
+
+@utility ios-tail-outgoing {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    height: 20px;
+  }
+  &::before {
+    right: -7px;
+    width: 20px;
+    background: var(--ios-bubble);
+    border-bottom-left-radius: 16px 14px;
+  }
+  &::after {
+    right: -26px;
+    width: 26px;
+    background: var(--ios-screen);
+    border-bottom-left-radius: 10px;
   }
 }
 

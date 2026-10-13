@@ -49,12 +49,12 @@ export function FaqSection() {
   };
 
   return (
-    <section className="mx-auto max-w-[820px] px-6 pt-16 pb-10">
+    <section className="mx-auto max-w-[820px] px-4 pt-24 pb-10 sm:pt-28">
       <div className="mb-9 text-center">
-        <div className="text-[13px] font-extrabold tracking-[0.1em] text-[var(--ptt-brand)] uppercase">
+        <span className="border-border bg-card text-text-secondary inline-block rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold">
           FAQ
-        </div>
-        <h2 className="mt-3 text-[clamp(2rem,4.4vw,3.25rem)] font-extrabold tracking-tight text-[var(--ptt-ink)]">
+        </span>
+        <h2 className="mt-3.5 text-[clamp(2rem,4.4vw,3.3rem)] font-extrabold tracking-[-0.04em]">
           Questions, answered
         </h2>
       </div>
@@ -83,8 +83,9 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border bg-[var(--ptt-surface)] transition-colors",
-        isOpen ? "border-[#C7E7CD]" : "border-[var(--ptt-green-border)]",
+        "bg-card overflow-hidden rounded-[20px] border transition-colors",
+        isOpen && "border-primary/40",
+        !isOpen && "border-border",
       )}
     >
       <button
@@ -93,20 +94,19 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
         aria-expanded={isOpen}
         className="flex w-full items-center justify-between gap-4 px-[22px] py-5 text-left"
       >
-        <span className="text-[17px] font-bold text-[var(--ptt-ink)]">{faq.question}</span>
+        <span className="text-[17px] font-bold">{faq.question}</span>
         <span
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-full transition-transform",
-            isOpen
-              ? "rotate-45 bg-[var(--ptt-brand)] text-white"
-              : "bg-[var(--ptt-green-tint)] text-[var(--ptt-brand)]",
+            isOpen && "bg-primary text-primary-foreground rotate-45",
+            !isOpen && "bg-surface-darker text-primary",
           )}
         >
           <Plus className="size-4" />
         </span>
       </button>
       {isOpen && (
-        <div className="px-[22px] pb-5 text-[15.5px] leading-relaxed font-medium text-[var(--ptt-ink-soft)]">
+        <div className="text-text-secondary px-[22px] pb-5 text-[15.5px] leading-relaxed font-medium">
           {faq.answer}
         </div>
       )}

@@ -3,35 +3,35 @@ import Logo from "@/components/shared/logo";
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-[var(--ptt-green-border)] bg-[var(--ptt-surface)]">
-      <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-4 px-6 py-9">
+    <footer className="mt-24 border-t border-[#1f3319]">
+      <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-5 py-9">
         <AppLink
           to="/"
           className="flex items-center gap-2"
         >
           <Logo
             size="small"
-            className="w-6 text-[var(--ptt-brand)]"
+            className="text-primary w-6"
           />
-          <span className="text-[17px] font-extrabold text-[var(--ptt-ink)]">PlanTheTrip</span>
+          <span className="text-[17px] font-extrabold">PlanTheTrip</span>
         </AppLink>
 
-        <div className="flex gap-6 text-[14.5px] font-semibold text-[var(--ptt-muted)]">
+        <div className="text-text-secondary flex gap-6 text-[14.5px] font-semibold">
           <a
             href="#how-it-works"
-            className="transition-colors hover:text-[var(--ptt-brand)]"
+            className="hover:text-primary transition-colors"
           >
             How it works
           </a>
           <AppLink
             to="/create"
-            className="transition-colors hover:text-[var(--ptt-brand)]"
+            className="hover:text-primary transition-colors"
           >
             Start planning
           </AppLink>
         </div>
 
-        <div className="text-[13.5px] font-medium text-[var(--ptt-faint)]">
+        <div className="text-text-secondary/60 text-[13.5px] font-medium">
           © 2026 PlanTheTrip. Made for group chats that mean it.
         </div>
       </div>

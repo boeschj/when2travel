@@ -1,16 +1,13 @@
 import type { ReactNode } from "react";
 import { Clock, Minus, Plus } from "lucide-react";
 
-import { buildColorMap, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import Logo from "@/components/shared/logo";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
-import { DEMO_PLAN } from "./demo-plan-data";
 
 const OBJECT_SURFACE = "shadow-object border border-border bg-surface-dark";
-
-const DEMO_BLOCKER_NAME = "Charles";
 
 const BOARDING_PASS_COPY = {
   label: "Boarding pass",
@@ -23,12 +20,6 @@ const BOARDING_PASS_COPY = {
   ],
   group: "GRP",
   passengers: "7 PAX",
-} as const;
-
-const BEST_WINDOW_COPY = {
-  kicker: "Best window",
-  dates: "Jul 13 – 19",
-  note: "So close! Charles can't make Jul 15.",
 } as const;
 
 const TRIP_LENGTH_COPY = {
@@ -103,38 +94,6 @@ export function BoardingPass({ className }: DeskObjectProps) {
   );
 }
 
-export function BestWindowCard({ className }: DeskObjectProps) {
-  const respondentIds = DEMO_PLAN.responses.map(response => response.id);
-  const respondentColorMap = buildColorMap(respondentIds);
-
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(OBJECT_SURFACE, "grid w-[280px] gap-3 rounded-[24px] p-[18px]", className)}
-    >
-      <span className="text-text-secondary text-xs font-bold tracking-wider uppercase">
-        {BEST_WINDOW_COPY.kicker}
-      </span>
-      <span className="text-primary text-[30px] leading-none font-extrabold tracking-tight">
-        {BEST_WINDOW_COPY.dates}
-      </span>
-      <div className="flex gap-1.5">
-        {DEMO_PLAN.responses.map(response => (
-          <RespondentDot
-            key={response.id}
-            name={response.name}
-            color={respondentColorMap[response.id]?.hex}
-            isBlocked={response.name === DEMO_BLOCKER_NAME}
-          />
-        ))}
-      </div>
-      <p className="text-foreground/85 text-[13px] leading-snug font-medium">
-        {BEST_WINDOW_COPY.note}
-      </p>
-    </div>
-  );
-}
-
 export function TripLengthCard({ className }: DeskObjectProps) {
   return (
     <div
@@ -197,30 +156,6 @@ function RouteLine() {
     <span className="relative h-0.5 flex-1 bg-[repeating-linear-gradient(90deg,#1b1d17_0_5px,transparent_5px_9px)] opacity-40">
       <span className="absolute -top-[3px] -left-0.5 size-2 rounded-full border-2 border-[#1b1d17] bg-[#f1ede2]" />
       <span className="absolute -top-[3px] -right-0.5 size-2 rounded-full bg-[#1b1d17]" />
-    </span>
-  );
-}
-
-function RespondentDot({
-  name,
-  color,
-  isBlocked,
-}: {
-  name: string;
-  color: string | undefined;
-  isBlocked: boolean;
-}) {
-  const initial = name.charAt(0);
-
-  return (
-    <span
-      className={cn(
-        "text-primary-foreground grid size-7 place-items-center rounded-full text-[11px] font-extrabold",
-        isBlocked && "opacity-40 outline-2 outline-offset-1 outline-[#ef4444]",
-      )}
-      style={{ backgroundColor: color }}
-    >
-      {initial}
     </span>
   );
 }

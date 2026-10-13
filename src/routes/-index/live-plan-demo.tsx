@@ -54,7 +54,7 @@ export function LivePlanDemo() {
   };
 
   return (
-    <div className="bg-background overflow-hidden rounded-2xl border border-white/10 text-left shadow-[0_30px_70px_-35px_rgba(12,32,19,0.55)]">
+    <div className="bg-background shadow-object overflow-hidden rounded-2xl border border-white/10 text-left">
       <BrowserBar />
 
       <div className="bg-background p-4 sm:p-6 md:p-8">

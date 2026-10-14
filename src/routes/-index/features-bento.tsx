@@ -10,6 +10,7 @@ import { ResultsLegend } from "../plan/-results/availability-legend";
 import { CopyLinkButton } from "./copy-link-button";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
 import { DEMO_PLAN } from "./demo-plan-data";
+import { SeeAlternativesButton } from "./see-alternatives-button";
 
 const SECTION_COPY = {
   eyebrow: "Features",
@@ -50,7 +51,6 @@ const VISUAL_COPY = {
   recommendationDates: "Jul 13 – 19",
   recommendationPeople: "6/7 people available",
   conflictNote: "Charles can't make Jul 15. If they can free that day up, everyone's in.",
-  conflictLink: "See Alternatives →",
 } as const;
 
 const RANGE_DAY_KIND = {
@@ -253,10 +253,7 @@ function ConflictCard() {
           </p>
         </div>
       </div>
-      <div
-        inert
-        className="relative h-[320px] lg:h-auto"
-      >
+      <div className="relative h-[320px] lg:h-auto">
         <ConflictVisual entryDelaySeconds={VISUAL_ENTRY_DELAY_SECONDS.CONFLICTS} />
       </div>
     </motion.article>
@@ -388,17 +385,14 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
       <motion.div
         className={cn(
           FLOATING_PANEL,
-          "top-[170px] left-16 w-[340px] -rotate-2 p-5 text-sm leading-snug lg:top-[200px]",
+          "hover-lift top-[170px] left-16 w-[340px] -rotate-2 p-5 text-sm leading-snug lg:top-[200px]",
         )}
         variants={noteVariants}
       >
         {VISUAL_COPY.conflictNote}
-        <motion.span
-          className="text-primary mt-2 block text-[13.5px] font-semibold"
-          variants={actionVariants}
-        >
-          {VISUAL_COPY.conflictLink}
-        </motion.span>
+        <motion.div variants={actionVariants}>
+          <SeeAlternativesButton />
+        </motion.div>
       </motion.div>
     </>
   );
@@ -539,7 +533,11 @@ function StatusChip({
   const StatusIcon = isBlocker ? XCircle : CheckCircle2;
 
   return (
-    <span className="border-border bg-card flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold">
+    <motion.span
+      className="border-border bg-card hover-lift flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold"
+      whileTap={PRESSED}
+      transition={PRESS_TRANSITION}
+    >
       <InitialAvatar
         name={name}
         color={color}
@@ -548,7 +546,7 @@ function StatusChip({
       <StatusIcon
         className={cn("size-4", isBlocker && "text-destructive", !isBlocker && "text-primary")}
       />
-    </span>
+    </motion.span>
   );
 }
 

@@ -7,31 +7,44 @@ const OUTGOING_BUBBLE_VARIABLES = "[--ios-bubble:#0a84ff] [--ios-screen:#0d0d0e]
 
 const THREAD_COPY = {
   groupName: "Hawaii 2026 🌺",
+  memberCount: "12 people",
   timestampDay: "Today",
   timestampTime: "9:38 AM",
   deliveredLabel: "Delivered",
   linkTitle: "PlanTheTrip - Find the best dates for your group trip",
   linkDomain: "justplanthetrip.com",
   linkImage: "/og.png",
-  accessibleLabel: "A group chat called Hawaii 2026 where a friend shares a PlanTheTrip link",
+  accessibleLabel:
+    "A 12 person group chat called Hawaii 2026 that cannot agree on dates until a friend shares a PlanTheTrip link",
 } as const;
 
-const GROUP_MEMBER_INITIALS = ["JM", "SK", "PR"] as const;
+const GROUP_AVATARS = [
+  { initials: "AL", className: "size-[18px] text-[7px]" },
+  { initials: "JM", className: "size-6 text-[9px]" },
+  { initials: "SK", className: "size-[34px] text-[13px]" },
+  { initials: "PR", className: "size-6 text-[9px]" },
+  { initials: "MC", className: "size-[18px] text-[7px]" },
+] as const;
 
 const INCOMING_RUNS = [
   {
     sender: "Joe",
     initials: "JM",
-    messages: ["are we actually doing hawaii or is this another group chat fantasy 💀"],
+    messages: ["alright people when we doin this. week of july 10th?"],
   },
   {
     sender: "Sam",
     initials: "SK",
-    messages: ["im so down fr", "but july is lowkey packed for me"],
+    messages: ["i cant, what about aug 25-31st"],
+  },
+  {
+    sender: "Priya",
+    initials: "PR",
+    messages: ["i cant do either"],
   },
 ] as const;
 
-const OUTGOING_MESSAGE = "ok bet. drop ur dates here, no excuses";
+const OUTGOING_MESSAGE = "everyone drop ur dates here and it'll tell us";
 
 interface HeroImessageThreadProps {
   className?: string;
@@ -84,31 +97,27 @@ function ThreadHeader() {
   return (
     <div className="grid justify-items-center gap-1 border-b-[0.5px] border-[#2c2c2e] bg-[#161618] pt-3.5 pb-2.5">
       <GroupAvatarCluster />
-      <div className="flex items-center gap-[3px] text-xs font-medium">
-        {THREAD_COPY.groupName}
-        <DisclosureChevronIcon />
+      <div className="grid justify-items-center">
+        <div className="flex items-center gap-[3px] text-xs font-medium">
+          {THREAD_COPY.groupName}
+          <DisclosureChevronIcon />
+        </div>
+        <p className="text-[10px] text-[#8e8e93]">{THREAD_COPY.memberCount}</p>
       </div>
     </div>
   );
 }
 
 function GroupAvatarCluster() {
-  const [leftInitials, centerInitials, rightInitials] = GROUP_MEMBER_INITIALS;
-
   return (
-    <div className="relative h-[44px] w-[60px]">
-      <MonogramAvatar
-        initials={leftInitials}
-        className="absolute top-3 left-0 size-[30px] text-[11px]"
-      />
-      <MonogramAvatar
-        initials={centerInitials}
-        className="absolute top-0 left-[13px] z-10 size-[34px] text-[13px] ring-2 ring-[#161618]"
-      />
-      <MonogramAvatar
-        initials={rightInitials}
-        className="absolute top-4 right-0 size-[26px] text-[10px]"
-      />
+    <div className="flex h-[38px] items-center gap-0.5">
+      {GROUP_AVATARS.map(avatar => (
+        <MonogramAvatar
+          key={avatar.initials}
+          initials={avatar.initials}
+          className={avatar.className}
+        />
+      ))}
     </div>
   );
 }

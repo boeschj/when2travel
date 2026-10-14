@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, Copy, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
+import { CalendarX2, CheckCircle2, Copy, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
 
 import { buildColorMap, cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ const SECTION_COPY = {
   heading: "Everything you need to lock in the dates",
   subheading:
     'No spreadsheets, no "so what weekend works for everyone???" Just a link and a calendar that fills itself in.',
+  moreFeatures: "Plus per-person filters, auto-picked best windows, and more.",
 } as const;
 
 const FEATURE_COPY = {
@@ -23,19 +24,10 @@ const FEATURE_COPY = {
     title: "Share one link",
     description: "Drop it in the group chat. No downloads, no accounts, friends just tap and pick.",
   },
-  filter: {
-    title: "Filter by person",
-    description:
-      "Tap anyone to see just their dates on the heatmap. Spot who's flexible in a glance.",
-  },
   heatmap: {
     title: "Live availability heatmap",
     description:
       "Watch the calendar light up as people respond. Green means go, so you can spot the perfect overlap without scrolling through replies.",
-  },
-  bestWindow: {
-    title: "Best window, found for you",
-    description: "We rank every window by who can make it and hand you the winner.",
   },
   conflicts: {
     title: "Spot the conflicts",
@@ -49,9 +41,8 @@ const VISUAL_COPY = {
   shareUrl: "justplanthetrip.com/plan/ibiza",
   shareLabel: "Share",
   groupMessage: "everyone PICK YOUR DATES 🙏",
-  bestOverlap: "Best overlap: Jul 13 – 19 · 6/7 free",
+  deliveredLabel: "Delivered",
   recommendationHeading: "So close!",
-  recommendationKicker: "Your ideal trip dates are:",
   recommendationDates: "Jul 13 – 19",
   recommendationPeople: "6/7 people available",
   conflictNote: "Charles can't make Jul 15. If they can free that day up, everyone's in.",
@@ -93,17 +84,14 @@ const CREATE_RANGE_DAYS = [
 
 const SUNDAY_FIRST_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
-const FILTER_PERSON_NAME = "Sam";
+const FILTER_ACTIVE_NAME = "Sam";
 const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
-const FILTER_WEEKS_START_DAY = 13;
-const FILTER_DAY_COUNT = 14;
 const DEMO_BLOCKER_NAME = "Charles";
-const DEMO_YEAR_MONTH_PREFIX = "2026-07-";
 
 const CARD_SHELL =
-  "flex min-w-0 flex-col rounded-[28px] border border-border bg-card p-3.5 pb-6 shadow-[0_12px_24px_-14px_rgba(0,0,0,0.6)]";
-const VISUAL_PANEL =
-  "grid grid-cols-[minmax(0,1fr)] place-items-center overflow-hidden rounded-[20px] border border-[#243c1e] bg-[#172713] p-[18px]";
+  "relative flex min-w-0 flex-col overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_12px_24px_-14px_rgba(0,0,0,0.6)]";
+const FLOATING_PANEL =
+  "shadow-object absolute rounded-[22px] border border-[#2f4a27] bg-surface-dark";
 
 export function FeaturesBento() {
   return (
@@ -111,36 +99,27 @@ export function FeaturesBento() {
       id="how-it-works"
       className="px-4 pt-24 sm:pt-28 lg:px-5"
     >
-      <div className="rounded-[40px] border border-[#1f3319] bg-[#142012] px-3.5 py-16 sm:px-7 sm:py-[72px]">
+      <div className="rounded-[40px] border border-[#1f3319] bg-[#142012] px-3.5 py-16 sm:px-7 sm:py-24">
         <SectionHeader />
-        <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-6">
+        <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12">
           <FeatureCard
-            className="md:col-span-2"
-            copy={FEATURE_COPY.create}
-            visual={<CreateVisual />}
-          />
-          <FeatureCard
-            className="md:col-span-2"
+            className="lg:col-span-5"
             copy={FEATURE_COPY.share}
             visual={<ShareVisual />}
           />
           <FeatureCard
-            className="md:col-span-2"
-            copy={FEATURE_COPY.filter}
-            visual={<FilterVisual />}
-          />
-          <FeatureCard
-            className="md:col-span-4"
+            className="lg:col-span-7"
             copy={FEATURE_COPY.heatmap}
             visual={<HeatmapVisual />}
           />
-          <FeatureCard
-            className="md:col-span-2"
-            copy={FEATURE_COPY.bestWindow}
-            visual={<BestWindowVisual />}
-          />
           <ConflictCard />
+          <FeatureCard
+            className="border-2 border-dashed border-[#2f4a27] bg-transparent shadow-none lg:col-span-4"
+            copy={FEATURE_COPY.create}
+            visual={<CreateVisual />}
+          />
         </div>
+        <p className="text-text-secondary mt-14 text-center text-lg">{SECTION_COPY.moreFeatures}</p>
       </div>
     </section>
   );
@@ -148,7 +127,7 @@ export function FeaturesBento() {
 
 function SectionHeader() {
   return (
-    <div className="mx-auto mb-12 grid max-w-[660px] justify-items-center gap-3.5 text-center">
+    <div className="mx-auto mb-16 grid max-w-[720px] justify-items-center gap-4 text-center">
       <span className="border-border bg-card text-text-secondary rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold">
         {SECTION_COPY.eyebrow}
       </span>
@@ -173,14 +152,16 @@ function FeatureCard({ className, copy, visual }: FeatureCardProps) {
     <article className={cn(CARD_SHELL, className)}>
       <div
         inert
-        className={cn(VISUAL_PANEL, "h-[236px]")}
+        className="relative h-[300px] sm:h-[340px]"
       >
         {visual}
       </div>
-      <h3 className="mt-5 px-2 text-xl font-bold tracking-tight">{copy.title}</h3>
-      <p className="text-text-secondary mt-2 px-2 text-[15px] leading-relaxed">
-        {copy.description}
-      </p>
+      <div className="px-8 pt-4 pb-10 text-center">
+        <h3 className="text-2xl font-bold tracking-tight">{copy.title}</h3>
+        <p className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty">
+          {copy.description}
+        </p>
+      </div>
     </article>
   );
 }
@@ -190,28 +171,143 @@ function ConflictCard() {
     <article
       className={cn(
         CARD_SHELL,
-        "gap-6 md:col-span-6 md:grid md:grid-cols-[1.15fr_1fr] md:items-center md:gap-8 md:p-[18px] md:pr-8",
+        "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
       )}
     >
+      <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
+        <span className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]">
+          <CalendarX2 className="text-primary size-7" />
+        </span>
+        <div>
+          <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
+          <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
+            {FEATURE_COPY.conflicts.description}
+          </p>
+        </div>
+      </div>
       <div
         inert
-        className={cn(VISUAL_PANEL, "min-h-[210px]")}
+        className="relative h-[320px] lg:h-auto"
       >
         <ConflictVisual />
-      </div>
-      <div className="px-2 md:px-0">
-        <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
-        <p className="text-text-secondary mt-2.5 text-base leading-relaxed">
-          {FEATURE_COPY.conflicts.description}
-        </p>
       </div>
     </article>
   );
 }
 
+function ShareVisual() {
+  return (
+    <>
+      <div className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] -rotate-3 gap-3 p-4")}>
+        <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
+          <span className="truncate">{VISUAL_COPY.shareUrl}</span>
+          <Copy className="size-4 shrink-0" />
+        </div>
+        <span className="bg-primary text-primary-foreground flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[13px] font-extrabold">
+          <Share2 className="size-4" />
+          {VISUAL_COPY.shareLabel}
+        </span>
+      </div>
+      <div
+        className={cn(
+          FLOATING_PANEL,
+          "top-[190px] right-6 grid w-[270px] justify-items-end gap-1 bg-[#0d0d0e] p-4 font-[-apple-system,BlinkMacSystemFont,system-ui,sans-serif]",
+        )}
+      >
+        <span className="rounded-[18px] rounded-br-md bg-[#0a84ff] px-3 py-[7px] text-[15px] tracking-[-0.02em] text-white">
+          {VISUAL_COPY.groupMessage}
+        </span>
+        <span className="text-[11px] font-medium text-[#8e8e93]">{VISUAL_COPY.deliveredLabel}</span>
+      </div>
+    </>
+  );
+}
+
+function HeatmapVisual() {
+  const respondentColors = buildDemoRespondentColors();
+
+  return (
+    <>
+      <div className={cn(FLOATING_PANEL, "top-14 -left-4 hidden -rotate-3 gap-2 p-4 lg:grid")}>
+        <PersonChip
+          name={FILTER_ACTIVE_NAME}
+          color={respondentColors[FILTER_ACTIVE_NAME]}
+          isActive
+        />
+        {FILTER_DIMMED_NAMES.map(name => (
+          <PersonChip
+            key={name}
+            name={name}
+            color={respondentColors[name]}
+            isActive={false}
+          />
+        ))}
+      </div>
+      <div
+        className={cn(
+          FLOATING_PANEL,
+          "top-24 -right-6 hidden w-[200px] rotate-3 justify-items-center gap-1 p-5 text-center lg:grid",
+        )}
+      >
+        <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
+          <ThumbsUp className="size-4" />
+        </span>
+        <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
+        <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
+          {VISUAL_COPY.recommendationDates}
+        </span>
+        <span className="text-text-secondary text-xs font-bold">
+          {VISUAL_COPY.recommendationPeople}
+        </span>
+      </div>
+      <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
+        <DemoJulyHeatmap className="[zoom:0.55]" />
+        <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
+      </div>
+    </>
+  );
+}
+
+function ConflictVisual() {
+  const respondentColors = buildDemoRespondentColors();
+
+  return (
+    <>
+      <div
+        className={cn(FLOATING_PANEL, "top-10 left-4 flex w-[480px] flex-wrap gap-2 p-5 lg:top-14")}
+      >
+        {DEMO_PLAN.responses.map(response => (
+          <StatusChip
+            key={response.id}
+            name={response.name}
+            color={respondentColors[response.name]}
+            isBlocker={response.name === DEMO_BLOCKER_NAME}
+          />
+        ))}
+      </div>
+      <div
+        className={cn(
+          FLOATING_PANEL,
+          "top-[170px] left-16 w-[340px] -rotate-2 p-5 text-sm leading-snug lg:top-[200px]",
+        )}
+      >
+        {VISUAL_COPY.conflictNote}
+        <span className="text-primary mt-2 block text-[13.5px] font-semibold">
+          {VISUAL_COPY.conflictLink}
+        </span>
+      </div>
+    </>
+  );
+}
+
 function CreateVisual() {
   return (
-    <div className="grid w-full max-w-[290px] justify-items-center gap-4">
+    <div
+      className={cn(
+        FLOATING_PANEL,
+        "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
+      )}
+    >
       <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
         {VISUAL_COPY.tripName}
         <Pencil className="text-primary size-5" />
@@ -241,124 +337,6 @@ function CreateVisual() {
   );
 }
 
-function ShareVisual() {
-  return (
-    <div className="grid w-full max-w-[300px] grid-cols-[minmax(0,1fr)] gap-3.5">
-      <div className="flex gap-2">
-        <div className="bg-surface-darker flex min-w-0 flex-1 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
-          <span className="truncate">{VISUAL_COPY.shareUrl}</span>
-          <Copy className="size-4 shrink-0" />
-        </div>
-        <span className="bg-primary text-primary-foreground flex items-center gap-1.5 rounded-2xl px-3 text-[13px] font-extrabold">
-          <Share2 className="size-4" />
-          {VISUAL_COPY.shareLabel}
-        </span>
-      </div>
-      <span className="justify-self-end rounded-[18px] rounded-br-md bg-[#0a84ff] px-3 py-[7px] font-[-apple-system,BlinkMacSystemFont,system-ui,sans-serif] text-[15px] tracking-[-0.02em] text-white">
-        {VISUAL_COPY.groupMessage}
-      </span>
-    </div>
-  );
-}
-
-function FilterVisual() {
-  const respondentColors = buildDemoRespondentColors();
-  const filteredPerson = findDemoResponse(FILTER_PERSON_NAME);
-  const filteredColor = respondentColors[filteredPerson.name];
-  const days = Array.from(
-    { length: FILTER_DAY_COUNT },
-    (_, index) => FILTER_WEEKS_START_DAY + index,
-  );
-
-  return (
-    <div className="grid justify-items-center gap-4">
-      <div className="flex flex-wrap justify-center gap-2">
-        <PersonChip
-          name={filteredPerson.name}
-          color={filteredColor}
-          isActive
-        />
-        {FILTER_DIMMED_NAMES.map(name => (
-          <PersonChip
-            key={name}
-            name={name}
-            color={respondentColors[name]}
-            isActive={false}
-          />
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {days.map(day => (
-          <FilteredDay
-            key={day}
-            day={day}
-            color={filteredColor}
-            isAvailable={isAvailableInJuly(filteredPerson.availableDates, day)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HeatmapVisual() {
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-      <DemoJulyHeatmap className="[zoom:0.62]" />
-      <div className="grid gap-4">
-        <ResultsLegend />
-        <span className="max-w-[240px] rounded-[22px] bg-[#2e4a28] px-4 py-3 text-sm font-semibold">
-          {VISUAL_COPY.bestOverlap}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function BestWindowVisual() {
-  return (
-    <div className="grid justify-items-center gap-1 text-center">
-      <span className="bg-surface-darker text-primary mb-1.5 grid size-12 place-items-center rounded-full">
-        <ThumbsUp className="size-5" />
-      </span>
-      <span className="text-lg font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
-      <span className="text-text-secondary text-[13px]">{VISUAL_COPY.recommendationKicker}</span>
-      <span className="text-[34px] leading-tight font-extrabold tracking-[-0.045em]">
-        {VISUAL_COPY.recommendationDates}
-      </span>
-      <span className="mt-1 flex items-center gap-1.5 text-[13px] font-bold">
-        <ThumbsUp className="text-primary size-4" />
-        {VISUAL_COPY.recommendationPeople}
-      </span>
-    </div>
-  );
-}
-
-function ConflictVisual() {
-  const respondentColors = buildDemoRespondentColors();
-
-  return (
-    <div className="grid justify-items-center gap-4">
-      <div className="flex max-w-[520px] flex-wrap justify-center gap-2">
-        {DEMO_PLAN.responses.map(response => (
-          <StatusChip
-            key={response.id}
-            name={response.name}
-            color={respondentColors[response.name]}
-            isBlocker={response.name === DEMO_BLOCKER_NAME}
-          />
-        ))}
-      </div>
-      <div className="max-w-[360px] rounded-[22px] bg-[#2e4a28] px-[18px] py-3.5 text-sm leading-snug">
-        {VISUAL_COPY.conflictNote}
-        <span className="text-primary mt-2 block text-[13.5px] font-semibold">
-          {VISUAL_COPY.conflictLink}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function PersonChip({
   name,
   color,
@@ -373,7 +351,7 @@ function PersonChip({
   return (
     <span
       className={cn(
-        "border-border bg-surface-dark flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold",
+        "border-border bg-card flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold",
         !isActive && "opacity-50",
       )}
       style={activeRingStyle}
@@ -399,7 +377,7 @@ function StatusChip({
   const StatusIcon = isBlocker ? XCircle : CheckCircle2;
 
   return (
-    <span className="border-border bg-surface-dark flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold">
+    <span className="border-border bg-card flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold">
       <InitialAvatar
         name={name}
         color={color}
@@ -408,33 +386,6 @@ function StatusChip({
       <StatusIcon
         className={cn("size-4", isBlocker && "text-destructive", !isBlocker && "text-primary")}
       />
-    </span>
-  );
-}
-
-function FilteredDay({
-  day,
-  color,
-  isAvailable,
-}: {
-  day: number;
-  color: string | undefined;
-  isAvailable: boolean;
-}) {
-  const availableStyle = { backgroundColor: color, boxShadow: `0 0 10px ${color}66` };
-  const unavailableStyle = { backgroundColor: "var(--color-border)", opacity: 0.5 };
-  const dayStyle = isAvailable ? availableStyle : unavailableStyle;
-
-  return (
-    <span
-      className={cn(
-        "grid size-9 place-items-center rounded-full text-[13px] font-bold",
-        isAvailable && "text-primary-foreground",
-        !isAvailable && "text-foreground",
-      )}
-      style={dayStyle}
-    >
-      {day}
     </span>
   );
 }
@@ -460,19 +411,4 @@ function buildDemoRespondentColors(): Record<string, string | undefined> {
   );
   const colorsByName = Object.fromEntries(nameColorEntries);
   return colorsByName;
-}
-
-function findDemoResponse(name: string) {
-  const response = DEMO_PLAN.responses.find(candidate => candidate.name === name);
-  if (!response) {
-    throw new Error(`Demo plan has no respondent named ${name}`);
-  }
-  return response;
-}
-
-function isAvailableInJuly(availableDates: string[], day: number): boolean {
-  const paddedDay = String(day).padStart(2, "0");
-  const isoDate = `${DEMO_YEAR_MONTH_PREFIX}${paddedDay}`;
-  const isAvailable = availableDates.includes(isoDate);
-  return isAvailable;
 }

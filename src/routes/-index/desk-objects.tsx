@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Clock, Minus, Plus } from "lucide-react";
 
 import { buildColorMap, cn } from "@/lib/utils";
 import Logo from "@/components/shared/logo";
@@ -8,7 +7,6 @@ import { ResultsLegend } from "../plan/-results/availability-legend";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
 import { DEMO_PLAN } from "./demo-plan-data";
 
-const OBJECT_SURFACE = "shadow-object border border-border bg-surface-dark";
 const FOLDER_SURFACE = "bg-[#1f3319]";
 
 const BOARDING_PASS_COPY = {
@@ -22,12 +20,6 @@ const BOARDING_PASS_COPY = {
   ],
   group: "GRP",
   passengers: "7 PAX",
-} as const;
-
-const TRIP_LENGTH_COPY = {
-  kicker: "Trip length",
-  value: "7",
-  unit: "Days",
 } as const;
 
 const HEATMAP_FOLDER_COPY = {
@@ -50,7 +42,7 @@ export function AppIconTile({ className }: DeskObjectProps) {
     <div
       aria-hidden="true"
       className={cn(
-        "shadow-object bg-card grid size-[108px] place-items-center rounded-[28px] border border-[#2f4a27]",
+        "shadow-object bg-card hover-lift grid size-[108px] place-items-center rounded-[28px] border border-[#2f4a27]",
         className,
       )}
     >
@@ -67,7 +59,7 @@ export function BoardingPass({ className }: DeskObjectProps) {
     <div
       aria-hidden="true"
       className={cn(
-        "shadow-object grid w-[330px] grid-cols-[1fr_88px] rounded-[18px] bg-[#f1ede2] font-mono text-[#1b1d17]",
+        "shadow-object hover-lift grid w-[330px] grid-cols-[1fr_88px] rounded-[18px] bg-[#f1ede2] font-mono text-[#1b1d17]",
         className,
       )}
     >
@@ -109,9 +101,7 @@ export function HeatmapFolder({ className }: DeskObjectProps) {
       subtitle={HEATMAP_FOLDER_COPY.subtitle}
       className={className}
     >
-      <div inert>
-        <DemoJulyHeatmap />
-      </div>
+      <DemoJulyHeatmap />
       <ResultsLegend className="mt-3 justify-center" />
     </FolderCard>
   );
@@ -141,36 +131,6 @@ export function CrewFolder({ className }: DeskObjectProps) {
   );
 }
 
-export function TripLengthCard({ className }: DeskObjectProps) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(OBJECT_SURFACE, "w-[230px] rounded-[24px] p-[18px] text-center", className)}
-    >
-      <div className="text-text-secondary flex items-center justify-center gap-1.5 text-xs font-bold">
-        <Clock className="text-primary size-3.5" />
-        {TRIP_LENGTH_COPY.kicker}
-      </div>
-      <div className="mt-2 flex items-center justify-between">
-        <StepperButton>
-          <Minus className="size-4" />
-        </StepperButton>
-        <div>
-          <div className="text-5xl leading-none font-extrabold tracking-tighter">
-            {TRIP_LENGTH_COPY.value}
-          </div>
-          <div className="text-text-secondary mt-1 text-[11px] font-bold tracking-[0.14em] uppercase">
-            {TRIP_LENGTH_COPY.unit}
-          </div>
-        </div>
-        <StepperButton>
-          <Plus className="size-4" />
-        </StepperButton>
-      </div>
-    </div>
-  );
-}
-
 function FolderCard({
   title,
   subtitle,
@@ -184,9 +144,8 @@ function FolderCard({
 }) {
   return (
     <div
-      aria-hidden="true"
       className={cn(
-        "relative w-fit pt-[26px] drop-shadow-[2px_10px_18px_rgba(0,0,0,0.2)]",
+        "hover-lift relative w-fit pt-[26px] drop-shadow-[2px_10px_18px_rgba(0,0,0,0.2)]",
         className,
       )}
     >
@@ -219,7 +178,7 @@ function CrewTile({
   return (
     <span
       className={cn(
-        "shadow-object bg-card grid size-[76px] shrink-0 place-items-center rounded-[22px] border border-[#2f4a27]",
+        "shadow-object bg-card hover-lift grid size-[76px] shrink-0 place-items-center rounded-[22px] border border-[#2f4a27]",
         tiltClassName,
       )}
     >
@@ -246,14 +205,6 @@ function RouteLine() {
     <span className="relative h-0.5 flex-1 bg-[repeating-linear-gradient(90deg,#1b1d17_0_5px,transparent_5px_9px)] opacity-40">
       <span className="absolute -top-[3px] -left-0.5 size-2 rounded-full border-2 border-[#1b1d17] bg-[#f1ede2]" />
       <span className="absolute -top-[3px] -right-0.5 size-2 rounded-full bg-[#1b1d17]" />
-    </span>
-  );
-}
-
-function StepperButton({ children }: { children: ReactNode }) {
-  return (
-    <span className="border-border text-text-secondary grid size-9 place-items-center rounded-full border">
-      {children}
     </span>
   );
 }

@@ -2,14 +2,9 @@ import { ArrowRight } from "lucide-react";
 
 import { AppLink } from "@/components/shared/app-link";
 
-import {
-  AppIconTile,
-  BoardingPass,
-  CrewFolder,
-  HeatmapFolder,
-  TripLengthCard,
-} from "./desk-objects";
+import { AppIconTile, BoardingPass, CrewFolder, HeatmapFolder } from "./desk-objects";
 import { HeroImessageThread } from "./hero-imessage-thread";
+import { TripLengthCard } from "./trip-length-card";
 
 const HERO_COPY = {
   headingLineOne: "Get the trip out",
@@ -35,8 +30,8 @@ export function LandingHero() {
 
         <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-start">
           <div className="xl:short:[zoom:0.6] relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78]">
-            <BoardingPass className="rotate-6" />
-            <TripLengthCard className="absolute top-[150px] left-10 -rotate-5" />
+            <BoardingPass className="relative rotate-6 hover:z-20" />
+            <TripLengthCard className="absolute top-[150px] left-6 z-10 -rotate-5" />
           </div>
           <HeatmapFolder className="xl:short:[zoom:0.52] -mb-40 ml-2 -rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
         </div>

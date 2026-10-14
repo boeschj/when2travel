@@ -56,7 +56,7 @@ export function HeroImessageThread({ className }: HeroImessageThreadProps) {
       role="img"
       aria-label={THREAD_COPY.accessibleLabel}
       className={cn(
-        "shadow-object w-[330px] overflow-hidden rounded-[30px] bg-[#0d0d0e] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text',system-ui,sans-serif] text-white antialiased ring-1 ring-white/10",
+        "shadow-object hover-lift w-[330px] overflow-hidden rounded-[30px] bg-[#0d0d0e] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text',system-ui,sans-serif] text-white antialiased ring-1 ring-white/10",
         className,
       )}
     >

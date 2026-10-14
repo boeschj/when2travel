@@ -99,7 +99,7 @@ export function FeaturesBento() {
       id="how-it-works"
       className="px-4 pt-24 sm:pt-28 lg:px-5"
     >
-      <div className="rounded-[40px] border border-[#1f3319] bg-[#142012] px-3.5 py-16 sm:px-7 sm:py-24">
+      <div className="bg-felt-texture rounded-[40px] border border-[#1f3319] px-3.5 py-16 sm:px-7 sm:py-24">
         <SectionHeader />
         <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12">
           <FeatureCard

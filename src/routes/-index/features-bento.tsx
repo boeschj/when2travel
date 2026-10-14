@@ -93,44 +93,64 @@ const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
 const ENTRY_VIEWPORT = { once: true, amount: 0.6 } as const;
 const ENTRY_STEP_SECONDS = 0.3;
 const ENTRY_MOVE_STEP = { duration: ENTRY_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
-const ENTRY_TILT_STEP = { ...ENTRY_MOVE_STEP, delay: ENTRY_STEP_SECONDS } as const;
 const ENTRY_STATE = {
   STACKED: "stacked",
   SPREAD: "spread",
 } as const;
 
-const SHARE_LINK_CARD_MOTION = {
-  stacked: { x: 80, y: 56, rotate: 0 },
-  spread: { x: 0, y: 0, rotate: -3 },
+const CARD_REVEAL_DELAY_SECONDS = {
+  TITLE: 0,
+  DESCRIPTION: ENTRY_STEP_SECONDS,
+  VISUAL: ENTRY_STEP_SECONDS * 2,
 } as const;
-const SHARE_MESSAGE_CARD_MOTION = {
-  stacked: { x: -80, y: -56, rotate: 0 },
-  spread: { x: 0, y: 0, rotate: 2 },
+const VISUAL_ANIMATION_DELAY_SECONDS = ENTRY_STEP_SECONDS * 3;
+const VISUAL_MOVE_STEP = { ...ENTRY_MOVE_STEP, delay: VISUAL_ANIMATION_DELAY_SECONDS } as const;
+const VISUAL_TILT_STEP = {
+  ...ENTRY_MOVE_STEP,
+  delay: VISUAL_ANIMATION_DELAY_SECONDS + ENTRY_STEP_SECONDS,
 } as const;
+
+const TITLE_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.TITLE);
+const DESCRIPTION_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.DESCRIPTION);
+const VISUAL_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.VISUAL);
+
 const SHARE_STACK_TRANSITION = {
-  x: ENTRY_MOVE_STEP,
-  y: ENTRY_MOVE_STEP,
-  rotate: ENTRY_TILT_STEP,
+  x: VISUAL_MOVE_STEP,
+  y: VISUAL_MOVE_STEP,
+  rotate: VISUAL_TILT_STEP,
+} as const;
+const SHARE_LINK_CARD_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: 80, y: 56, rotate: 0 },
+  [ENTRY_STATE.SPREAD]: { x: 0, y: 0, rotate: -3, transition: SHARE_STACK_TRANSITION },
+} as const;
+const SHARE_MESSAGE_CARD_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: -80, y: -56, rotate: 0 },
+  [ENTRY_STATE.SPREAD]: { x: 0, y: 0, rotate: 2, transition: SHARE_STACK_TRANSITION },
 } as const;
 
 const HEATMAP_FILTER_TRACK_VARIANTS = {
   [ENTRY_STATE.STACKED]: { x: "42%" },
-  [ENTRY_STATE.SPREAD]: { x: 0, transition: ENTRY_MOVE_STEP },
+  [ENTRY_STATE.SPREAD]: { x: 0, transition: VISUAL_MOVE_STEP },
 } as const;
 const HEATMAP_BEST_WINDOW_TRACK_VARIANTS = {
   [ENTRY_STATE.STACKED]: { x: "-41%" },
-  [ENTRY_STATE.SPREAD]: { x: 0, transition: ENTRY_MOVE_STEP },
+  [ENTRY_STATE.SPREAD]: { x: 0, transition: VISUAL_MOVE_STEP },
 } as const;
 const HEATMAP_FILTER_TILT_VARIANTS = {
   [ENTRY_STATE.STACKED]: { rotate: 0 },
-  [ENTRY_STATE.SPREAD]: { rotate: -3, transition: ENTRY_TILT_STEP },
+  [ENTRY_STATE.SPREAD]: { rotate: -3, transition: VISUAL_TILT_STEP },
 } as const;
 const HEATMAP_BEST_WINDOW_TILT_VARIANTS = {
   [ENTRY_STATE.STACKED]: { rotate: 0 },
-  [ENTRY_STATE.SPREAD]: { rotate: 3, transition: ENTRY_TILT_STEP },
+  [ENTRY_STATE.SPREAD]: { rotate: 3, transition: VISUAL_TILT_STEP },
 } as const;
 
-const SCALE_IN_VARIANTS = {
+const CREATE_CALENDAR_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { scale: 0.6, opacity: 0 },
+  [ENTRY_STATE.SPREAD]: { scale: 1, opacity: 1, transition: VISUAL_MOVE_STEP },
+} as const;
+
+const CONFLICT_ICON_VARIANTS = {
   [ENTRY_STATE.STACKED]: { scale: 0.6, opacity: 0 },
   [ENTRY_STATE.SPREAD]: { scale: 1, opacity: 1, transition: ENTRY_MOVE_STEP },
 } as const;
@@ -163,24 +183,26 @@ export function FeaturesBento() {
     >
       <div className="bg-felt-texture rounded-[40px] border border-[#1f3319] px-3.5 py-16 sm:px-7 sm:py-24">
         <SectionHeader />
-        <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12">
-          <FeatureCard
-            className="lg:col-span-5"
-            copy={FEATURE_COPY.share}
-            visual={<ShareVisual />}
-          />
-          <FeatureCard
-            className="lg:col-span-7"
-            copy={FEATURE_COPY.heatmap}
-            visual={<HeatmapVisual />}
-          />
-          <ConflictCard />
-          <FeatureCard
-            className="border-2 border-dashed border-[#2f4a27] bg-transparent shadow-none lg:col-span-4"
-            copy={FEATURE_COPY.create}
-            visual={<CreateVisual />}
-          />
-        </div>
+        <MotionConfig reducedMotion="user">
+          <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12">
+            <FeatureCard
+              className="lg:col-span-5"
+              copy={FEATURE_COPY.share}
+              visual={<ShareVisual />}
+            />
+            <FeatureCard
+              className="lg:col-span-7"
+              copy={FEATURE_COPY.heatmap}
+              visual={<HeatmapVisual />}
+            />
+            <ConflictCard />
+            <FeatureCard
+              className="border-2 border-dashed border-[#2f4a27] bg-transparent shadow-none lg:col-span-4"
+              copy={FEATURE_COPY.create}
+              visual={<CreateVisual />}
+            />
+          </div>
+        </MotionConfig>
         <p className="text-text-secondary mt-14 text-center text-lg">{SECTION_COPY.moreFeatures}</p>
       </div>
     </section>
@@ -211,69 +233,86 @@ interface FeatureCardProps {
 
 function FeatureCard({ className, copy, visual }: FeatureCardProps) {
   return (
-    <article className={cn(CARD_SHELL, className)}>
-      <div
+    <motion.article
+      className={cn(CARD_SHELL, className)}
+      initial={ENTRY_STATE.STACKED}
+      whileInView={ENTRY_STATE.SPREAD}
+      viewport={ENTRY_VIEWPORT}
+    >
+      <motion.div
         inert
         className="relative h-[300px] sm:h-[340px]"
+        variants={VISUAL_FADE_VARIANTS}
       >
         {visual}
-      </div>
+      </motion.div>
       <div className="px-8 pt-4 pb-10 text-center">
-        <h3 className="text-2xl font-bold tracking-tight">{copy.title}</h3>
-        <p className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty">
+        <motion.h3
+          className="text-2xl font-bold tracking-tight"
+          variants={TITLE_FADE_VARIANTS}
+        >
+          {copy.title}
+        </motion.h3>
+        <motion.p
+          className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty"
+          variants={DESCRIPTION_FADE_VARIANTS}
+        >
           {copy.description}
-        </p>
+        </motion.p>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
 function ConflictCard() {
   return (
-    <MotionConfig reducedMotion="user">
-      <motion.article
-        className={cn(
-          CARD_SHELL,
-          "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
-        )}
-        initial={ENTRY_STATE.STACKED}
-        whileInView={ENTRY_STATE.SPREAD}
-        viewport={ENTRY_VIEWPORT}
-      >
-        <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
-          <motion.span
-            className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]"
-            variants={SCALE_IN_VARIANTS}
-          >
-            <CalendarX2 className="text-primary size-7" />
-          </motion.span>
-          <div>
-            <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
-            <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
-              {FEATURE_COPY.conflicts.description}
-            </p>
-          </div>
-        </div>
-        <div
-          inert
-          className="relative h-[320px] lg:h-auto"
+    <motion.article
+      className={cn(
+        CARD_SHELL,
+        "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
+      )}
+      initial={ENTRY_STATE.STACKED}
+      whileInView={ENTRY_STATE.SPREAD}
+      viewport={ENTRY_VIEWPORT}
+    >
+      <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
+        <motion.span
+          className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]"
+          variants={CONFLICT_ICON_VARIANTS}
         >
-          <ConflictVisual />
+          <CalendarX2 className="text-primary size-7" />
+        </motion.span>
+        <div>
+          <motion.h3
+            className="text-2xl font-bold tracking-tight"
+            variants={TITLE_FADE_VARIANTS}
+          >
+            {FEATURE_COPY.conflicts.title}
+          </motion.h3>
+          <motion.p
+            className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty"
+            variants={DESCRIPTION_FADE_VARIANTS}
+          >
+            {FEATURE_COPY.conflicts.description}
+          </motion.p>
         </div>
-      </motion.article>
-    </MotionConfig>
+      </div>
+      <div
+        inert
+        className="relative h-[320px] lg:h-auto"
+      >
+        <ConflictVisual />
+      </div>
+    </motion.article>
   );
 }
 
 function ShareVisual() {
   return (
-    <MotionConfig reducedMotion="user">
+    <>
       <motion.div
         className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] gap-3 p-4")}
-        initial={SHARE_LINK_CARD_MOTION.stacked}
-        whileInView={SHARE_LINK_CARD_MOTION.spread}
-        viewport={ENTRY_VIEWPORT}
-        transition={SHARE_STACK_TRANSITION}
+        variants={SHARE_LINK_CARD_VARIANTS}
       >
         <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
           <span className="truncate">{VISUAL_COPY.shareUrl}</span>
@@ -289,17 +328,14 @@ function ShareVisual() {
           FLOATING_PANEL,
           "top-[190px] right-6 grid w-[270px] justify-items-end gap-1 bg-[#0d0d0e] p-4 font-[-apple-system,BlinkMacSystemFont,system-ui,sans-serif]",
         )}
-        initial={SHARE_MESSAGE_CARD_MOTION.stacked}
-        whileInView={SHARE_MESSAGE_CARD_MOTION.spread}
-        viewport={ENTRY_VIEWPORT}
-        transition={SHARE_STACK_TRANSITION}
+        variants={SHARE_MESSAGE_CARD_VARIANTS}
       >
         <span className="rounded-[18px] rounded-br-md bg-[#0a84ff] px-3 py-[7px] text-[15px] tracking-[-0.02em] text-white">
           {VISUAL_COPY.groupMessage}
         </span>
         <span className="text-[11px] font-medium text-[#8e8e93]">{VISUAL_COPY.deliveredLabel}</span>
       </motion.div>
-    </MotionConfig>
+    </>
   );
 }
 
@@ -307,65 +343,58 @@ function HeatmapVisual() {
   const respondentColors = buildDemoRespondentColors();
 
   return (
-    <MotionConfig reducedMotion="user">
+    <>
       <motion.div
-        className="absolute inset-0"
-        initial={ENTRY_STATE.STACKED}
-        whileInView={ENTRY_STATE.SPREAD}
-        viewport={ENTRY_VIEWPORT}
+        className="absolute inset-0 hidden lg:block"
+        variants={HEATMAP_FILTER_TRACK_VARIANTS}
       >
         <motion.div
-          className="absolute inset-0 hidden lg:block"
-          variants={HEATMAP_FILTER_TRACK_VARIANTS}
+          className={cn(FLOATING_PANEL, "top-14 -left-4 grid gap-2 p-4")}
+          variants={HEATMAP_FILTER_TILT_VARIANTS}
         >
-          <motion.div
-            className={cn(FLOATING_PANEL, "top-14 -left-4 grid gap-2 p-4")}
-            variants={HEATMAP_FILTER_TILT_VARIANTS}
-          >
+          <PersonChip
+            name={FILTER_ACTIVE_NAME}
+            color={respondentColors[FILTER_ACTIVE_NAME]}
+            isActive
+          />
+          {FILTER_DIMMED_NAMES.map(name => (
             <PersonChip
-              name={FILTER_ACTIVE_NAME}
-              color={respondentColors[FILTER_ACTIVE_NAME]}
-              isActive
+              key={name}
+              name={name}
+              color={respondentColors[name]}
+              isActive={false}
             />
-            {FILTER_DIMMED_NAMES.map(name => (
-              <PersonChip
-                key={name}
-                name={name}
-                color={respondentColors[name]}
-                isActive={false}
-              />
-            ))}
-          </motion.div>
+          ))}
         </motion.div>
-        <motion.div
-          className="absolute inset-0 hidden lg:block"
-          variants={HEATMAP_BEST_WINDOW_TRACK_VARIANTS}
-        >
-          <motion.div
-            className={cn(
-              FLOATING_PANEL,
-              "top-24 -right-6 grid w-[200px] justify-items-center gap-1 p-5 text-center",
-            )}
-            variants={HEATMAP_BEST_WINDOW_TILT_VARIANTS}
-          >
-            <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
-              <ThumbsUp className="size-4" />
-            </span>
-            <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
-            <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
-              {VISUAL_COPY.recommendationDates}
-            </span>
-            <span className="text-text-secondary text-xs font-bold">
-              {VISUAL_COPY.recommendationPeople}
-            </span>
-          </motion.div>
-        </motion.div>
-        <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
-          <DemoJulyHeatmap className="[zoom:0.55]" />
-          <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
-        </div>
       </motion.div>
-    </MotionConfig>
+      <motion.div
+        className="absolute inset-0 hidden lg:block"
+        variants={HEATMAP_BEST_WINDOW_TRACK_VARIANTS}
+      >
+        <motion.div
+          className={cn(
+            FLOATING_PANEL,
+            "top-24 -right-6 grid w-[200px] justify-items-center gap-1 p-5 text-center",
+          )}
+          variants={HEATMAP_BEST_WINDOW_TILT_VARIANTS}
+        >
+          <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
+            <ThumbsUp className="size-4" />
+          </span>
+          <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
+          <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
+            {VISUAL_COPY.recommendationDates}
+          </span>
+          <span className="text-text-secondary text-xs font-bold">
+            {VISUAL_COPY.recommendationPeople}
+          </span>
+        </motion.div>
+      </motion.div>
+      <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
+        <DemoJulyHeatmap className="[zoom:0.55]" />
+        <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
+      </div>
+    </>
   );
 }
 
@@ -405,44 +434,39 @@ function ConflictVisual() {
 
 function CreateVisual() {
   return (
-    <MotionConfig reducedMotion="user">
-      <motion.div
-        className={cn(
-          FLOATING_PANEL,
-          "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
-        )}
-        variants={SCALE_IN_VARIANTS}
-        initial={ENTRY_STATE.STACKED}
-        whileInView={ENTRY_STATE.SPREAD}
-        viewport={ENTRY_VIEWPORT}
-      >
-        <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
-          {VISUAL_COPY.tripName}
-          <Pencil className="text-primary size-5" />
-        </div>
-        <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
-          {SUNDAY_FIRST_WEEKDAYS.map(weekday => (
-            <span
-              key={weekday}
-              className="text-muted-foreground text-center text-[10px] font-bold tracking-wider uppercase"
-            >
-              {weekday}
-            </span>
-          ))}
-          {CREATE_RANGE_DAYS.map(rangeDay => (
-            <span
-              key={rangeDay.day}
-              className={cn(
-                "grid size-9 place-items-center rounded-full text-[13px]",
-                RANGE_DAY_CLASS[rangeDay.kind],
-              )}
-            >
-              {rangeDay.day}
-            </span>
-          ))}
-        </div>
-      </motion.div>
-    </MotionConfig>
+    <motion.div
+      className={cn(
+        FLOATING_PANEL,
+        "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
+      )}
+      variants={CREATE_CALENDAR_VARIANTS}
+    >
+      <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
+        {VISUAL_COPY.tripName}
+        <Pencil className="text-primary size-5" />
+      </div>
+      <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
+        {SUNDAY_FIRST_WEEKDAYS.map(weekday => (
+          <span
+            key={weekday}
+            className="text-muted-foreground text-center text-[10px] font-bold tracking-wider uppercase"
+          >
+            {weekday}
+          </span>
+        ))}
+        {CREATE_RANGE_DAYS.map(rangeDay => (
+          <span
+            key={rangeDay.day}
+            className={cn(
+              "grid size-9 place-items-center rounded-full text-[13px]",
+              RANGE_DAY_CLASS[rangeDay.kind],
+            )}
+          >
+            {rangeDay.day}
+          </span>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -520,4 +544,12 @@ function buildDemoRespondentColors(): Record<string, string | undefined> {
   );
   const colorsByName = Object.fromEntries(nameColorEntries);
   return colorsByName;
+}
+
+function buildFadeInVariants(delaySeconds: number) {
+  const fadeInVariants = {
+    [ENTRY_STATE.STACKED]: { opacity: 0 },
+    [ENTRY_STATE.SPREAD]: { opacity: 1, transition: { ...ENTRY_MOVE_STEP, delay: delaySeconds } },
+  };
+  return fadeInVariants;
 }

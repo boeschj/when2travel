@@ -42,8 +42,8 @@ const FEATURE_COPY = {
 } as const;
 
 const VISUAL_COPY = {
-  tripName: "Ibiza 2026",
-  shareUrl: "justplanthetrip.com/plan/ibiza",
+  tripName: "Hawaii Trip 2026",
+  shareUrl: "justplanthetrip.com/plan/hawaii",
   shareLabel: "Share",
   groupMessage: "everyone PICK YOUR DATES 🙏",
   deliveredLabel: "Delivered",

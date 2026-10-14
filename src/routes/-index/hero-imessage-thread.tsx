@@ -7,7 +7,7 @@ const OUTGOING_BUBBLE_VARIABLES = "[--ios-bubble:#0a84ff] [--ios-screen:#0d0d0e]
 
 const THREAD_COPY = {
   groupName: "Hawaii 2026 🌺",
-  memberCount: "12 people",
+  memberCount: "7 people",
   timestampDay: "Today",
   timestampTime: "9:38 AM",
   deliveredLabel: "Delivered",
@@ -15,7 +15,7 @@ const THREAD_COPY = {
   linkDomain: "justplanthetrip.com",
   linkImage: "/og.png",
   accessibleLabel:
-    "A 12 person group chat called Hawaii 2026 that cannot agree on dates until a friend shares a PlanTheTrip link",
+    "A 7 person group chat called Hawaii 2026 that cannot agree on dates until a friend shares a PlanTheTrip link",
 } as const;
 
 const GROUP_AVATARS = [

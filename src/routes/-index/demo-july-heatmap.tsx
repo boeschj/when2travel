@@ -20,9 +20,10 @@ const DEMO_JULY_PLAN = {
 
 interface DemoJulyHeatmapProps {
   className?: string;
+  selectedRespondentId?: string | null;
 }
 
-export function DemoJulyHeatmap({ className }: DemoJulyHeatmapProps) {
+export function DemoJulyHeatmap({ className, selectedRespondentId = null }: DemoJulyHeatmapProps) {
   const [dialogDate, setDialogDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -51,7 +52,7 @@ export function DemoJulyHeatmap({ className }: DemoJulyHeatmapProps) {
       respondents={respondents}
       respondentColorMap={respondentColorMap}
       bestWindow={null}
-      selectedRespondentId={null}
+      selectedRespondentId={selectedRespondentId}
       onRespondentClick={ignoreRespondentClick}
       onDateClick={handleDateClick}
     >

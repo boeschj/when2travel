@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { CalendarX2, CheckCircle2, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
@@ -92,8 +93,7 @@ const CREATE_RANGE_DAYS = [
 
 const SUNDAY_FIRST_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
-const FILTER_ACTIVE_NAME = "Sam";
-const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
+const FILTER_NAMES = ["Sam", "Joe", "Priya"] as const;
 const DEMO_BLOCKER_NAME = "Charles";
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
@@ -109,6 +109,8 @@ const ENTRY_STATE = {
 
 const CARD_FADE_SECONDS = 0.4;
 const SLOW_FILL_SECONDS = 0.35;
+const PRESSED = { scale: 0.95 } as const;
+const PRESS_TRANSITION = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] } as const;
 const HIDDEN = { opacity: 0 } as const;
 const VISIBLE = { opacity: 1 } as const;
 const SLOW_FILL_STAGGER_SECONDS = 0.15;
@@ -215,12 +217,7 @@ function FeatureCard({ className, copy, entryDelaySeconds, visual }: FeatureCard
       viewport={CARD_VIEWPORT}
       className={cn(CARD_SHELL, className)}
     >
-      <div
-        aria-hidden="true"
-        className="relative h-[300px] sm:h-[340px]"
-      >
-        {visual}
-      </div>
+      <div className="relative h-[300px] sm:h-[340px]">{visual}</div>
       <div className="px-8 pt-4 pb-10 text-center">
         <h3 className="text-2xl font-bold tracking-tight">{copy.title}</h3>
         <p className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty">
@@ -302,23 +299,31 @@ function ShareVisual({ entryDelaySeconds }: EntryDelayProps) {
 }
 
 function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
+  const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null);
+
   const respondentColors = buildDemoRespondentColors();
-  const dimmedFilterRows = FILTER_DIMMED_NAMES.map((name, rowIndex) => {
-    const rowDelaySeconds = entryDelaySeconds + rowIndex * SLOW_FILL_STAGGER_SECONDS;
-    const fadeInVariants = buildSlowFillVariants(HIDDEN, VISIBLE, rowDelaySeconds);
-    const filterRow = { name, fadeInVariants };
+  const hasSelection = selectedRespondentId !== null;
+  const filterRows = FILTER_NAMES.map((name, rowIndex) => {
+    const respondentId = findDemoRespondentId(name);
+    const isFirstRow = rowIndex === 0;
+    const rowDelaySeconds = entryDelaySeconds + (rowIndex - 1) * SLOW_FILL_STAGGER_SECONDS;
+    const fadeInVariants = isFirstRow
+      ? undefined
+      : buildSlowFillVariants(HIDDEN, VISIBLE, rowDelaySeconds);
+    const isSelected = respondentId === selectedRespondentId;
+    const isDimmed = hasSelection && !isSelected;
+    const filterRow = { name, respondentId, fadeInVariants, isSelected, isDimmed };
     return filterRow;
   });
+
+  const handleRespondentToggle = (respondentId: string) => {
+    setSelectedRespondentId(current => (current === respondentId ? null : respondentId));
+  };
 
   return (
     <>
       <div className={cn(FLOATING_PANEL, "top-14 -left-4 hidden -rotate-3 gap-2 p-4 lg:grid")}>
-        <PersonChip
-          name={FILTER_ACTIVE_NAME}
-          color={respondentColors[FILTER_ACTIVE_NAME]}
-          isActive
-        />
-        {dimmedFilterRows.map(filterRow => (
+        {filterRows.map(filterRow => (
           <motion.div
             key={filterRow.name}
             variants={filterRow.fadeInVariants}
@@ -326,7 +331,9 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
             <PersonChip
               name={filterRow.name}
               color={respondentColors[filterRow.name]}
-              isActive={false}
+              isSelected={filterRow.isSelected}
+              isDimmed={filterRow.isDimmed}
+              onClick={() => handleRespondentToggle(filterRow.respondentId)}
             />
           </motion.div>
         ))}
@@ -348,11 +355,11 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
           {VISUAL_COPY.recommendationPeople}
         </span>
       </div>
-      <div
-        inert
-        className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}
-      >
-        <DemoJulyHeatmap className="[zoom:0.55]" />
+      <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
+        <DemoJulyHeatmap
+          className="[zoom:0.55]"
+          selectedRespondentId={selectedRespondentId}
+        />
         <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
       </div>
     </>
@@ -486,28 +493,37 @@ function RangeDayCell({
 function PersonChip({
   name,
   color,
-  isActive,
+  isSelected,
+  isDimmed,
+  onClick,
 }: {
   name: string;
   color: string | undefined;
-  isActive: boolean;
+  isSelected: boolean;
+  isDimmed: boolean;
+  onClick: () => void;
 }) {
-  const activeRingStyle = isActive ? { boxShadow: `0 0 0 1.5px ${color}` } : undefined;
+  const selectedRingStyle = isSelected ? { boxShadow: `0 0 0 1.5px ${color}` } : undefined;
 
   return (
-    <span
+    <motion.button
+      type="button"
+      aria-pressed={isSelected}
       className={cn(
-        "border-border bg-card flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold",
-        !isActive && "opacity-50",
+        "border-border bg-card hover-lift flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold transition-opacity",
+        isDimmed && "opacity-50",
       )}
-      style={activeRingStyle}
+      style={selectedRingStyle}
+      whileTap={PRESSED}
+      transition={PRESS_TRANSITION}
+      onClick={onClick}
     >
       <InitialAvatar
         name={name}
         color={color}
       />
       {name}
-    </span>
+    </motion.button>
   );
 }
 
@@ -616,4 +632,12 @@ function buildSlowFillVariants(
     [ENTRY_STATE.SPREAD]: { ...filled, transition: fillTransition },
   };
   return slowFillVariants;
+}
+
+function findDemoRespondentId(name: string): string {
+  const response = DEMO_PLAN.responses.find(candidate => candidate.name === name);
+  if (!response) {
+    throw new Error(`Demo plan has no respondent named ${name}`);
+  }
+  return response.id;
 }

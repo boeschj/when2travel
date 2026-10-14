@@ -8,6 +8,7 @@ const PRESSED = { scale: 0.95 } as const;
 const ICON_HIDDEN = { opacity: 0, filter: "blur(4px)" } as const;
 const ICON_VISIBLE = { opacity: 1, filter: "blur(0px)" } as const;
 const COPIED_RESET_MILLISECONDS = 2000;
+const COPY_LABEL = "Copy link";
 
 const COPY_STATE = {
   IDLE: "idle",
@@ -37,7 +38,7 @@ export function CopyLinkButton() {
   return (
     <motion.button
       type="button"
-      tabIndex={-1}
+      aria-label={COPY_LABEL}
       className="relative grid size-6 shrink-0 cursor-pointer place-items-center"
       whileTap={PRESSED}
       transition={ICON_SWAP_TRANSITION}

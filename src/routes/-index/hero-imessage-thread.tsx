@@ -40,7 +40,7 @@ const INCOMING_RUNS = [
   {
     sender: "Priya",
     initials: "PR",
-    messages: ["i cant do either"],
+    messages: ["i cant do either 😅"],
   },
 ] as const;
 

@@ -93,7 +93,6 @@ const SUNDAY_FIRST_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as cons
 
 const FILTER_ACTIVE_NAME = "Sam";
 const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
-const FILTER_ROW_NAMES = [FILTER_ACTIVE_NAME, ...FILTER_DIMMED_NAMES] as const;
 const DEMO_BLOCKER_NAME = "Charles";
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
@@ -301,7 +300,7 @@ function ShareVisual({ entryDelaySeconds }: EntryDelayProps) {
 
 function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
   const respondentColors = buildDemoRespondentColors();
-  const filterRows = FILTER_ROW_NAMES.map((name, rowIndex) => {
+  const dimmedFilterRows = FILTER_DIMMED_NAMES.map((name, rowIndex) => {
     const rowDelaySeconds = entryDelaySeconds + rowIndex * FILTER_ROW_STAGGER_SECONDS;
     const filterRow = { name, fadeInVariants: buildFadeInVariants(rowDelaySeconds) };
     return filterRow;
@@ -310,7 +309,12 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
   return (
     <>
       <div className={cn(FLOATING_PANEL, "top-14 -left-4 hidden -rotate-3 gap-2 p-4 lg:grid")}>
-        {filterRows.map(filterRow => (
+        <PersonChip
+          name={FILTER_ACTIVE_NAME}
+          color={respondentColors[FILTER_ACTIVE_NAME]}
+          isActive
+        />
+        {dimmedFilterRows.map(filterRow => (
           <motion.div
             key={filterRow.name}
             variants={filterRow.fadeInVariants}
@@ -318,7 +322,7 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
             <PersonChip
               name={filterRow.name}
               color={respondentColors[filterRow.name]}
-              isActive={filterRow.name === FILTER_ACTIVE_NAME}
+              isActive={false}
             />
           </motion.div>
         ))}

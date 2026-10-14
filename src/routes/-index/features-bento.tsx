@@ -88,10 +88,11 @@ const SUNDAY_FIRST_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as cons
 
 const FILTER_ACTIVE_NAME = "Sam";
 const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
+const FILTER_ROW_NAMES = [FILTER_ACTIVE_NAME, ...FILTER_DIMMED_NAMES] as const;
 const DEMO_BLOCKER_NAME = "Charles";
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
-const EASE_IN = [0.42, 0, 1, 1] as const;
+const EASE_OUT = [0, 0, 0.58, 1] as const;
 const GRID_VIEWPORT = { once: true, amount: 0.25 } as const;
 const ENTRY_STEP_SECONDS = 0.3;
 const ENTRY_MOVE_STEP = { duration: ENTRY_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
@@ -100,7 +101,8 @@ const ENTRY_STATE = {
   SPREAD: "spread",
 } as const;
 
-const CARD_FADE_SECONDS = 0.6;
+const CARD_FADE_SECONDS = 0.4;
+const FILTER_ROW_STAGGER_SECONDS = 0.1;
 const CARD_STAGGER_SECONDS = 0.15;
 const CARD_ENTRY_DELAY_SECONDS = {
   SHARE: 0,
@@ -110,7 +112,7 @@ const CARD_ENTRY_DELAY_SECONDS = {
 } as const;
 const VISUAL_ANIMATION_SECONDS = {
   SHARE: ENTRY_STEP_SECONDS * 2,
-  HEATMAP: ENTRY_STEP_SECONDS * 2,
+  HEATMAP: ENTRY_STEP_SECONDS + FILTER_ROW_STAGGER_SECONDS * (FILTER_ROW_NAMES.length - 1),
   CONFLICTS: ENTRY_STEP_SECONDS * 3,
 } as const;
 const VISUAL_ENTRY_DELAY_SECONDS = {
@@ -136,11 +138,7 @@ const CONFLICT_NOTE_POSE = {
   stacked: { x: "150%", rotate: 0 },
   spread: { x: 0, rotate: -2 },
 } as const;
-const HEATMAP_FILTER_START_X = "42%";
-const HEATMAP_BEST_WINDOW_START_X = "-41%";
 const CONFLICT_RESPONDENTS_START_X = "150%";
-const HEATMAP_FILTER_TILT = -3;
-const HEATMAP_BEST_WINDOW_TILT = 3;
 
 const CARD_SHELL =
   "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";
@@ -313,63 +311,45 @@ function ShareVisual({ entryDelaySeconds }: EntryDelayProps) {
 
 function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
   const respondentColors = buildDemoRespondentColors();
-  const tiltDelaySeconds = entryDelaySeconds + ENTRY_STEP_SECONDS;
-  const filterTrackVariants = buildSlideInVariants(HEATMAP_FILTER_START_X, entryDelaySeconds);
-  const bestWindowTrackVariants = buildSlideInVariants(
-    HEATMAP_BEST_WINDOW_START_X,
-    entryDelaySeconds,
-  );
-  const filterTiltVariants = buildTiltVariants(HEATMAP_FILTER_TILT, tiltDelaySeconds);
-  const bestWindowTiltVariants = buildTiltVariants(HEATMAP_BEST_WINDOW_TILT, tiltDelaySeconds);
+  const filterRows = FILTER_ROW_NAMES.map((name, rowIndex) => {
+    const rowDelaySeconds = entryDelaySeconds + rowIndex * FILTER_ROW_STAGGER_SECONDS;
+    const filterRow = { name, fadeInVariants: buildFadeInVariants(rowDelaySeconds) };
+    return filterRow;
+  });
 
   return (
     <>
-      <motion.div
-        className="absolute inset-0 hidden lg:block"
-        variants={filterTrackVariants}
-      >
-        <motion.div
-          className={cn(FLOATING_PANEL, "top-14 -left-4 grid gap-2 p-4")}
-          variants={filterTiltVariants}
-        >
-          <PersonChip
-            name={FILTER_ACTIVE_NAME}
-            color={respondentColors[FILTER_ACTIVE_NAME]}
-            isActive
-          />
-          {FILTER_DIMMED_NAMES.map(name => (
+      <div className={cn(FLOATING_PANEL, "top-14 -left-4 hidden -rotate-3 gap-2 p-4 lg:grid")}>
+        {filterRows.map(filterRow => (
+          <motion.div
+            key={filterRow.name}
+            variants={filterRow.fadeInVariants}
+          >
             <PersonChip
-              key={name}
-              name={name}
-              color={respondentColors[name]}
-              isActive={false}
+              name={filterRow.name}
+              color={respondentColors[filterRow.name]}
+              isActive={filterRow.name === FILTER_ACTIVE_NAME}
             />
-          ))}
-        </motion.div>
-      </motion.div>
-      <motion.div
-        className="absolute inset-0 hidden lg:block"
-        variants={bestWindowTrackVariants}
+          </motion.div>
+        ))}
+      </div>
+      <div
+        className={cn(
+          FLOATING_PANEL,
+          "top-24 -right-6 hidden w-[200px] rotate-3 justify-items-center gap-1 p-5 text-center lg:grid",
+        )}
       >
-        <motion.div
-          className={cn(
-            FLOATING_PANEL,
-            "top-24 -right-6 grid w-[200px] justify-items-center gap-1 p-5 text-center",
-          )}
-          variants={bestWindowTiltVariants}
-        >
-          <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
-            <ThumbsUp className="size-4" />
-          </span>
-          <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
-          <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
-            {VISUAL_COPY.recommendationDates}
-          </span>
-          <span className="text-text-secondary text-xs font-bold">
-            {VISUAL_COPY.recommendationPeople}
-          </span>
-        </motion.div>
-      </motion.div>
+        <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
+          <ThumbsUp className="size-4" />
+        </span>
+        <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
+        <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
+          {VISUAL_COPY.recommendationDates}
+        </span>
+        <span className="text-text-secondary text-xs font-bold">
+          {VISUAL_COPY.recommendationPeople}
+        </span>
+      </div>
       <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
         <DemoJulyHeatmap className="[zoom:0.55]" />
         <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
@@ -539,7 +519,7 @@ function buildEntryStep(delaySeconds: number) {
 }
 
 function buildCardFadeVariants(delaySeconds: number) {
-  const fadeTransition = { duration: CARD_FADE_SECONDS, ease: EASE_IN, delay: delaySeconds };
+  const fadeTransition = { duration: CARD_FADE_SECONDS, ease: EASE_OUT, delay: delaySeconds };
   const cardFadeVariants = {
     [ENTRY_STATE.STACKED]: { opacity: 0 },
     [ENTRY_STATE.SPREAD]: { opacity: 1, transition: fadeTransition },
@@ -571,12 +551,12 @@ function buildSlideInVariants(startX: string, delaySeconds: number) {
   return slideInVariants;
 }
 
-function buildTiltVariants(rotate: number, delaySeconds: number) {
-  const tiltVariants = {
-    [ENTRY_STATE.STACKED]: { rotate: 0 },
-    [ENTRY_STATE.SPREAD]: { rotate, transition: buildEntryStep(delaySeconds) },
+function buildFadeInVariants(delaySeconds: number) {
+  const fadeInVariants = {
+    [ENTRY_STATE.STACKED]: { opacity: 0 },
+    [ENTRY_STATE.SPREAD]: { opacity: 1, transition: buildEntryStep(delaySeconds) },
   };
-  return tiltVariants;
+  return fadeInVariants;
 }
 
 function buildScaleInVariants(delaySeconds: number) {

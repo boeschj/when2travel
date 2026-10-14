@@ -98,11 +98,11 @@ const ENTRY_STATE = {
   SPREAD: "spread",
 } as const;
 
-const EASE = [0.25, 0.1, 0.25, 1] as const;
+const EASE_IN = [0.42, 0, 1, 1] as const;
 const CARD_FADE_SECONDS = 0.4;
 const CARD_FADE_VARIANTS = {
   [ENTRY_STATE.STACKED]: { opacity: 0 },
-  [ENTRY_STATE.SPREAD]: { opacity: 1, transition: { duration: CARD_FADE_SECONDS, ease: EASE } },
+  [ENTRY_STATE.SPREAD]: { opacity: 1, transition: { duration: CARD_FADE_SECONDS, ease: EASE_IN } },
 } as const;
 const VISUAL_ANIMATION_DELAY_SECONDS = CARD_FADE_SECONDS;
 const VISUAL_MOVE_STEP = { ...ENTRY_MOVE_STEP, delay: VISUAL_ANIMATION_DELAY_SECONDS } as const;

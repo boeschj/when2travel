@@ -1,11 +1,12 @@
+import { Suspense } from "react";
 import type { ReactNode } from "react";
 
 import { buildColorMap, cn } from "@/lib/utils";
 import Logo from "@/components/shared/logo";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
-import { DemoJulyHeatmap } from "./demo-july-heatmap";
 import { DEMO_PLAN } from "./demo-plan-data";
+import { DemoHeatmapPlaceholder, LazyDemoJulyHeatmap } from "./lazy-demos";
 
 const FOLDER_SURFACE = "bg-[#1f3319]";
 
@@ -101,7 +102,9 @@ export function HeatmapFolder({ className }: DeskObjectProps) {
       subtitle={HEATMAP_FOLDER_COPY.subtitle}
       className={className}
     >
-      <DemoJulyHeatmap />
+      <Suspense fallback={<DemoHeatmapPlaceholder />}>
+        <LazyDemoJulyHeatmap />
+      </Suspense>
       <ResultsLegend className="mt-3 justify-center" />
     </FolderCard>
   );

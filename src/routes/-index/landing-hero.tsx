@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { useFirstKnownPlanId } from "@/hooks/use-auth-tokens";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { ArrowRight } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
 import type { TargetAndTransition, Transition, Variants } from "motion/react";
@@ -7,7 +9,7 @@ import { AppLink } from "@/components/shared/app-link";
 
 import { AppIconTile, BoardingPass, CrewFolder, HeatmapFolder } from "./desk-objects";
 import { HeroImessageThread } from "./hero-imessage-thread";
-import { TripLengthCard } from "./trip-length-card";
+import { LazyTripLengthCard } from "./lazy-demos";
 
 const HERO_COPY = {
   headingLineOne: "Get the trip out of",
@@ -74,7 +76,11 @@ const BOTTOM_OBJECT_VARIANTS = buildRevealVariants({
   transition: { ...OBJECT_REVEAL, delay: REVEAL_DELAY_SECONDS.OBJECTS },
 });
 
+const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
+
 export function LandingHero() {
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
+
   return (
     <section
       id="top"
@@ -103,10 +109,16 @@ export function LandingHero() {
               variants={TOP_OBJECT_VARIANTS}
             >
               <BoardingPass className="relative rotate-6 hover:z-20" />
-              <TripLengthCard className="absolute top-[150px] left-6 z-10 -rotate-5" />
+              {isDesktop && (
+                <Suspense fallback={null}>
+                  <LazyTripLengthCard className="absolute top-[150px] left-6 z-10 -rotate-5" />
+                </Suspense>
+              )}
             </motion.div>
             <motion.div variants={BOTTOM_OBJECT_VARIANTS}>
-              <HeatmapFolder className="xl:short:[zoom:0.52] -mb-40 ml-2 -rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
+              {isDesktop && (
+                <HeatmapFolder className="xl:short:[zoom:0.52] -mb-40 ml-2 -rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
+              )}
             </motion.div>
           </div>
         </motion.div>

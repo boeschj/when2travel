@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { ReactNode } from "react";
 import { CalendarX2, CheckCircle2, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
@@ -9,9 +9,13 @@ import { Button } from "@/components/ui/button";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
 import { CopyLinkButton } from "./copy-link-button";
-import { DemoJulyHeatmap } from "./demo-july-heatmap";
 import { DEMO_CURRENT_USER_ID, DEMO_PLAN } from "./demo-plan-data";
-import { SeeAlternativesButton } from "./see-alternatives-button";
+import {
+  DemoHeatmapPlaceholder,
+  LazyDemoJulyHeatmap,
+  LazySeeAlternativesButton,
+  SeeAlternativesPlaceholder,
+} from "./lazy-demos";
 
 const SECTION_COPY = {
   eyebrow: "Features",
@@ -352,10 +356,12 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
         </span>
       </div>
       <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
-        <DemoJulyHeatmap
-          className="[zoom:0.55]"
-          selectedRespondentId={selectedRespondentId}
-        />
+        <Suspense fallback={<DemoHeatmapPlaceholder className="[zoom:0.55]" />}>
+          <LazyDemoJulyHeatmap
+            className="[zoom:0.55]"
+            selectedRespondentId={selectedRespondentId}
+          />
+        </Suspense>
         <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
       </div>
     </>
@@ -399,7 +405,9 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
       >
         {VISUAL_COPY.conflictNote}
         <motion.div variants={actionVariants}>
-          <SeeAlternativesButton />
+          <Suspense fallback={<SeeAlternativesPlaceholder />}>
+            <LazySeeAlternativesButton />
+          </Suspense>
         </motion.div>
       </motion.div>
     </>

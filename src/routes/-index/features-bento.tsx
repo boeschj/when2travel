@@ -98,21 +98,18 @@ const ENTRY_STATE = {
   SPREAD: "spread",
 } as const;
 
-const CARD_REVEAL_DELAY_SECONDS = {
-  TITLE: 0,
-  DESCRIPTION: ENTRY_STEP_SECONDS,
-  VISUAL: ENTRY_STEP_SECONDS * 2,
+const EASE = [0.25, 0.1, 0.25, 1] as const;
+const CARD_FADE_SECONDS = 0.4;
+const CARD_FADE_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { opacity: 0 },
+  [ENTRY_STATE.SPREAD]: { opacity: 1, transition: { duration: CARD_FADE_SECONDS, ease: EASE } },
 } as const;
-const VISUAL_ANIMATION_DELAY_SECONDS = ENTRY_STEP_SECONDS * 3;
+const VISUAL_ANIMATION_DELAY_SECONDS = CARD_FADE_SECONDS;
 const VISUAL_MOVE_STEP = { ...ENTRY_MOVE_STEP, delay: VISUAL_ANIMATION_DELAY_SECONDS } as const;
 const VISUAL_TILT_STEP = {
   ...ENTRY_MOVE_STEP,
   delay: VISUAL_ANIMATION_DELAY_SECONDS + ENTRY_STEP_SECONDS,
 } as const;
-
-const TITLE_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.TITLE);
-const DESCRIPTION_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.DESCRIPTION);
-const VISUAL_FADE_VARIANTS = buildFadeInVariants(CARD_REVEAL_DELAY_SECONDS.VISUAL);
 
 const SHARE_STACK_TRANSITION = {
   x: VISUAL_MOVE_STEP,
@@ -234,31 +231,23 @@ interface FeatureCardProps {
 function FeatureCard({ className, copy, visual }: FeatureCardProps) {
   return (
     <motion.article
+      variants={CARD_FADE_VARIANTS}
       className={cn(CARD_SHELL, className)}
       initial={ENTRY_STATE.STACKED}
       whileInView={ENTRY_STATE.SPREAD}
       viewport={ENTRY_VIEWPORT}
     >
-      <motion.div
+      <div
         inert
         className="relative h-[300px] sm:h-[340px]"
-        variants={VISUAL_FADE_VARIANTS}
       >
         {visual}
-      </motion.div>
+      </div>
       <div className="px-8 pt-4 pb-10 text-center">
-        <motion.h3
-          className="text-2xl font-bold tracking-tight"
-          variants={TITLE_FADE_VARIANTS}
-        >
-          {copy.title}
-        </motion.h3>
-        <motion.p
-          className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty"
-          variants={DESCRIPTION_FADE_VARIANTS}
-        >
+        <h3 className="text-2xl font-bold tracking-tight">{copy.title}</h3>
+        <p className="text-text-secondary mx-auto mt-3 max-w-[40ch] text-base leading-relaxed text-pretty">
           {copy.description}
-        </motion.p>
+        </p>
       </div>
     </motion.article>
   );
@@ -267,6 +256,7 @@ function FeatureCard({ className, copy, visual }: FeatureCardProps) {
 function ConflictCard() {
   return (
     <motion.article
+      variants={CARD_FADE_VARIANTS}
       className={cn(
         CARD_SHELL,
         "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
@@ -283,18 +273,10 @@ function ConflictCard() {
           <CalendarX2 className="text-primary size-7" />
         </motion.span>
         <div>
-          <motion.h3
-            className="text-2xl font-bold tracking-tight"
-            variants={TITLE_FADE_VARIANTS}
-          >
-            {FEATURE_COPY.conflicts.title}
-          </motion.h3>
-          <motion.p
-            className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty"
-            variants={DESCRIPTION_FADE_VARIANTS}
-          >
+          <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
+          <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
             {FEATURE_COPY.conflicts.description}
-          </motion.p>
+          </p>
         </div>
       </div>
       <div
@@ -544,12 +526,4 @@ function buildDemoRespondentColors(): Record<string, string | undefined> {
   );
   const colorsByName = Object.fromEntries(nameColorEntries);
   return colorsByName;
-}
-
-function buildFadeInVariants(delaySeconds: number) {
-  const fadeInVariants = {
-    [ENTRY_STATE.STACKED]: { opacity: 0 },
-    [ENTRY_STATE.SPREAD]: { opacity: 1, transition: { ...ENTRY_MOVE_STEP, delay: delaySeconds } },
-  };
-  return fadeInVariants;
 }

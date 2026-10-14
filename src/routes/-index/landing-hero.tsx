@@ -1,4 +1,6 @@
 import { ArrowRight } from "lucide-react";
+import { motion, MotionConfig } from "motion/react";
+import type { TargetAndTransition, Variants } from "motion/react";
 
 import { AppLink } from "@/components/shared/app-link";
 
@@ -14,28 +16,88 @@ const HERO_COPY = {
   ctaLabel: "Start planning now",
 } as const;
 
+const EASE_OUT = [0, 0, 0.58, 1] as const;
+const REVEAL_SECONDS = 0.3;
+const TEXT_STAGGER_SECONDS = 0.15;
+const HERO_STATE = {
+  HIDDEN: "hidden",
+  SHOWN: "shown",
+} as const;
+
+const TEXT_HIDDEN = { opacity: 0, filter: "blur(8px)" } as const;
+const TEXT_SHOWN = { opacity: 1, filter: "blur(0px)" } as const;
+const OBJECT_SCALED_DOWN = { opacity: 0, scale: 0.85 } as const;
+const OBJECT_SCALED_UP = { opacity: 1, scale: 1 } as const;
+const OBJECT_BELOW = { y: 160 } as const;
+const OBJECT_IN_PLACE = { y: 0 } as const;
+
+const REVEAL_DELAY_SECONDS = {
+  HEADLINE: 0,
+  SUBHEADING: TEXT_STAGGER_SECONDS,
+  CTA: TEXT_STAGGER_SECONDS * 2,
+  TOP_OBJECTS: TEXT_STAGGER_SECONDS * 2 + REVEAL_SECONDS,
+  BOTTOM_OBJECTS: TEXT_STAGGER_SECONDS * 2 + REVEAL_SECONDS * 2,
+} as const;
+
+const HEADLINE_VARIANTS = buildRevealVariants(
+  TEXT_HIDDEN,
+  TEXT_SHOWN,
+  REVEAL_DELAY_SECONDS.HEADLINE,
+);
+const SUBHEADING_VARIANTS = buildRevealVariants(
+  TEXT_HIDDEN,
+  TEXT_SHOWN,
+  REVEAL_DELAY_SECONDS.SUBHEADING,
+);
+const CTA_VARIANTS = buildRevealVariants(TEXT_HIDDEN, TEXT_SHOWN, REVEAL_DELAY_SECONDS.CTA);
+const TOP_OBJECT_VARIANTS = buildRevealVariants(
+  OBJECT_SCALED_DOWN,
+  OBJECT_SCALED_UP,
+  REVEAL_DELAY_SECONDS.TOP_OBJECTS,
+);
+const BOTTOM_OBJECT_VARIANTS = buildRevealVariants(
+  OBJECT_BELOW,
+  OBJECT_IN_PLACE,
+  REVEAL_DELAY_SECONDS.BOTTOM_OBJECTS,
+);
+
 export function LandingHero() {
   return (
     <section
       id="top"
       className="px-4 lg:px-5"
     >
-      <div className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-clip rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[min(820px,calc(100svh-6rem))] lg:min-h-[500px] lg:grid-cols-[minmax(0,380px)_540px_minmax(0,380px)] lg:justify-center lg:gap-x-4 lg:px-0 lg:pt-0 xl:grid-cols-[minmax(0,380px)_620px_minmax(0,380px)]">
-        <HeroCopy />
+      <MotionConfig reducedMotion="user">
+        <motion.div
+          initial={HERO_STATE.HIDDEN}
+          animate={HERO_STATE.SHOWN}
+          className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-clip rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[min(820px,calc(100svh-6rem))] lg:min-h-[500px] lg:grid-cols-[minmax(0,380px)_540px_minmax(0,380px)] lg:justify-center lg:gap-x-4 lg:px-0 lg:pt-0 xl:grid-cols-[minmax(0,380px)_620px_minmax(0,380px)]"
+        >
+          <HeroCopy />
 
-        <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end">
-          <HeroImessageThread className="xl:short:[zoom:0.5] lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.48] xl:[zoom:0.64]" />
-          <CrewFolder className="xl:short:[zoom:0.5] hidden lg:-mb-12 lg:ml-4 lg:block lg:rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
-        </div>
-
-        <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-start">
-          <div className="xl:short:[zoom:0.6] relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78]">
-            <BoardingPass className="relative rotate-6 hover:z-20" />
-            <TripLengthCard className="absolute top-[150px] left-6 z-10 -rotate-5" />
+          <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end">
+            <motion.div variants={TOP_OBJECT_VARIANTS}>
+              <HeroImessageThread className="xl:short:[zoom:0.5] lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.48] xl:[zoom:0.64]" />
+            </motion.div>
+            <motion.div variants={BOTTOM_OBJECT_VARIANTS}>
+              <CrewFolder className="xl:short:[zoom:0.5] hidden lg:-mb-12 lg:ml-4 lg:block lg:rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
+            </motion.div>
           </div>
-          <HeatmapFolder className="xl:short:[zoom:0.52] -mb-40 ml-2 -rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
-        </div>
-      </div>
+
+          <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-start">
+            <motion.div
+              className="xl:short:[zoom:0.6] relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78]"
+              variants={TOP_OBJECT_VARIANTS}
+            >
+              <BoardingPass className="relative rotate-6 hover:z-20" />
+              <TripLengthCard className="absolute top-[150px] left-6 z-10 -rotate-5" />
+            </motion.div>
+            <motion.div variants={BOTTOM_OBJECT_VARIANTS}>
+              <HeatmapFolder className="xl:short:[zoom:0.52] -mb-40 ml-2 -rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
+            </motion.div>
+          </div>
+        </motion.div>
+      </MotionConfig>
     </section>
   );
 }
@@ -43,21 +105,44 @@ export function LandingHero() {
 function HeroCopy() {
   return (
     <div className="lg:short:gap-4 grid justify-items-center gap-6 text-center lg:col-start-2 lg:row-start-1 lg:self-center">
-      <AppIconTile className="lg:short:mb-0 lg:short:[zoom:0.7] mb-3" />
-      <h1 className="lg:short:text-[min(5.6vw,4.2rem,9svh)] text-[clamp(2.6rem,5.6vw,4.2rem)] leading-[1.02] font-extrabold tracking-[-0.05em] text-balance">
+      <motion.div variants={HEADLINE_VARIANTS}>
+        <AppIconTile className="lg:short:mb-0 lg:short:[zoom:0.7] mb-3" />
+      </motion.div>
+      <motion.h1
+        className="lg:short:text-[min(5.6vw,4.2rem,9svh)] text-[clamp(2.6rem,5.6vw,4.2rem)] leading-[1.02] font-extrabold tracking-[-0.05em] text-balance"
+        variants={HEADLINE_VARIANTS}
+      >
         <span className="block">{HERO_COPY.headingLineOne}</span>
         <span className="text-text-secondary/75 block">{HERO_COPY.headingLineTwo}</span>
-      </h1>
-      <p className="text-text-secondary max-w-[52ch] text-[clamp(1.05rem,1.6vw,1.2rem)] leading-relaxed text-pretty">
-        {HERO_COPY.subheading}
-      </p>
-      <AppLink
-        to="/create"
-        className="bg-primary text-primary-foreground lg:short:mt-0 lg:short:py-3.5 ease-out-quart mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition-[scale] duration-300 hover:scale-105 motion-reduce:transition-none"
+      </motion.h1>
+      <motion.p
+        className="text-text-secondary max-w-[52ch] text-[clamp(1.05rem,1.6vw,1.2rem)] leading-relaxed text-pretty"
+        variants={SUBHEADING_VARIANTS}
       >
-        {HERO_COPY.ctaLabel}
-        <ArrowRight className="size-5" />
-      </AppLink>
+        {HERO_COPY.subheading}
+      </motion.p>
+      <motion.div variants={CTA_VARIANTS}>
+        <AppLink
+          to="/create"
+          className="bg-primary text-primary-foreground lg:short:mt-0 lg:short:py-3.5 ease-out-quart mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition-[scale] duration-300 hover:scale-105 motion-reduce:transition-none"
+        >
+          {HERO_COPY.ctaLabel}
+          <ArrowRight className="size-5" />
+        </AppLink>
+      </motion.div>
     </div>
   );
+}
+
+function buildRevealVariants(
+  hidden: TargetAndTransition,
+  shown: TargetAndTransition,
+  delaySeconds: number,
+): Variants {
+  const revealTransition = { duration: REVEAL_SECONDS, ease: EASE_OUT, delay: delaySeconds };
+  const revealVariants = {
+    [HERO_STATE.HIDDEN]: hidden,
+    [HERO_STATE.SHOWN]: { ...shown, transition: revealTransition },
+  };
+  return revealVariants;
 }

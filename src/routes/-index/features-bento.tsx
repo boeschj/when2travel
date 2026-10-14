@@ -90,7 +90,15 @@ const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
 const DEMO_BLOCKER_NAME = "Charles";
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
-const SHARE_STACK_VIEWPORT = { once: true, amount: 0.6 } as const;
+const ENTRY_VIEWPORT = { once: true, amount: 0.6 } as const;
+const ENTRY_STEP_SECONDS = 0.3;
+const ENTRY_MOVE_STEP = { duration: ENTRY_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
+const ENTRY_TILT_STEP = { ...ENTRY_MOVE_STEP, delay: ENTRY_STEP_SECONDS } as const;
+const ENTRY_STATE = {
+  STACKED: "stacked",
+  SPREAD: "spread",
+} as const;
+
 const SHARE_LINK_CARD_MOTION = {
   stacked: { x: 80, y: 56, rotate: 0 },
   spread: { x: 0, y: 0, rotate: -3 },
@@ -99,12 +107,27 @@ const SHARE_MESSAGE_CARD_MOTION = {
   stacked: { x: -80, y: -56, rotate: 0 },
   spread: { x: 0, y: 0, rotate: 2 },
 } as const;
-const SHARE_STACK_STEP_SECONDS = 0.3;
-const SHARE_STACK_MOVE_STEP = { duration: SHARE_STACK_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
 const SHARE_STACK_TRANSITION = {
-  x: SHARE_STACK_MOVE_STEP,
-  y: SHARE_STACK_MOVE_STEP,
-  rotate: { ...SHARE_STACK_MOVE_STEP, delay: SHARE_STACK_STEP_SECONDS },
+  x: ENTRY_MOVE_STEP,
+  y: ENTRY_MOVE_STEP,
+  rotate: ENTRY_TILT_STEP,
+} as const;
+
+const HEATMAP_FILTER_TRACK_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: "42%" },
+  [ENTRY_STATE.SPREAD]: { x: 0, transition: ENTRY_MOVE_STEP },
+} as const;
+const HEATMAP_BEST_WINDOW_TRACK_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: "-41%" },
+  [ENTRY_STATE.SPREAD]: { x: 0, transition: ENTRY_MOVE_STEP },
+} as const;
+const HEATMAP_FILTER_TILT_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { rotate: 0 },
+  [ENTRY_STATE.SPREAD]: { rotate: -3, transition: ENTRY_TILT_STEP },
+} as const;
+const HEATMAP_BEST_WINDOW_TILT_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { rotate: 0 },
+  [ENTRY_STATE.SPREAD]: { rotate: 3, transition: ENTRY_TILT_STEP },
 } as const;
 
 const CARD_SHELL =
@@ -221,7 +244,7 @@ function ShareVisual() {
         className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] gap-3 p-4")}
         initial={SHARE_LINK_CARD_MOTION.stacked}
         whileInView={SHARE_LINK_CARD_MOTION.spread}
-        viewport={SHARE_STACK_VIEWPORT}
+        viewport={ENTRY_VIEWPORT}
         transition={SHARE_STACK_TRANSITION}
       >
         <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
@@ -240,7 +263,7 @@ function ShareVisual() {
         )}
         initial={SHARE_MESSAGE_CARD_MOTION.stacked}
         whileInView={SHARE_MESSAGE_CARD_MOTION.spread}
-        viewport={SHARE_STACK_VIEWPORT}
+        viewport={ENTRY_VIEWPORT}
         transition={SHARE_STACK_TRANSITION}
       >
         <span className="rounded-[18px] rounded-br-md bg-[#0a84ff] px-3 py-[7px] text-[15px] tracking-[-0.02em] text-white">
@@ -256,44 +279,65 @@ function HeatmapVisual() {
   const respondentColors = buildDemoRespondentColors();
 
   return (
-    <>
-      <div className={cn(FLOATING_PANEL, "top-14 -left-4 hidden -rotate-3 gap-2 p-4 lg:grid")}>
-        <PersonChip
-          name={FILTER_ACTIVE_NAME}
-          color={respondentColors[FILTER_ACTIVE_NAME]}
-          isActive
-        />
-        {FILTER_DIMMED_NAMES.map(name => (
-          <PersonChip
-            key={name}
-            name={name}
-            color={respondentColors[name]}
-            isActive={false}
-          />
-        ))}
-      </div>
-      <div
-        className={cn(
-          FLOATING_PANEL,
-          "top-24 -right-6 hidden w-[200px] rotate-3 justify-items-center gap-1 p-5 text-center lg:grid",
-        )}
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        className="absolute inset-0"
+        initial={ENTRY_STATE.STACKED}
+        whileInView={ENTRY_STATE.SPREAD}
+        viewport={ENTRY_VIEWPORT}
       >
-        <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
-          <ThumbsUp className="size-4" />
-        </span>
-        <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
-        <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
-          {VISUAL_COPY.recommendationDates}
-        </span>
-        <span className="text-text-secondary text-xs font-bold">
-          {VISUAL_COPY.recommendationPeople}
-        </span>
-      </div>
-      <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
-        <DemoJulyHeatmap className="[zoom:0.55]" />
-        <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
-      </div>
-    </>
+        <motion.div
+          className="absolute inset-0 hidden lg:block"
+          variants={HEATMAP_FILTER_TRACK_VARIANTS}
+        >
+          <motion.div
+            className={cn(FLOATING_PANEL, "top-14 -left-4 grid gap-2 p-4")}
+            variants={HEATMAP_FILTER_TILT_VARIANTS}
+          >
+            <PersonChip
+              name={FILTER_ACTIVE_NAME}
+              color={respondentColors[FILTER_ACTIVE_NAME]}
+              isActive
+            />
+            {FILTER_DIMMED_NAMES.map(name => (
+              <PersonChip
+                key={name}
+                name={name}
+                color={respondentColors[name]}
+                isActive={false}
+              />
+            ))}
+          </motion.div>
+        </motion.div>
+        <motion.div
+          className="absolute inset-0 hidden lg:block"
+          variants={HEATMAP_BEST_WINDOW_TRACK_VARIANTS}
+        >
+          <motion.div
+            className={cn(
+              FLOATING_PANEL,
+              "top-24 -right-6 grid w-[200px] justify-items-center gap-1 p-5 text-center",
+            )}
+            variants={HEATMAP_BEST_WINDOW_TILT_VARIANTS}
+          >
+            <span className="bg-surface-darker text-primary mb-1 grid size-10 place-items-center rounded-full">
+              <ThumbsUp className="size-4" />
+            </span>
+            <span className="font-extrabold">{VISUAL_COPY.recommendationHeading}</span>
+            <span className="text-[26px] leading-tight font-extrabold tracking-[-0.045em]">
+              {VISUAL_COPY.recommendationDates}
+            </span>
+            <span className="text-text-secondary text-xs font-bold">
+              {VISUAL_COPY.recommendationPeople}
+            </span>
+          </motion.div>
+        </motion.div>
+        <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
+          <DemoJulyHeatmap className="[zoom:0.55]" />
+          <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
+        </div>
+      </motion.div>
+    </MotionConfig>
   );
 }
 

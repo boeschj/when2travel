@@ -130,6 +130,26 @@ const HEATMAP_BEST_WINDOW_TILT_VARIANTS = {
   [ENTRY_STATE.SPREAD]: { rotate: 3, transition: ENTRY_TILT_STEP },
 } as const;
 
+const CONFLICT_ICON_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { scale: 0.6, opacity: 0 },
+  [ENTRY_STATE.SPREAD]: { scale: 1, opacity: 1, transition: ENTRY_MOVE_STEP },
+} as const;
+const CONFLICT_RESPONDENTS_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: "150%" },
+  [ENTRY_STATE.SPREAD]: { x: 0, transition: ENTRY_MOVE_STEP },
+} as const;
+const CONFLICT_NOTE_VARIANTS = {
+  [ENTRY_STATE.STACKED]: { x: "150%", rotate: 0 },
+  [ENTRY_STATE.SPREAD]: {
+    x: 0,
+    rotate: -2,
+    transition: {
+      x: { ...ENTRY_MOVE_STEP, delay: ENTRY_STEP_SECONDS },
+      rotate: { ...ENTRY_MOVE_STEP, delay: ENTRY_STEP_SECONDS * 2 },
+    },
+  },
+} as const;
+
 const CARD_SHELL =
   "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";
 const FLOATING_PANEL =
@@ -210,30 +230,38 @@ function FeatureCard({ className, copy, visual }: FeatureCardProps) {
 
 function ConflictCard() {
   return (
-    <article
-      className={cn(
-        CARD_SHELL,
-        "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
-      )}
-    >
-      <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
-        <span className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]">
-          <CalendarX2 className="text-primary size-7" />
-        </span>
-        <div>
-          <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
-          <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
-            {FEATURE_COPY.conflicts.description}
-          </p>
-        </div>
-      </div>
-      <div
-        inert
-        className="relative h-[320px] lg:h-auto"
+    <MotionConfig reducedMotion="user">
+      <motion.article
+        className={cn(
+          CARD_SHELL,
+          "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
+        )}
+        initial={ENTRY_STATE.STACKED}
+        whileInView={ENTRY_STATE.SPREAD}
+        viewport={ENTRY_VIEWPORT}
       >
-        <ConflictVisual />
-      </div>
-    </article>
+        <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
+          <motion.span
+            className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]"
+            variants={CONFLICT_ICON_VARIANTS}
+          >
+            <CalendarX2 className="text-primary size-7" />
+          </motion.span>
+          <div>
+            <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
+            <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
+              {FEATURE_COPY.conflicts.description}
+            </p>
+          </div>
+        </div>
+        <div
+          inert
+          className="relative h-[320px] lg:h-auto"
+        >
+          <ConflictVisual />
+        </div>
+      </motion.article>
+    </MotionConfig>
   );
 }
 
@@ -346,8 +374,9 @@ function ConflictVisual() {
 
   return (
     <>
-      <div
+      <motion.div
         className={cn(FLOATING_PANEL, "top-10 left-4 flex w-[480px] flex-wrap gap-2 p-5 lg:top-14")}
+        variants={CONFLICT_RESPONDENTS_VARIANTS}
       >
         {DEMO_PLAN.responses.map(response => (
           <StatusChip
@@ -357,18 +386,19 @@ function ConflictVisual() {
             isBlocker={response.name === DEMO_BLOCKER_NAME}
           />
         ))}
-      </div>
-      <div
+      </motion.div>
+      <motion.div
         className={cn(
           FLOATING_PANEL,
-          "top-[170px] left-16 w-[340px] -rotate-2 p-5 text-sm leading-snug lg:top-[200px]",
+          "top-[170px] left-16 w-[340px] p-5 text-sm leading-snug lg:top-[200px]",
         )}
+        variants={CONFLICT_NOTE_VARIANTS}
       >
         {VISUAL_COPY.conflictNote}
         <span className="text-primary mt-2 block text-[13.5px] font-semibold">
           {VISUAL_COPY.conflictLink}
         </span>
-      </div>
+      </motion.div>
     </>
   );
 }

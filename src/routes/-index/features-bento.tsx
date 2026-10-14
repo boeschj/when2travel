@@ -99,7 +99,13 @@ const SHARE_MESSAGE_CARD_MOTION = {
   stacked: { x: -80, y: -56, rotate: 0 },
   spread: { x: 0, y: 0, rotate: 2 },
 } as const;
-const SHARE_STACK_TRANSITION = { duration: 0.3, ease: EASE_OUT_QUART } as const;
+const SHARE_STACK_STEP_SECONDS = 0.3;
+const SHARE_STACK_MOVE_STEP = { duration: SHARE_STACK_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
+const SHARE_STACK_TRANSITION = {
+  x: SHARE_STACK_MOVE_STEP,
+  y: SHARE_STACK_MOVE_STEP,
+  rotate: { ...SHARE_STACK_MOVE_STEP, delay: SHARE_STACK_STEP_SECONDS },
+} as const;
 
 const CARD_SHELL =
   "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";

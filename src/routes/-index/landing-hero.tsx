@@ -2,7 +2,13 @@ import { ArrowRight } from "lucide-react";
 
 import { AppLink } from "@/components/shared/app-link";
 
-import { AppIconTile, BoardingPass, CrewFolder, HeatmapFolder } from "./desk-objects";
+import {
+  AppIconTile,
+  BoardingPass,
+  CrewFolder,
+  HeatmapFolder,
+  TripLengthCard,
+} from "./desk-objects";
 import { HeroImessageThread } from "./hero-imessage-thread";
 
 const HERO_COPY = {
@@ -22,14 +28,17 @@ export function LandingHero() {
       <div className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-hidden rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[820px] lg:grid-cols-[minmax(0,1fr)_620px_minmax(0,1fr)] lg:gap-x-4 lg:px-0 lg:pt-0">
         <HeroCopy />
 
-        <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-end">
-          <HeroImessageThread className="lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.5] xl:[zoom:0.72]" />
-          <HeatmapFolder className="hidden lg:-mb-40 lg:ml-6 lg:block lg:rotate-3 lg:[zoom:0.55] xl:[zoom:0.62]" />
+        <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end">
+          <HeroImessageThread className="lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.48] xl:[zoom:0.64]" />
+          <CrewFolder className="hidden lg:-mb-12 lg:ml-4 lg:block lg:rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
         </div>
 
         <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-start">
-          <BoardingPass className="mt-24 ml-3 rotate-6 lg:[zoom:0.5] xl:[zoom:0.68]" />
-          <CrewFolder className="-mb-10 -rotate-3 lg:[zoom:0.62] xl:[zoom:0.72]" />
+          <div className="relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78]">
+            <BoardingPass className="rotate-6" />
+            <TripLengthCard className="absolute top-[150px] left-10 -rotate-5" />
+          </div>
+          <HeatmapFolder className="-mb-40 ml-2 -rotate-3 lg:[zoom:0.55] xl:[zoom:0.62]" />
         </div>
       </div>
     </section>

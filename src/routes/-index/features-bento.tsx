@@ -364,9 +364,15 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
 }
 
 function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
+  const [selectedRespondentId, setSelectedRespondentId] = useState<string | null>(null);
+
   const respondentColors = buildDemoRespondentColors();
   const noteVariants = buildScaleInVariants(entryDelaySeconds);
   const actionVariants = buildFadeInVariants(entryDelaySeconds + ENTRY_STEP_SECONDS);
+
+  const handleRespondentToggle = (respondentId: string) => {
+    setSelectedRespondentId(current => (current === respondentId ? null : respondentId));
+  };
 
   return (
     <>
@@ -379,6 +385,8 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
             name={response.name}
             color={respondentColors[response.name]}
             isBlocker={response.name === DEMO_BLOCKER_NAME}
+            isSelected={response.id === selectedRespondentId}
+            onClick={() => handleRespondentToggle(response.id)}
           />
         ))}
       </div>
@@ -525,18 +533,28 @@ function StatusChip({
   name,
   color,
   isBlocker,
+  isSelected,
+  onClick,
 }: {
   name: string;
   color: string | undefined;
   isBlocker: boolean;
+  isSelected: boolean;
+  onClick: () => void;
 }) {
   const StatusIcon = isBlocker ? XCircle : CheckCircle2;
 
   return (
-    <motion.span
-      className="border-border bg-card hover-lift flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold"
+    <motion.button
+      type="button"
+      aria-pressed={isSelected}
+      className={cn(
+        "border-border bg-card hover-lift flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold transition-colors",
+        isSelected && "ring-primary bg-primary/20 ring-2",
+      )}
       whileTap={PRESSED}
       transition={PRESS_TRANSITION}
+      onClick={onClick}
     >
       <InitialAvatar
         name={name}
@@ -546,7 +564,7 @@ function StatusChip({
       <StatusIcon
         className={cn("size-4", isBlocker && "text-destructive", !isBlocker && "text-primary")}
       />
-    </motion.span>
+    </motion.button>
   );
 }
 

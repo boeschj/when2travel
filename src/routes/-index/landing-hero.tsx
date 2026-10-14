@@ -53,7 +53,7 @@ function HeroCopy() {
       </p>
       <AppLink
         to="/create"
-        className="bg-primary text-primary-foreground lg:short:mt-0 lg:short:py-3.5 mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition hover:-translate-y-0.5"
+        className="bg-primary text-primary-foreground lg:short:mt-0 lg:short:py-3.5 ease-out-quart mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition-[scale] duration-300 hover:scale-105 motion-reduce:transition-none"
       >
         {HERO_COPY.ctaLabel}
         <ArrowRight className="size-5" />

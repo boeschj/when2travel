@@ -136,7 +136,7 @@ function HeroCopy() {
           {HERO_COPY.headingLineOne}
         </motion.span>
         <motion.span
-          className="text-text-secondary/75 block"
+          className="block"
           variants={HEADLINE_LINE_TWO_VARIANTS}
         >
           {HERO_COPY.headingLineTwo}

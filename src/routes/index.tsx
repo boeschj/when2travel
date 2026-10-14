@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { CtaSection } from "./-index/cta-section";
 import { FaqSection } from "./-index/faq-section";
 import { FeaturesBento } from "./-index/features-bento";
 import { LandingFooter } from "./-index/landing-footer";
@@ -24,6 +25,7 @@ function LandingPage() {
         <LandingHero />
         <FeaturesBento />
         <FaqSection />
+        <CtaSection />
       </main>
       <LandingFooter />
     </div>

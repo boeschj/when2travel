@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
-import type { TargetAndTransition, Variants } from "motion/react";
+import type { TargetAndTransition, Transition, Variants } from "motion/react";
 
 import { AppLink } from "@/components/shared/app-link";
 
@@ -17,49 +17,60 @@ const HERO_COPY = {
 } as const;
 
 const EASE_OUT = [0, 0, 0.58, 1] as const;
-const REVEAL_SECONDS = 0.3;
-const TEXT_STAGGER_SECONDS = 0.15;
+const EASE_OUT_QUAD = [0.25, 0.46, 0.45, 0.94] as const;
+const TEXT_REVEAL_SECONDS = 0.6;
+const TEXT_REVEAL = { duration: TEXT_REVEAL_SECONDS, ease: EASE_OUT_QUAD } as const;
+const OBJECT_REVEAL = { duration: 0.2, ease: EASE_OUT } as const;
 const HERO_STATE = {
   HIDDEN: "hidden",
   SHOWN: "shown",
 } as const;
 
-const TEXT_HIDDEN = { opacity: 0, filter: "blur(8px)" } as const;
-const TEXT_SHOWN = { opacity: 1, filter: "blur(0px)" } as const;
+const TEXT_HIDDEN = { opacity: 0, filter: "blur(10px)", y: "20%" } as const;
+const TEXT_SHOWN = { opacity: 1, filter: "blur(0px)", y: 0 } as const;
 const OBJECT_SCALED_DOWN = { opacity: 0, scale: 0.85 } as const;
 const OBJECT_SCALED_UP = { opacity: 1, scale: 1 } as const;
 const OBJECT_BELOW = { y: 160 } as const;
 const OBJECT_IN_PLACE = { y: 0 } as const;
 
 const REVEAL_DELAY_SECONDS = {
-  HEADLINE: 0,
-  SUBHEADING: TEXT_STAGGER_SECONDS,
-  CTA: TEXT_STAGGER_SECONDS * 2,
-  TOP_OBJECTS: TEXT_STAGGER_SECONDS * 2 + REVEAL_SECONDS,
-  BOTTOM_OBJECTS: TEXT_STAGGER_SECONDS * 2 + REVEAL_SECONDS * 2,
+  HEADLINE_LINE_ONE: 0,
+  HEADLINE_LINE_TWO: 0.1,
+  SUBHEADING: 0.4,
+  CTA: 0.5,
+  OBJECTS: 0.5 + TEXT_REVEAL_SECONDS,
 } as const;
 
-const HEADLINE_VARIANTS = buildRevealVariants(
-  TEXT_HIDDEN,
-  TEXT_SHOWN,
-  REVEAL_DELAY_SECONDS.HEADLINE,
-);
-const SUBHEADING_VARIANTS = buildRevealVariants(
-  TEXT_HIDDEN,
-  TEXT_SHOWN,
-  REVEAL_DELAY_SECONDS.SUBHEADING,
-);
-const CTA_VARIANTS = buildRevealVariants(TEXT_HIDDEN, TEXT_SHOWN, REVEAL_DELAY_SECONDS.CTA);
-const TOP_OBJECT_VARIANTS = buildRevealVariants(
-  OBJECT_SCALED_DOWN,
-  OBJECT_SCALED_UP,
-  REVEAL_DELAY_SECONDS.TOP_OBJECTS,
-);
-const BOTTOM_OBJECT_VARIANTS = buildRevealVariants(
-  OBJECT_BELOW,
-  OBJECT_IN_PLACE,
-  REVEAL_DELAY_SECONDS.BOTTOM_OBJECTS,
-);
+const HEADLINE_LINE_ONE_VARIANTS = buildRevealVariants({
+  hidden: TEXT_HIDDEN,
+  shown: TEXT_SHOWN,
+  transition: { ...TEXT_REVEAL, delay: REVEAL_DELAY_SECONDS.HEADLINE_LINE_ONE },
+});
+const HEADLINE_LINE_TWO_VARIANTS = buildRevealVariants({
+  hidden: TEXT_HIDDEN,
+  shown: TEXT_SHOWN,
+  transition: { ...TEXT_REVEAL, delay: REVEAL_DELAY_SECONDS.HEADLINE_LINE_TWO },
+});
+const SUBHEADING_VARIANTS = buildRevealVariants({
+  hidden: TEXT_HIDDEN,
+  shown: TEXT_SHOWN,
+  transition: { ...TEXT_REVEAL, delay: REVEAL_DELAY_SECONDS.SUBHEADING },
+});
+const CTA_VARIANTS = buildRevealVariants({
+  hidden: TEXT_HIDDEN,
+  shown: TEXT_SHOWN,
+  transition: { ...TEXT_REVEAL, delay: REVEAL_DELAY_SECONDS.CTA },
+});
+const TOP_OBJECT_VARIANTS = buildRevealVariants({
+  hidden: OBJECT_SCALED_DOWN,
+  shown: OBJECT_SCALED_UP,
+  transition: { ...OBJECT_REVEAL, delay: REVEAL_DELAY_SECONDS.OBJECTS },
+});
+const BOTTOM_OBJECT_VARIANTS = buildRevealVariants({
+  hidden: OBJECT_BELOW,
+  shown: OBJECT_IN_PLACE,
+  transition: { ...OBJECT_REVEAL, delay: REVEAL_DELAY_SECONDS.OBJECTS },
+});
 
 export function LandingHero() {
   return (
@@ -105,16 +116,23 @@ export function LandingHero() {
 function HeroCopy() {
   return (
     <div className="lg:short:gap-4 grid justify-items-center gap-6 text-center lg:col-start-2 lg:row-start-1 lg:self-center">
-      <motion.div variants={HEADLINE_VARIANTS}>
+      <motion.div variants={HEADLINE_LINE_ONE_VARIANTS}>
         <AppIconTile className="lg:short:mb-0 lg:short:[zoom:0.7] mb-3" />
       </motion.div>
-      <motion.h1
-        className="lg:short:text-[min(5.6vw,4.2rem,9svh)] text-[clamp(2.6rem,5.6vw,4.2rem)] leading-[1.02] font-extrabold tracking-[-0.05em] text-balance"
-        variants={HEADLINE_VARIANTS}
-      >
-        <span className="block">{HERO_COPY.headingLineOne}</span>
-        <span className="text-text-secondary/75 block">{HERO_COPY.headingLineTwo}</span>
-      </motion.h1>
+      <h1 className="lg:short:text-[min(5.6vw,4.2rem,9svh)] text-[clamp(2.6rem,5.6vw,4.2rem)] leading-[1.02] font-extrabold tracking-[-0.05em] text-balance">
+        <motion.span
+          className="block"
+          variants={HEADLINE_LINE_ONE_VARIANTS}
+        >
+          {HERO_COPY.headingLineOne}
+        </motion.span>
+        <motion.span
+          className="text-text-secondary/75 block"
+          variants={HEADLINE_LINE_TWO_VARIANTS}
+        >
+          {HERO_COPY.headingLineTwo}
+        </motion.span>
+      </h1>
       <motion.p
         className="text-text-secondary max-w-[52ch] text-[clamp(1.05rem,1.6vw,1.2rem)] leading-relaxed text-pretty"
         variants={SUBHEADING_VARIANTS}
@@ -134,15 +152,18 @@ function HeroCopy() {
   );
 }
 
-function buildRevealVariants(
-  hidden: TargetAndTransition,
-  shown: TargetAndTransition,
-  delaySeconds: number,
-): Variants {
-  const revealTransition = { duration: REVEAL_SECONDS, ease: EASE_OUT, delay: delaySeconds };
+function buildRevealVariants({
+  hidden,
+  shown,
+  transition,
+}: {
+  hidden: TargetAndTransition;
+  shown: TargetAndTransition;
+  transition: Transition;
+}): Variants {
   const revealVariants = {
     [HERO_STATE.HIDDEN]: hidden,
-    [HERO_STATE.SHOWN]: { ...shown, transition: revealTransition },
+    [HERO_STATE.SHOWN]: { ...shown, transition },
   };
   return revealVariants;
 }

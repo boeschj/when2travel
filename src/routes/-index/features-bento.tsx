@@ -5,11 +5,12 @@ import { motion, MotionConfig } from "motion/react";
 import type { TargetAndTransition, Variants } from "motion/react";
 
 import { buildColorMap, cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
 import { CopyLinkButton } from "./copy-link-button";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
-import { DEMO_PLAN } from "./demo-plan-data";
+import { DEMO_CURRENT_USER_ID, DEMO_PLAN } from "./demo-plan-data";
 import { SeeAlternativesButton } from "./see-alternatives-button";
 
 const SECTION_COPY = {
@@ -385,6 +386,7 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
             name={response.name}
             color={respondentColors[response.name]}
             isBlocker={response.name === DEMO_BLOCKER_NAME}
+            isCurrentUser={response.id === DEMO_CURRENT_USER_ID}
             isSelected={response.id === selectedRespondentId}
             onClick={() => handleRespondentToggle(response.id)}
           />
@@ -533,27 +535,29 @@ function StatusChip({
   name,
   color,
   isBlocker,
+  isCurrentUser,
   isSelected,
   onClick,
 }: {
   name: string;
   color: string | undefined;
   isBlocker: boolean;
+  isCurrentUser: boolean;
   isSelected: boolean;
   onClick: () => void;
 }) {
   const StatusIcon = isBlocker ? XCircle : CheckCircle2;
 
   return (
-    <motion.button
-      type="button"
+    <Button
+      variant="outline"
       aria-pressed={isSelected}
       className={cn(
-        "border-border bg-card hover-lift flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13.5px] font-semibold transition-colors",
-        isSelected && "ring-primary bg-primary/20 ring-2",
+        "bg-card hover:bg-card h-auto gap-2 py-1 pr-3 pl-1 text-[13.5px] font-semibold text-white hover:scale-100 hover:text-white",
+        isSelected && "ring-primary bg-primary/20 hover:bg-primary/20 ring-2",
+        !isSelected && isCurrentUser && "border-primary",
+        !isSelected && !isCurrentUser && "border-border",
       )}
-      whileTap={PRESSED}
-      transition={PRESS_TRANSITION}
       onClick={onClick}
     >
       <InitialAvatar
@@ -564,7 +568,7 @@ function StatusChip({
       <StatusIcon
         className={cn("size-4", isBlocker && "text-destructive", !isBlocker && "text-primary")}
       />
-    </motion.button>
+    </Button>
   );
 }
 

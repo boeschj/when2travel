@@ -7,8 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useFormFieldContext } from "@/components/ui/tanstack-form";
 
-const MIN_TRIP_LENGTH_DAYS = 1;
-const MAX_TRIP_LENGTH_DAYS = 60;
+export const MIN_TRIP_LENGTH_DAYS = 1;
+export const MAX_TRIP_LENGTH_DAYS = 60;
+
+export const STEPPER_LABELS = {
+  decrement: "Decrease trip length",
+  increment: "Increase trip length",
+} as const;
 
 const STEPPER_BUTTON_CLASS =
   "size-12 rounded-full bg-foreground/5 border border-foreground/10 text-foreground hover:bg-primary hover:text-foreground hover:border-primary transition-all duration-200 group";
@@ -33,6 +38,7 @@ export function DurationPicker() {
       <div className="flex w-full items-center justify-center gap-6">
         <StepperButton
           icon={Minus}
+          label={STEPPER_LABELS.decrement}
           onClick={handleDecrement}
         />
         <DurationDisplay
@@ -41,6 +47,7 @@ export function DurationPicker() {
         />
         <StepperButton
           icon={Plus}
+          label={STEPPER_LABELS.increment}
           onClick={handleIncrement}
         />
       </div>
@@ -62,16 +69,18 @@ function SectionHeader() {
 
 interface StepperButtonProps {
   icon: LucideIcon;
+  label: string;
   onClick: () => void;
 }
 
-function StepperButton({ icon: Icon, onClick }: StepperButtonProps) {
+export function StepperButton({ icon: Icon, label, onClick }: StepperButtonProps) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon"
       className={STEPPER_BUTTON_CLASS}
+      aria-label={label}
       onClick={onClick}
     >
       <Icon className="h-6 w-6 transition-transform group-hover:scale-110" />
@@ -84,7 +93,7 @@ interface DurationDisplayProps {
   label: string;
 }
 
-function DurationDisplay({ value, label }: DurationDisplayProps) {
+export function DurationDisplay({ value, label }: DurationDisplayProps) {
   return (
     <div className="flex flex-col items-center">
       <motion.span

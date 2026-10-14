@@ -60,11 +60,16 @@ const RANGE_DAY_KIND = {
 
 type RangeDayKind = (typeof RANGE_DAY_KIND)[keyof typeof RANGE_DAY_KIND];
 
-const RANGE_DAY_CLASS: Record<RangeDayKind, string> = {
+const RANGE_DAY_TEXT_CLASS: Record<RangeDayKind, string> = {
   [RANGE_DAY_KIND.BEFORE]: "text-muted-foreground opacity-50",
-  [RANGE_DAY_KIND.ENDPOINT]: "bg-primary text-primary-foreground shadow-glow",
-  [RANGE_DAY_KIND.MIDDLE]: "bg-primary/20 text-white",
+  [RANGE_DAY_KIND.ENDPOINT]: "text-foreground",
+  [RANGE_DAY_KIND.MIDDLE]: "text-white",
   [RANGE_DAY_KIND.AFTER]: "text-foreground",
+};
+
+const RANGE_DAY_FILL_CLASS: Partial<Record<RangeDayKind, string>> = {
+  [RANGE_DAY_KIND.ENDPOINT]: "bg-primary shadow-glow",
+  [RANGE_DAY_KIND.MIDDLE]: "bg-primary/20",
 };
 
 const CREATE_RANGE_DAYS = [
@@ -93,6 +98,7 @@ const DEMO_BLOCKER_NAME = "Charles";
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
 const EASE_OUT = [0, 0, 0.58, 1] as const;
+const EASE_IN = [0.42, 0, 1, 1] as const;
 const GRID_VIEWPORT = { once: true, amount: 0.25 } as const;
 const ENTRY_STEP_SECONDS = 0.3;
 const ENTRY_MOVE_STEP = { duration: ENTRY_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
@@ -102,6 +108,8 @@ const ENTRY_STATE = {
 } as const;
 
 const CARD_FADE_SECONDS = 0.4;
+const DATE_FILL_SECONDS = 0.2;
+const DATE_FILL_STAGGER_SECONDS = 0.1;
 const FILTER_ROW_STAGGER_SECONDS = 0.1;
 const CARD_STAGGER_SECONDS = 0.15;
 const CARD_ENTRY_DELAY_SECONDS = {
@@ -379,15 +387,22 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
 }
 
 function CreateVisual({ entryDelaySeconds }: EntryDelayProps) {
-  const calendarVariants = buildScaleInVariants(entryDelaySeconds);
+  const filledRangeDays = CREATE_RANGE_DAYS.filter(
+    rangeDay => rangeDay.kind in RANGE_DAY_FILL_CLASS,
+  );
+  const rangeDayCells = CREATE_RANGE_DAYS.map(rangeDay => {
+    const fillOrder = filledRangeDays.indexOf(rangeDay);
+    const fillDelaySeconds = entryDelaySeconds + fillOrder * DATE_FILL_STAGGER_SECONDS;
+    const rangeDayCell = { ...rangeDay, fillDelaySeconds };
+    return rangeDayCell;
+  });
 
   return (
-    <motion.div
+    <div
       className={cn(
         FLOATING_PANEL,
         "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
       )}
-      variants={calendarVariants}
     >
       <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
         {VISUAL_COPY.tripName}
@@ -402,19 +417,58 @@ function CreateVisual({ entryDelaySeconds }: EntryDelayProps) {
             {weekday}
           </span>
         ))}
-        {CREATE_RANGE_DAYS.map(rangeDay => (
-          <span
-            key={rangeDay.day}
-            className={cn(
-              "grid size-9 place-items-center rounded-full text-[13px]",
-              RANGE_DAY_CLASS[rangeDay.kind],
-            )}
-          >
-            {rangeDay.day}
-          </span>
+        {rangeDayCells.map(rangeDayCell => (
+          <RangeDayCell
+            key={rangeDayCell.day}
+            day={rangeDayCell.day}
+            kind={rangeDayCell.kind}
+            fillDelaySeconds={rangeDayCell.fillDelaySeconds}
+          />
         ))}
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+function RangeDayCell({
+  day,
+  kind,
+  fillDelaySeconds,
+}: {
+  day: number;
+  kind: RangeDayKind;
+  fillDelaySeconds: number;
+}) {
+  const fillClass = RANGE_DAY_FILL_CLASS[kind];
+  const isEndpoint = kind === RANGE_DAY_KIND.ENDPOINT;
+  const fillVariants = buildDateFillVariants({ opacity: 0 }, { opacity: 1 }, fillDelaySeconds);
+  const endpointTextVariants = buildDateFillVariants(
+    { color: "var(--color-foreground)" },
+    { color: "var(--color-primary-foreground)" },
+    fillDelaySeconds,
+  );
+  const textVariants = isEndpoint ? endpointTextVariants : undefined;
+
+  return (
+    <span
+      className={cn(
+        "relative grid size-9 place-items-center rounded-full text-[13px]",
+        RANGE_DAY_TEXT_CLASS[kind],
+      )}
+    >
+      {fillClass && (
+        <motion.span
+          className={cn("absolute inset-0 rounded-full", fillClass)}
+          variants={fillVariants}
+        />
+      )}
+      <motion.span
+        className="relative"
+        variants={textVariants}
+      >
+        {day}
+      </motion.span>
+    </span>
   );
 }
 
@@ -538,4 +592,17 @@ function buildScaleInVariants(delaySeconds: number) {
     [ENTRY_STATE.SPREAD]: { scale: 1, opacity: 1, transition: buildEntryStep(delaySeconds) },
   };
   return scaleInVariants;
+}
+
+function buildDateFillVariants(
+  unfilled: TargetAndTransition,
+  filled: TargetAndTransition,
+  delaySeconds: number,
+): Variants {
+  const fillTransition = { duration: DATE_FILL_SECONDS, ease: EASE_IN, delay: delaySeconds };
+  const dateFillVariants = {
+    [ENTRY_STATE.STACKED]: unfilled,
+    [ENTRY_STATE.SPREAD]: { ...filled, transition: fillTransition },
+  };
+  return dateFillVariants;
 }

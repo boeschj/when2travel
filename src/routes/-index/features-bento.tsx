@@ -107,9 +107,10 @@ const ENTRY_STATE = {
 } as const;
 
 const CARD_FADE_SECONDS = 0.4;
-const DATE_FILL_SECONDS = 0.35;
-const DATE_FILL_STAGGER_SECONDS = 0.15;
-const FILTER_ROW_STAGGER_SECONDS = 0.1;
+const SLOW_FILL_SECONDS = 0.35;
+const HIDDEN = { opacity: 0 } as const;
+const VISIBLE = { opacity: 1 } as const;
+const SLOW_FILL_STAGGER_SECONDS = 0.15;
 const CARD_STAGGER_SECONDS = 0.15;
 const CARD_ENTRY_DELAY_SECONDS = {
   SHARE: 0,
@@ -301,8 +302,9 @@ function ShareVisual({ entryDelaySeconds }: EntryDelayProps) {
 function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
   const respondentColors = buildDemoRespondentColors();
   const dimmedFilterRows = FILTER_DIMMED_NAMES.map((name, rowIndex) => {
-    const rowDelaySeconds = entryDelaySeconds + rowIndex * FILTER_ROW_STAGGER_SECONDS;
-    const filterRow = { name, fadeInVariants: buildFadeInVariants(rowDelaySeconds) };
+    const rowDelaySeconds = entryDelaySeconds + rowIndex * SLOW_FILL_STAGGER_SECONDS;
+    const fadeInVariants = buildSlowFillVariants(HIDDEN, VISIBLE, rowDelaySeconds);
+    const filterRow = { name, fadeInVariants };
     return filterRow;
   });
 
@@ -396,7 +398,7 @@ function CreateVisual({ entryDelaySeconds }: EntryDelayProps) {
   );
   const rangeDayCells = CREATE_RANGE_DAYS.map(rangeDay => {
     const fillOrder = filledRangeDays.indexOf(rangeDay);
-    const fillDelaySeconds = entryDelaySeconds + fillOrder * DATE_FILL_STAGGER_SECONDS;
+    const fillDelaySeconds = entryDelaySeconds + fillOrder * SLOW_FILL_STAGGER_SECONDS;
     const rangeDayCell = { ...rangeDay, fillDelaySeconds };
     return rangeDayCell;
   });
@@ -445,8 +447,8 @@ function RangeDayCell({
 }) {
   const fillClass = RANGE_DAY_FILL_CLASS[kind];
   const isEndpoint = kind === RANGE_DAY_KIND.ENDPOINT;
-  const fillVariants = buildDateFillVariants({ opacity: 0 }, { opacity: 1 }, fillDelaySeconds);
-  const endpointTextVariants = buildDateFillVariants(
+  const fillVariants = buildSlowFillVariants(HIDDEN, VISIBLE, fillDelaySeconds);
+  const endpointTextVariants = buildSlowFillVariants(
     { color: "var(--color-foreground)" },
     { color: "var(--color-primary-foreground)" },
     fillDelaySeconds,
@@ -598,15 +600,15 @@ function buildScaleInVariants(delaySeconds: number) {
   return scaleInVariants;
 }
 
-function buildDateFillVariants(
+function buildSlowFillVariants(
   unfilled: TargetAndTransition,
   filled: TargetAndTransition,
   delaySeconds: number,
 ): Variants {
-  const fillTransition = { duration: DATE_FILL_SECONDS, ease: EASE_IN, delay: delaySeconds };
-  const dateFillVariants = {
+  const fillTransition = { duration: SLOW_FILL_SECONDS, ease: EASE_IN, delay: delaySeconds };
+  const slowFillVariants = {
     [ENTRY_STATE.STACKED]: unfilled,
     [ENTRY_STATE.SPREAD]: { ...filled, transition: fillTransition },
   };
-  return dateFillVariants;
+  return slowFillVariants;
 }

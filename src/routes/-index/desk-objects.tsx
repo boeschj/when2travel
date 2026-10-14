@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { Clock, Minus, Plus } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { buildColorMap, cn } from "@/lib/utils";
 import Logo from "@/components/shared/logo";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
+import { DEMO_PLAN } from "./demo-plan-data";
 
 const OBJECT_SURFACE = "shadow-object border border-border bg-surface-dark";
+const FOLDER_SURFACE = "bg-[#1f3319]";
 
 const BOARDING_PASS_COPY = {
   label: "Boarding pass",
@@ -28,10 +30,16 @@ const TRIP_LENGTH_COPY = {
   unit: "Days",
 } as const;
 
-const HEATMAP_CARD_COPY = {
+const HEATMAP_FOLDER_COPY = {
   title: "Hawaii Trip 2026",
   subtitle: "7 people responded",
 } as const;
+
+const CREW_FOLDER_COPY = {
+  title: "7 friends are in",
+} as const;
+
+const CREW_TILE_TILTS = ["-rotate-6", "rotate-3", "-rotate-2", "rotate-6"] as const;
 
 interface DeskObjectProps {
   className?: string;
@@ -59,7 +67,7 @@ export function BoardingPass({ className }: DeskObjectProps) {
     <div
       aria-hidden="true"
       className={cn(
-        "shadow-object grid w-[310px] grid-cols-[1fr_86px] rounded-[18px] bg-[#f1ede2] font-mono text-[#1b1d17]",
+        "shadow-object grid w-[330px] grid-cols-[1fr_88px] rounded-[18px] bg-[#f1ede2] font-mono text-[#1b1d17]",
         className,
       )}
     >
@@ -94,6 +102,45 @@ export function BoardingPass({ className }: DeskObjectProps) {
   );
 }
 
+export function HeatmapFolder({ className }: DeskObjectProps) {
+  return (
+    <FolderCard
+      title={HEATMAP_FOLDER_COPY.title}
+      subtitle={HEATMAP_FOLDER_COPY.subtitle}
+      className={className}
+    >
+      <div inert>
+        <DemoJulyHeatmap />
+      </div>
+      <ResultsLegend className="mt-3 justify-center" />
+    </FolderCard>
+  );
+}
+
+export function CrewFolder({ className }: DeskObjectProps) {
+  const respondentIds = DEMO_PLAN.responses.map(response => response.id);
+  const respondentColorMap = buildColorMap(respondentIds);
+  const visibleRespondents = DEMO_PLAN.responses.slice(0, CREW_TILE_TILTS.length);
+
+  return (
+    <FolderCard
+      title={CREW_FOLDER_COPY.title}
+      className={cn("w-[380px]", className)}
+    >
+      <div className="mt-5 flex gap-3 pb-10">
+        {visibleRespondents.map((response, index) => (
+          <CrewTile
+            key={response.id}
+            name={response.name}
+            color={respondentColorMap[response.id]?.hex}
+            tiltClassName={CREW_TILE_TILTS[index]}
+          />
+        ))}
+      </div>
+    </FolderCard>
+  );
+}
+
 export function TripLengthCard({ className }: DeskObjectProps) {
   return (
     <div
@@ -124,22 +171,65 @@ export function TripLengthCard({ className }: DeskObjectProps) {
   );
 }
 
-export function HeatmapCard({ className }: DeskObjectProps) {
+function FolderCard({
+  title,
+  subtitle,
+  className,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <div
-      inert
       aria-hidden="true"
-      className={cn(OBJECT_SURFACE, "w-fit rounded-[28px] p-5", className)}
+      className={cn(
+        "relative w-fit pt-[26px] drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)]",
+        className,
+      )}
     >
-      <div className="mb-3 flex items-baseline justify-between gap-6 px-1">
-        <div>
-          <p className="text-[15px] font-bold">{HEATMAP_CARD_COPY.title}</p>
-          <p className="text-text-secondary text-xs font-medium">{HEATMAP_CARD_COPY.subtitle}</p>
-        </div>
+      <span
+        className={cn(
+          FOLDER_SURFACE,
+          "absolute top-0 left-0 h-[30px] w-[170px] rounded-tl-[18px] [clip-path:polygon(0_0,82%_0,100%_100%,0_100%)]",
+        )}
+      />
+      <div className={cn(FOLDER_SURFACE, "rounded-[24px] rounded-tl-none px-5 pt-4 pb-5")}>
+        <p className="text-lg font-bold tracking-tight">{title}</p>
+        {subtitle && <p className="text-text-secondary mb-3 text-xs font-medium">{subtitle}</p>}
+        {children}
       </div>
-      <DemoJulyHeatmap />
-      <ResultsLegend className="mt-3 justify-center" />
     </div>
+  );
+}
+
+function CrewTile({
+  name,
+  color,
+  tiltClassName,
+}: {
+  name: string;
+  color: string | undefined;
+  tiltClassName: string | undefined;
+}) {
+  const initial = name.charAt(0);
+
+  return (
+    <span
+      className={cn(
+        "shadow-object bg-card grid size-[76px] shrink-0 place-items-center rounded-[22px] border border-[#2f4a27]",
+        tiltClassName,
+      )}
+    >
+      <span
+        className="text-primary-foreground grid size-11 place-items-center rounded-full text-lg font-extrabold"
+        style={{ backgroundColor: color }}
+      >
+        {initial}
+      </span>
+    </span>
   );
 }
 

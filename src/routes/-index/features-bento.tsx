@@ -98,7 +98,7 @@ const DEMO_BLOCKER_NAME = "Charles";
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
 const EASE_OUT = [0, 0, 0.58, 1] as const;
 const EASE_IN = [0.42, 0, 1, 1] as const;
-const GRID_VIEWPORT = { once: true, amount: 0.25 } as const;
+const CARD_VIEWPORT = { once: true, amount: 0.4 } as const;
 const ENTRY_STEP_SECONDS = 0.3;
 const ENTRY_MOVE_STEP = { duration: ENTRY_STEP_SECONDS, ease: EASE_OUT_QUART } as const;
 const ENTRY_STATE = {
@@ -115,8 +115,8 @@ const CARD_STAGGER_SECONDS = 0.15;
 const CARD_ENTRY_DELAY_SECONDS = {
   SHARE: 0,
   HEATMAP: CARD_STAGGER_SECONDS,
-  CONFLICTS: CARD_STAGGER_SECONDS * 2,
-  CREATE: CARD_STAGGER_SECONDS * 3,
+  CONFLICTS: 0,
+  CREATE: CARD_STAGGER_SECONDS,
 } as const;
 const VISUAL_ENTRY_DELAY_SECONDS = {
   SHARE: CARD_ENTRY_DELAY_SECONDS.SHARE + CARD_FADE_SECONDS,
@@ -148,12 +148,7 @@ export function FeaturesBento() {
       <div className="bg-felt-texture rounded-[40px] border border-[#1f3319] px-3.5 py-16 sm:px-7 sm:py-24">
         <SectionHeader />
         <MotionConfig reducedMotion="user">
-          <motion.div
-            className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12"
-            initial={ENTRY_STATE.STACKED}
-            whileInView={ENTRY_STATE.SPREAD}
-            viewport={GRID_VIEWPORT}
-          >
+          <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-5 lg:grid-cols-12">
             <FeatureCard
               className="lg:col-span-5"
               copy={FEATURE_COPY.share}
@@ -173,7 +168,7 @@ export function FeaturesBento() {
               entryDelaySeconds={CARD_ENTRY_DELAY_SECONDS.CREATE}
               visual={<CreateVisual entryDelaySeconds={VISUAL_ENTRY_DELAY_SECONDS.CREATE} />}
             />
-          </motion.div>
+          </div>
         </MotionConfig>
         <p className="text-text-secondary mt-14 text-center text-lg">{SECTION_COPY.moreFeatures}</p>
       </div>
@@ -214,6 +209,9 @@ function FeatureCard({ className, copy, entryDelaySeconds, visual }: FeatureCard
   return (
     <motion.article
       variants={cardFadeVariants}
+      initial={ENTRY_STATE.STACKED}
+      whileInView={ENTRY_STATE.SPREAD}
+      viewport={CARD_VIEWPORT}
       className={cn(CARD_SHELL, className)}
     >
       <div
@@ -238,6 +236,9 @@ function ConflictCard() {
   return (
     <motion.article
       variants={cardFadeVariants}
+      initial={ENTRY_STATE.STACKED}
+      whileInView={ENTRY_STATE.SPREAD}
+      viewport={CARD_VIEWPORT}
       className={cn(
         CARD_SHELL,
         "lg:col-span-8 lg:grid lg:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",

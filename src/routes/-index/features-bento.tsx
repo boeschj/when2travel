@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { CalendarX2, CheckCircle2, Copy, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
+import { CalendarX2, CheckCircle2, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
 import type { TargetAndTransition, Variants } from "motion/react";
 
 import { buildColorMap, cn } from "@/lib/utils";
 
 import { ResultsLegend } from "../plan/-results/availability-legend";
+import { CopyLinkButton } from "./copy-link-button";
 import { DemoJulyHeatmap } from "./demo-july-heatmap";
 import { DEMO_PLAN } from "./demo-plan-data";
 
@@ -215,7 +216,7 @@ function FeatureCard({ className, copy, entryDelaySeconds, visual }: FeatureCard
       className={cn(CARD_SHELL, className)}
     >
       <div
-        inert
+        aria-hidden="true"
         className="relative h-[300px] sm:h-[340px]"
       >
         {visual}
@@ -277,7 +278,7 @@ function ShareVisual({ entryDelaySeconds }: EntryDelayProps) {
       >
         <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
           <span className="truncate">{VISUAL_COPY.shareUrl}</span>
-          <Copy className="size-4 shrink-0" />
+          <CopyLinkButton />
         </div>
         <span className="bg-primary text-primary-foreground flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-[13px] font-extrabold">
           <Share2 className="size-4" />
@@ -347,7 +348,10 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
           {VISUAL_COPY.recommendationPeople}
         </span>
       </div>
-      <div className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}>
+      <div
+        inert
+        className={cn(FLOATING_PANEL, "top-6 left-1/2 -translate-x-1/2 p-4")}
+      >
         <DemoJulyHeatmap className="[zoom:0.55]" />
         <ResultsLegend className="mt-2 justify-center whitespace-nowrap" />
       </div>

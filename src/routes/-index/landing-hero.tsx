@@ -23,22 +23,22 @@ export function LandingHero() {
   return (
     <section
       id="top"
-      className="mx-auto max-w-[1180px] px-4"
+      className="px-4 lg:px-5"
     >
       <div className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-hidden rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[820px] lg:grid-cols-[minmax(0,1fr)_620px_minmax(0,1fr)] lg:gap-x-4 lg:px-0 lg:pt-0">
         <HeroCopy />
 
-        <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end">
-          <HeroImessageThread className="lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.48] xl:[zoom:0.64]" />
-          <CrewFolder className="hidden lg:-mb-12 lg:ml-4 lg:block lg:rotate-3 lg:[zoom:0.5] xl:[zoom:0.62]" />
+        <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-start lg:justify-between lg:justify-self-start lg:pl-8">
+          <HeroImessageThread className="lg:mt-14 lg:mr-2 lg:-rotate-4 lg:[zoom:0.48] xl:[zoom:0.64] 2xl:[zoom:0.8]" />
+          <CrewFolder className="hidden lg:-mb-12 lg:ml-4 lg:block lg:rotate-3 lg:[zoom:0.5] xl:[zoom:0.62] 2xl:[zoom:0.74]" />
         </div>
 
-        <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:justify-between lg:justify-self-start">
-          <div className="relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78]">
+        <div className="hidden lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end lg:pr-8">
+          <div className="relative mt-20 ml-3 h-[300px] w-[330px] lg:[zoom:0.55] xl:[zoom:0.78] 2xl:[zoom:0.95]">
             <BoardingPass className="rotate-6" />
             <TripLengthCard className="absolute top-[150px] left-10 -rotate-5" />
           </div>
-          <HeatmapFolder className="-mb-40 ml-2 -rotate-3 lg:[zoom:0.55] xl:[zoom:0.62]" />
+          <HeatmapFolder className="-mb-40 ml-2 -rotate-3 lg:[zoom:0.55] xl:[zoom:0.62] 2xl:[zoom:0.74]" />
         </div>
       </div>
     </section>

@@ -11,7 +11,7 @@ export function LandingNav() {
   const ctaLabel = mostRecentPlanId ? "My trips" : "Start planning";
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4">
+    <div className="px-4 lg:px-12">
       <nav className="flex w-full items-center justify-between gap-3 px-1 py-5">
         <AppLink
           to="/"

@@ -109,11 +109,11 @@ export function FeaturesBento() {
   return (
     <section
       id="how-it-works"
-      className="mx-auto max-w-[1180px] px-4 pt-24 sm:pt-28"
+      className="px-4 pt-24 sm:pt-28 lg:px-5"
     >
       <div className="rounded-[40px] border border-[#1f3319] bg-[#142012] px-3.5 py-16 sm:px-7 sm:py-[72px]">
         <SectionHeader />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
+        <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-6">
           <FeatureCard
             className="md:col-span-2"
             copy={FEATURE_COPY.create}

@@ -15,30 +15,29 @@ import { SeeAlternativesButton } from "./see-alternatives-button";
 
 const SECTION_COPY = {
   eyebrow: "Features",
-  heading: "Everything you need to lock in the dates",
-  subheading:
-    'No spreadsheets, no "so what weekend works for everyone???" Just a link and a calendar that fills itself in.',
-  moreFeatures: "Plus per-person filters, auto-picked best windows, and more.",
+  heading: "Plan your trip in five minutes.",
+  subheading: "We help you nail down the dates so you can actually book the thing.",
 } as const;
 
 const FEATURE_COPY = {
   create: {
-    title: "Create in 10 seconds",
-    description: "Name it, set a window, pick how many days. Done before your coffee's cold.",
+    title: "Create your trip",
+    description: "Name it, set the date range, pick how many days you need. Done in 10 seconds.",
   },
   share: {
-    title: "Share one link",
-    description: "Drop it in the group chat. No downloads, no accounts, friends just tap and pick.",
+    title: "Share the link",
+    description:
+      "Drop it in the group chat. No downloads, no signups. People just tap and pick their dates.",
   },
   heatmap: {
-    title: "Live availability heatmap",
+    title: "See who's free when",
     description:
-      "Watch the calendar light up as people respond. Green means go, so you can spot the perfect overlap without scrolling through replies.",
+      "The calendar fills in as people respond. Perfect overlap? Book it. Conflicts? We'll show you exactly what's blocking and help you find a window that works.",
   },
   conflicts: {
-    title: "Spot the conflicts",
+    title: "Book it",
     description:
-      "One person blocking the perfect week? PlanTheTrip points them out and instantly surfaces the next-best window that works for everyone, so you can decide instead of debate.",
+      "We surface the best window automatically. No more guessing, no more back-and-forth.",
   },
 } as const;
 
@@ -174,7 +173,6 @@ export function FeaturesBento() {
             />
           </div>
         </MotionConfig>
-        <p className="text-text-secondary mt-14 text-center text-lg">{SECTION_COPY.moreFeatures}</p>
       </div>
     </section>
   );

@@ -8,7 +8,7 @@ export function LandingNav() {
   const mostRecentPlanId = useFirstKnownPlanId();
 
   const ctaRoute = mostRecentPlanId ? "/trips" : "/create";
-  const ctaLabel = mostRecentPlanId ? "My trips" : "Start planning";
+  const ctaLabel = mostRecentPlanId ? "My Trips" : "New Trip";
 
   return (
     <div className="px-4 lg:px-12">

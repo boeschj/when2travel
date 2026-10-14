@@ -1,3 +1,4 @@
+import { useFirstKnownPlanId } from "@/hooks/use-auth-tokens";
 import { ArrowRight } from "lucide-react";
 import { motion, MotionConfig } from "motion/react";
 import type { TargetAndTransition, Transition, Variants } from "motion/react";
@@ -9,11 +10,12 @@ import { HeroImessageThread } from "./hero-imessage-thread";
 import { TripLengthCard } from "./trip-length-card";
 
 const HERO_COPY = {
-  headingLineOne: "Get the trip out",
-  headingLineTwo: "of the group chat",
+  headingLineOne: "Get the trip out of",
+  headingLineTwo: "the group chat.",
   subheading:
-    "Plan your trip in five minutes. PlanTheTrip helps you nail down the dates everyone can actually make, so you can stop guessing and finally book the thing.",
-  ctaLabel: "Start planning now",
+    "The fastest way to find dates that work for everyone. Create a plan, share the link, see when everyone's free.",
+  newVisitorCtaLabel: "Start Planning",
+  returningVisitorCtaLabel: "My Trips",
 } as const;
 
 const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
@@ -114,6 +116,13 @@ export function LandingHero() {
 }
 
 function HeroCopy() {
+  const mostRecentPlanId = useFirstKnownPlanId();
+
+  const ctaRoute = mostRecentPlanId ? "/trips" : "/create";
+  const ctaLabel = mostRecentPlanId
+    ? HERO_COPY.returningVisitorCtaLabel
+    : HERO_COPY.newVisitorCtaLabel;
+
   return (
     <div className="lg:short:gap-4 grid justify-items-center gap-6 text-center lg:col-start-2 lg:row-start-1 lg:self-center">
       <motion.div variants={HEADLINE_LINE_ONE_VARIANTS}>
@@ -141,10 +150,10 @@ function HeroCopy() {
       </motion.p>
       <motion.div variants={CTA_VARIANTS}>
         <AppLink
-          to="/create"
+          to={ctaRoute}
           className="bg-primary text-primary-foreground lg:short:mt-0 lg:short:py-3.5 ease-out-quart mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition-[scale] duration-300 hover:scale-105 motion-reduce:transition-none"
         >
-          {HERO_COPY.ctaLabel}
+          {ctaLabel}
           <ArrowRight className="size-5" />
         </AppLink>
       </motion.div>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { CalendarX2, CheckCircle2, Copy, Pencil, Share2, ThumbsUp, XCircle } from "lucide-react";
+import { motion, MotionConfig } from "motion/react";
 
 import { buildColorMap, cn } from "@/lib/utils";
 
@@ -87,6 +88,18 @@ const SUNDAY_FIRST_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as cons
 const FILTER_ACTIVE_NAME = "Sam";
 const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
 const DEMO_BLOCKER_NAME = "Charles";
+
+const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
+const SHARE_STACK_VIEWPORT = { once: true, amount: 0.6 } as const;
+const SHARE_LINK_CARD_MOTION = {
+  stacked: { x: 80, y: 56, rotate: 0 },
+  spread: { x: 0, y: 0, rotate: -3 },
+} as const;
+const SHARE_MESSAGE_CARD_MOTION = {
+  stacked: { x: -80, y: -56, rotate: 0 },
+  spread: { x: 0, y: 0, rotate: 2 },
+} as const;
+const SHARE_STACK_TRANSITION = { duration: 0.8, delay: 0.15, ease: EASE_OUT_QUART } as const;
 
 const CARD_SHELL =
   "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";
@@ -197,8 +210,14 @@ function ConflictCard() {
 
 function ShareVisual() {
   return (
-    <>
-      <div className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] -rotate-3 gap-3 p-4")}>
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] gap-3 p-4")}
+        initial={SHARE_LINK_CARD_MOTION.stacked}
+        whileInView={SHARE_LINK_CARD_MOTION.spread}
+        viewport={SHARE_STACK_VIEWPORT}
+        transition={SHARE_STACK_TRANSITION}
+      >
         <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">
           <span className="truncate">{VISUAL_COPY.shareUrl}</span>
           <Copy className="size-4 shrink-0" />
@@ -207,19 +226,23 @@ function ShareVisual() {
           <Share2 className="size-4" />
           {VISUAL_COPY.shareLabel}
         </span>
-      </div>
-      <div
+      </motion.div>
+      <motion.div
         className={cn(
           FLOATING_PANEL,
           "top-[190px] right-6 grid w-[270px] justify-items-end gap-1 bg-[#0d0d0e] p-4 font-[-apple-system,BlinkMacSystemFont,system-ui,sans-serif]",
         )}
+        initial={SHARE_MESSAGE_CARD_MOTION.stacked}
+        whileInView={SHARE_MESSAGE_CARD_MOTION.spread}
+        viewport={SHARE_STACK_VIEWPORT}
+        transition={SHARE_STACK_TRANSITION}
       >
         <span className="rounded-[18px] rounded-br-md bg-[#0a84ff] px-3 py-[7px] text-[15px] tracking-[-0.02em] text-white">
           {VISUAL_COPY.groupMessage}
         </span>
         <span className="text-[11px] font-medium text-[#8e8e93]">{VISUAL_COPY.deliveredLabel}</span>
-      </div>
-    </>
+      </motion.div>
+    </MotionConfig>
   );
 }
 

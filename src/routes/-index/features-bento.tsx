@@ -113,7 +113,7 @@ const CARD_ENTRY_DELAY_SECONDS = {
 const VISUAL_ANIMATION_SECONDS = {
   SHARE: ENTRY_STEP_SECONDS * 2,
   HEATMAP: ENTRY_STEP_SECONDS + FILTER_ROW_STAGGER_SECONDS * (FILTER_ROW_NAMES.length - 1),
-  CONFLICTS: ENTRY_STEP_SECONDS * 3,
+  CONFLICTS: ENTRY_STEP_SECONDS * 2,
 } as const;
 const VISUAL_ENTRY_DELAY_SECONDS = {
   SHARE: CARD_FADE_SECONDS,
@@ -134,11 +134,6 @@ const SHARE_MESSAGE_CARD_POSE = {
   stacked: { x: -80, y: -56, rotate: 0 },
   spread: { x: 0, y: 0, rotate: 2 },
 } as const;
-const CONFLICT_NOTE_POSE = {
-  stacked: { x: "150%", rotate: 0 },
-  spread: { x: 0, rotate: -2 },
-} as const;
-const CONFLICT_RESPONDENTS_START_X = "150%";
 
 const CARD_SHELL =
   "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";
@@ -240,7 +235,6 @@ function FeatureCard({ className, copy, entryDelaySeconds, visual }: FeatureCard
 
 function ConflictCard() {
   const cardFadeVariants = buildCardFadeVariants(CARD_ENTRY_DELAY_SECONDS.CONFLICTS);
-  const iconVariants = buildScaleInVariants(VISUAL_ENTRY_DELAY_SECONDS.CONFLICTS);
 
   return (
     <motion.article
@@ -251,12 +245,9 @@ function ConflictCard() {
       )}
     >
       <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
-        <motion.span
-          className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]"
-          variants={iconVariants}
-        >
+        <span className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]">
           <CalendarX2 className="text-primary size-7" />
-        </motion.span>
+        </span>
         <div>
           <h3 className="text-2xl font-bold tracking-tight">{FEATURE_COPY.conflicts.title}</h3>
           <p className="text-text-secondary mt-3 max-w-[36ch] text-base leading-relaxed text-pretty">
@@ -360,17 +351,13 @@ function HeatmapVisual({ entryDelaySeconds }: EntryDelayProps) {
 
 function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
   const respondentColors = buildDemoRespondentColors();
-  const respondentsVariants = buildSlideInVariants(CONFLICT_RESPONDENTS_START_X, entryDelaySeconds);
-  const noteVariants = buildMoveThenTiltVariants(
-    CONFLICT_NOTE_POSE,
-    entryDelaySeconds + ENTRY_STEP_SECONDS,
-  );
+  const noteVariants = buildScaleInVariants(entryDelaySeconds);
+  const actionVariants = buildFadeInVariants(entryDelaySeconds + ENTRY_STEP_SECONDS);
 
   return (
     <>
-      <motion.div
+      <div
         className={cn(FLOATING_PANEL, "top-10 left-4 flex w-[480px] flex-wrap gap-2 p-5 lg:top-14")}
-        variants={respondentsVariants}
       >
         {DEMO_PLAN.responses.map(response => (
           <StatusChip
@@ -380,18 +367,21 @@ function ConflictVisual({ entryDelaySeconds }: EntryDelayProps) {
             isBlocker={response.name === DEMO_BLOCKER_NAME}
           />
         ))}
-      </motion.div>
+      </div>
       <motion.div
         className={cn(
           FLOATING_PANEL,
-          "top-[170px] left-16 w-[340px] p-5 text-sm leading-snug lg:top-[200px]",
+          "top-[170px] left-16 w-[340px] -rotate-2 p-5 text-sm leading-snug lg:top-[200px]",
         )}
         variants={noteVariants}
       >
         {VISUAL_COPY.conflictNote}
-        <span className="text-primary mt-2 block text-[13.5px] font-semibold">
+        <motion.span
+          className="text-primary mt-2 block text-[13.5px] font-semibold"
+          variants={actionVariants}
+        >
           {VISUAL_COPY.conflictLink}
-        </span>
+        </motion.span>
       </motion.div>
     </>
   );
@@ -541,14 +531,6 @@ function buildMoveThenTiltVariants(
     },
   };
   return moveThenTiltVariants;
-}
-
-function buildSlideInVariants(startX: string, delaySeconds: number) {
-  const slideInVariants = {
-    [ENTRY_STATE.STACKED]: { x: startX },
-    [ENTRY_STATE.SPREAD]: { x: 0, transition: buildEntryStep(delaySeconds) },
-  };
-  return slideInVariants;
 }
 
 function buildFadeInVariants(delaySeconds: number) {

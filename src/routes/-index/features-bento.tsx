@@ -293,7 +293,7 @@ function ShareVisual() {
   return (
     <>
       <motion.div
-        className={cn(FLOATING_PANEL, "top-16 left-6 grid w-[320px] gap-3 p-4")}
+        className={cn(FLOATING_PANEL, "top-16 left-6 z-10 grid w-[320px] gap-3 p-4")}
         variants={SHARE_LINK_CARD_VARIANTS}
       >
         <div className="bg-surface-darker flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-[13px] font-semibold">

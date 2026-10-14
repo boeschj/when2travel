@@ -25,7 +25,7 @@ export function LandingHero() {
       id="top"
       className="px-4 lg:px-5"
     >
-      <div className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-hidden rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[min(820px,calc(100svh-6rem))] lg:min-h-[500px] lg:grid-cols-[minmax(0,380px)_540px_minmax(0,380px)] lg:justify-center lg:gap-x-4 lg:px-0 lg:pt-0 xl:grid-cols-[minmax(0,380px)_620px_minmax(0,380px)]">
+      <div className="bg-felt-texture relative flex flex-col items-center gap-10 overflow-clip rounded-[40px] border border-[#223a1c] px-4 pt-14 lg:grid lg:h-[min(820px,calc(100svh-6rem))] lg:min-h-[500px] lg:grid-cols-[minmax(0,380px)_540px_minmax(0,380px)] lg:justify-center lg:gap-x-4 lg:px-0 lg:pt-0 xl:grid-cols-[minmax(0,380px)_620px_minmax(0,380px)]">
         <HeroCopy />
 
         <div className="-mb-10 lg:col-start-1 lg:row-start-1 lg:mb-0 lg:flex lg:h-full lg:flex-col lg:items-end lg:justify-between lg:justify-self-end">

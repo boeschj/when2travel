@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { DayButton as DayButtonType } from "react-day-picker";
 
 import { formatDateLong } from "@/lib/date/formatter";
@@ -13,8 +12,6 @@ import { useDayButtonFocus } from "./use-day-button-focus";
 
 type DayButtonProps = React.ComponentProps<typeof DayButtonType>;
 
-const UNZOOMED = 1;
-
 const HEATMAP_STOPS = [
   { threshold: 1, color: "#46ec13", textColor: "#0a1208", glow: true },
   { threshold: 0.8, color: "#a3e635", textColor: "#0a1208", glow: false },
@@ -28,16 +25,9 @@ export function HeatmapDayButton({ className, day, modifiers, ...props }: DayBut
   const ref = useDayButtonFocus(modifiers[MODIFIER_KEYS.FOCUSED] ?? false);
   const { availabilityMap, selectedRespondentId, respondentColorMap, onDateClick } =
     useCalendarContext();
-  const [tooltipZoom, setTooltipZoom] = useState(UNZOOMED);
 
   const dateStr = toISODateString(day.date);
   const data = availabilityMap?.get(dateStr);
-
-  const handleTooltipOpenChange = (isOpen: boolean) => {
-    if (!isOpen) return;
-    const triggerZoom = ref.current?.currentCSSZoom ?? UNZOOMED;
-    setTooltipZoom(triggerZoom);
-  };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     props.onClick?.(e);
@@ -72,7 +62,7 @@ export function HeatmapDayButton({ className, day, modifiers, ...props }: DayBut
   const dayNumber = day.date.getDate();
 
   return (
-    <Tooltip onOpenChange={handleTooltipOpenChange}>
+    <Tooltip>
       <TooltipTrigger asChild>
         <button
           ref={ref}
@@ -88,7 +78,7 @@ export function HeatmapDayButton({ className, day, modifiers, ...props }: DayBut
           />
         </button>
       </TooltipTrigger>
-      <TooltipContent style={{ zoom: tooltipZoom }}>
+      <TooltipContent>
         <p className="font-semibold">{tooltipText}</p>
       </TooltipContent>
     </Tooltip>

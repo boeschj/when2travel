@@ -171,15 +171,9 @@
   background-color: #162514;
   background-image:
     radial-gradient(ellipse 60% 45% at 50% 48%, rgba(70, 236, 19, 0.06), transparent 70%),
-    url("/textures/passport-rosette.svg"), url("/textures/passport-lines.svg");
-  background-position:
-    center,
-    center 48%,
-    0 0;
-  background-repeat: no-repeat, no-repeat, repeat;
+    url("/textures/passport-lines.svg");
   background-size:
     auto,
-    1000px 1000px,
     240px 32px;
 }
 

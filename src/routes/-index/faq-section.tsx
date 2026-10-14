@@ -15,6 +15,11 @@ const FAQS: Faq[] = [
       "Nope. You send one link, they tap it, and pick their dates right in the browser. Nothing to install, on any phone or laptop.",
   },
   {
+    question: "Is it free?",
+    answer:
+      "Yep, it's free. No account, no credit card, nothing to pay to plan a trip with your group.",
+  },
+  {
     question: "Does anyone need to make an account?",
     answer:
       "No accounts, for anyone. You create a trip and get private links you keep on your device, and everyone else just opens the link and taps the days they're free.",

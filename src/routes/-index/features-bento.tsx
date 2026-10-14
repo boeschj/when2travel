@@ -130,7 +130,7 @@ const HEATMAP_BEST_WINDOW_TILT_VARIANTS = {
   [ENTRY_STATE.SPREAD]: { rotate: 3, transition: ENTRY_TILT_STEP },
 } as const;
 
-const CONFLICT_ICON_VARIANTS = {
+const SCALE_IN_VARIANTS = {
   [ENTRY_STATE.STACKED]: { scale: 0.6, opacity: 0 },
   [ENTRY_STATE.SPREAD]: { scale: 1, opacity: 1, transition: ENTRY_MOVE_STEP },
 } as const;
@@ -243,7 +243,7 @@ function ConflictCard() {
         <div className="flex flex-col justify-between gap-10 p-8 sm:p-10">
           <motion.span
             className="shadow-object bg-surface-dark grid size-16 place-items-center rounded-[20px] border border-[#2f4a27]"
-            variants={CONFLICT_ICON_VARIANTS}
+            variants={SCALE_IN_VARIANTS}
           >
             <CalendarX2 className="text-primary size-7" />
           </motion.span>
@@ -405,38 +405,44 @@ function ConflictVisual() {
 
 function CreateVisual() {
   return (
-    <div
-      className={cn(
-        FLOATING_PANEL,
-        "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
-      )}
-    >
-      <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
-        {VISUAL_COPY.tripName}
-        <Pencil className="text-primary size-5" />
-      </div>
-      <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
-        {SUNDAY_FIRST_WEEKDAYS.map(weekday => (
-          <span
-            key={weekday}
-            className="text-muted-foreground text-center text-[10px] font-bold tracking-wider uppercase"
-          >
-            {weekday}
-          </span>
-        ))}
-        {CREATE_RANGE_DAYS.map(rangeDay => (
-          <span
-            key={rangeDay.day}
-            className={cn(
-              "grid size-9 place-items-center rounded-full text-[13px]",
-              RANGE_DAY_CLASS[rangeDay.kind],
-            )}
-          >
-            {rangeDay.day}
-          </span>
-        ))}
-      </div>
-    </div>
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        className={cn(
+          FLOATING_PANEL,
+          "top-10 left-1/2 grid w-[300px] -translate-x-1/2 -rotate-3 justify-items-center gap-4 p-5 lg:[zoom:0.85] xl:[zoom:1]",
+        )}
+        variants={SCALE_IN_VARIANTS}
+        initial={ENTRY_STATE.STACKED}
+        whileInView={ENTRY_STATE.SPREAD}
+        viewport={ENTRY_VIEWPORT}
+      >
+        <div className="border-primary flex w-full items-center justify-between border-b-2 pb-1.5 text-[22px] font-extrabold tracking-tight">
+          {VISUAL_COPY.tripName}
+          <Pencil className="text-primary size-5" />
+        </div>
+        <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
+          {SUNDAY_FIRST_WEEKDAYS.map(weekday => (
+            <span
+              key={weekday}
+              className="text-muted-foreground text-center text-[10px] font-bold tracking-wider uppercase"
+            >
+              {weekday}
+            </span>
+          ))}
+          {CREATE_RANGE_DAYS.map(rangeDay => (
+            <span
+              key={rangeDay.day}
+              className={cn(
+                "grid size-9 place-items-center rounded-full text-[13px]",
+                RANGE_DAY_CLASS[rangeDay.kind],
+              )}
+            >
+              {rangeDay.day}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+    </MotionConfig>
   );
 }
 

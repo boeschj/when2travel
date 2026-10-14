@@ -186,7 +186,7 @@ function FolderCard({
     <div
       aria-hidden="true"
       className={cn(
-        "relative w-fit pt-[26px] drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)]",
+        "relative w-fit pt-[26px] drop-shadow-[2px_10px_18px_rgba(0,0,0,0.2)]",
         className,
       )}
     >

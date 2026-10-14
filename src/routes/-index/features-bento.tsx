@@ -89,7 +89,7 @@ const FILTER_DIMMED_NAMES = ["Joe", "Priya"] as const;
 const DEMO_BLOCKER_NAME = "Charles";
 
 const CARD_SHELL =
-  "relative flex min-w-0 flex-col overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_12px_24px_-14px_rgba(0,0,0,0.6)]";
+  "relative flex min-w-0 flex-col overflow-clip rounded-[32px] border border-border bg-card";
 const FLOATING_PANEL =
   "shadow-object absolute rounded-[22px] border border-[#2f4a27] bg-surface-dark";
 

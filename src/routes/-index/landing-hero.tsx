@@ -30,7 +30,7 @@ const TEXT_HIDDEN = { opacity: 0, filter: "blur(10px)", y: "20%" } as const;
 const TEXT_SHOWN = { opacity: 1, filter: "blur(0px)", y: 0 } as const;
 const OBJECT_SCALED_DOWN = { opacity: 0, scale: 0.85 } as const;
 const OBJECT_SCALED_UP = { opacity: 1, scale: 1 } as const;
-const OBJECT_BELOW = { y: 160 } as const;
+const OBJECT_BELOW = { y: "125%" } as const;
 const OBJECT_IN_PLACE = { y: 0 } as const;
 
 const REVEAL_DELAY_SECONDS = {

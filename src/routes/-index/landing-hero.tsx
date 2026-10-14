@@ -16,11 +16,11 @@ const HERO_COPY = {
   ctaLabel: "Start planning now",
 } as const;
 
-const EASE_OUT = [0, 0, 0.58, 1] as const;
+const EASE_OUT_QUART = [0.165, 0.84, 0.44, 1] as const;
 const EASE_OUT_QUAD = [0.25, 0.46, 0.45, 0.94] as const;
 const TEXT_REVEAL_SECONDS = 0.6;
 const TEXT_REVEAL = { duration: TEXT_REVEAL_SECONDS, ease: EASE_OUT_QUAD } as const;
-const OBJECT_REVEAL = { duration: 0.2, ease: EASE_OUT } as const;
+const OBJECT_REVEAL = { duration: 0.1, ease: EASE_OUT_QUART } as const;
 const HERO_STATE = {
   HIDDEN: "hidden",
   SHOWN: "shown",

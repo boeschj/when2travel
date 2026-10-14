@@ -5,7 +5,6 @@ import { FeaturesBento } from "./-index/features-bento";
 import { LandingFooter } from "./-index/landing-footer";
 import { LandingHero } from "./-index/landing-hero";
 import { LandingNav } from "./-index/landing-nav";
-import { ProductShot } from "./-index/product-shot";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -23,7 +22,6 @@ function LandingPage() {
       <LandingNav />
       <main id="main-content">
         <LandingHero />
-        <ProductShot />
         <FeaturesBento />
         <FaqSection />
       </main>

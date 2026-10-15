@@ -2,15 +2,13 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-const INCOMING_BUBBLE_VARIABLES = "[--ios-bubble:#262628] [--ios-screen:#0d0d0e]";
-const OUTGOING_BUBBLE_VARIABLES = "[--ios-bubble:#0a84ff] [--ios-screen:#0d0d0e]";
-
 const THREAD_COPY = {
   groupName: "Hawaii 2026 🌺",
   memberCount: "7 people",
   timestampDay: "Today",
   timestampTime: "9:38 AM",
   deliveredLabel: "Delivered",
+  outgoingMessage: "everyone drop ur dates here and it'll tell us",
   linkTitle: "PlanTheTrip - Find the best dates for your group trip",
   linkDomain: "justplanthetrip.com",
   linkImage: "/og.png",
@@ -26,173 +24,153 @@ const GROUP_AVATARS = [
   { initials: "MC", className: "size-[18px] text-[7px]" },
 ] as const;
 
-const INCOMING_RUNS = [
+const INCOMING_MESSAGES = [
   {
     sender: "Joe",
     initials: "JM",
-    messages: ["alright people when we doin this. week of july 10th?"],
+    message: "alright people when we doin this. week of july 10th?",
   },
   {
     sender: "Sam",
     initials: "SK",
-    messages: ["i cant, what about aug 25-31st"],
+    message: "i cant, what about aug 25-31st",
   },
   {
     sender: "Priya",
     initials: "PR",
-    messages: ["i cant do either 😅"],
+    message: "i cant do either 😅",
   },
 ] as const;
 
-const OUTGOING_MESSAGE = "everyone drop ur dates here and it'll tell us";
+const BUBBLE_KIND = {
+  INCOMING: "incoming",
+  OUTGOING: "outgoing",
+} as const;
+
+type BubbleKind = (typeof BUBBLE_KIND)[keyof typeof BUBBLE_KIND];
+
+const BUBBLE_KIND_CLASS: Record<BubbleKind, string> = {
+  [BUBBLE_KIND.INCOMING]:
+    "ios-tail-incoming [--ios-bubble:var(--color-ios-incoming)] [--ios-screen:var(--color-ios-screen)]",
+  [BUBBLE_KIND.OUTGOING]: "[--ios-bubble:var(--color-ios-blue)]",
+};
+
+const LINK_PREVIEW_BUBBLE =
+  "ios-tail-outgoing [--ios-bubble:var(--color-ios-incoming)] [--ios-screen:var(--color-ios-screen)]";
 
 interface HeroImessageThreadProps {
   className?: string;
 }
 
 export function HeroImessageThread({ className }: HeroImessageThreadProps) {
+  const threadClassName = cn(
+    "shadow-object hover-lift bg-ios-screen w-[330px] overflow-hidden rounded-[30px] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text',system-ui,sans-serif] text-white antialiased ring-1 ring-white/10",
+    className,
+  );
+
   return (
     <div
       role="img"
       aria-label={THREAD_COPY.accessibleLabel}
-      className={cn(
-        "shadow-object hover-lift w-[330px] overflow-hidden rounded-[30px] bg-[#0d0d0e] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text',system-ui,sans-serif] text-white antialiased ring-1 ring-white/10",
-        className,
-      )}
+      className={threadClassName}
     >
       <ThreadHeader />
-      <div className="flex flex-col px-3.5 pt-2 pb-4">
-        <p className="mb-1 text-center text-[11px] text-[#8e8e93]">
-          <span className="font-semibold">{THREAD_COPY.timestampDay}</span>{" "}
-          {THREAD_COPY.timestampTime}
-        </p>
-        {INCOMING_RUNS.map(run => (
-          <IncomingRun
-            key={run.sender}
-            sender={run.sender}
-            initials={run.initials}
-            messages={run.messages}
-          />
-        ))}
-        <div className="mt-2.5 flex justify-end">
-          <Bubble
-            isOutgoing
-            hasTail={false}
-          >
-            {OUTGOING_MESSAGE}
-          </Bubble>
-        </div>
-        <div className="mt-0.5 flex justify-end">
-          <LinkPreview />
-        </div>
-        <p className="mt-[3px] mr-1 self-end text-[11px] font-medium text-[#8e8e93]">
-          {THREAD_COPY.deliveredLabel}
-        </p>
-      </div>
+      <ThreadMessages />
     </div>
   );
 }
 
 function ThreadHeader() {
   return (
-    <div className="grid justify-items-center gap-1 border-b-[0.5px] border-[#2c2c2e] bg-[#161618] pt-3.5 pb-2.5">
-      <GroupAvatarCluster />
+    <div className="border-ios-hairline bg-ios-header grid justify-items-center gap-1 border-b-[0.5px] pt-3.5 pb-2.5">
+      <div className="flex h-[38px] items-center gap-0.5">
+        {GROUP_AVATARS.map(avatar => (
+          <MonogramAvatar
+            key={avatar.initials}
+            initials={avatar.initials}
+            className={avatar.className}
+          />
+        ))}
+      </div>
       <div className="grid justify-items-center">
         <div className="flex items-center gap-[3px] text-xs font-medium">
           {THREAD_COPY.groupName}
           <DisclosureChevronIcon />
         </div>
-        <p className="text-[10px] text-[#8e8e93]">{THREAD_COPY.memberCount}</p>
+        <p className="text-ios-secondary text-[10px]">{THREAD_COPY.memberCount}</p>
       </div>
     </div>
   );
 }
 
-function GroupAvatarCluster() {
+function ThreadMessages() {
   return (
-    <div className="flex h-[38px] items-center gap-0.5">
-      {GROUP_AVATARS.map(avatar => (
-        <MonogramAvatar
-          key={avatar.initials}
-          initials={avatar.initials}
-          className={avatar.className}
+    <div className="flex flex-col px-3.5 pt-2 pb-4">
+      <p className="text-ios-secondary mb-1 text-center text-[11px]">
+        <span className="font-semibold">{THREAD_COPY.timestampDay}</span>{" "}
+        {THREAD_COPY.timestampTime}
+      </p>
+      {INCOMING_MESSAGES.map(incoming => (
+        <IncomingMessage
+          key={incoming.sender}
+          sender={incoming.sender}
+          initials={incoming.initials}
+          message={incoming.message}
         />
       ))}
+      <div className="mt-2.5 flex justify-end">
+        <Bubble kind={BUBBLE_KIND.OUTGOING}>{THREAD_COPY.outgoingMessage}</Bubble>
+      </div>
+      <div className="mt-0.5 flex justify-end">
+        <LinkPreview />
+      </div>
+      <p className="text-ios-secondary mt-[3px] mr-1 self-end text-[11px] font-medium">
+        {THREAD_COPY.deliveredLabel}
+      </p>
     </div>
   );
 }
 
-function IncomingRun({
+function IncomingMessage({
   sender,
   initials,
-  messages,
+  message,
 }: {
   sender: string;
   initials: string;
-  messages: readonly string[];
+  message: string;
 }) {
-  const lastMessageIndex = messages.length - 1;
-
   return (
     <>
-      <p className="mt-2 mb-0.5 ml-[44px] text-[11px] text-[#8e8e93]">{sender}</p>
-      {messages.map((message, index) => {
-        const isLastInRun = index === lastMessageIndex;
-        return (
-          <div
-            key={message}
-            className="mt-0.5 flex items-end gap-2"
-          >
-            <MonogramAvatar
-              initials={initials}
-              className={cn("relative z-10 size-6 text-[10px]", !isLastInRun && "invisible")}
-            />
-            <Bubble
-              isOutgoing={false}
-              hasTail={isLastInRun}
-            >
-              {message}
-            </Bubble>
-          </div>
-        );
-      })}
+      <p className="text-ios-secondary mt-2 mb-0.5 ml-[44px] text-[11px]">{sender}</p>
+      <div className="mt-0.5 flex items-end gap-2">
+        <MonogramAvatar
+          initials={initials}
+          className="relative z-10 size-6 text-[10px]"
+        />
+        <Bubble kind={BUBBLE_KIND.INCOMING}>{message}</Bubble>
+      </div>
     </>
   );
 }
 
-function Bubble({
-  isOutgoing,
-  hasTail,
-  children,
-}: {
-  isOutgoing: boolean;
-  hasTail: boolean;
-  children: ReactNode;
-}) {
-  const bubbleVariables = isOutgoing ? OUTGOING_BUBBLE_VARIABLES : INCOMING_BUBBLE_VARIABLES;
-  const tailClassName = isOutgoing ? "ios-tail-outgoing" : "ios-tail-incoming";
-
-  return (
-    <div
-      className={cn(
-        "relative max-w-[230px] rounded-[18px] bg-(--ios-bubble) px-3 pt-[6px] pb-[7px] text-[15px] leading-[20px] tracking-[-0.02em]",
-        bubbleVariables,
-        hasTail && tailClassName,
-      )}
-    >
-      {children}
-    </div>
+function Bubble({ kind, children }: { kind: BubbleKind; children: ReactNode }) {
+  const bubbleClassName = cn(
+    "relative max-w-[230px] rounded-[18px] bg-(--ios-bubble) px-3 pt-[6px] pb-[7px] text-[15px] leading-[20px] tracking-[-0.02em]",
+    BUBBLE_KIND_CLASS[kind],
   );
+
+  return <div className={bubbleClassName}>{children}</div>;
 }
 
 function LinkPreview() {
+  const previewClassName = cn(
+    "relative w-[230px] rounded-[18px] bg-(--ios-bubble)",
+    LINK_PREVIEW_BUBBLE,
+  );
+
   return (
-    <div
-      className={cn(
-        "ios-tail-outgoing relative w-[230px] rounded-[18px] bg-(--ios-bubble)",
-        INCOMING_BUBBLE_VARIABLES,
-      )}
-    >
+    <div className={previewClassName}>
       <img
         src={THREAD_COPY.linkImage}
         alt=""
@@ -202,23 +180,19 @@ function LinkPreview() {
         <p className="line-clamp-2 text-[13px] leading-[17px] font-semibold tracking-[-0.01em]">
           {THREAD_COPY.linkTitle}
         </p>
-        <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">{THREAD_COPY.linkDomain}</p>
+        <p className="text-ios-secondary mt-0.5 text-[11.5px]">{THREAD_COPY.linkDomain}</p>
       </div>
     </div>
   );
 }
 
 function MonogramAvatar({ initials, className }: { initials: string; className: string }) {
-  return (
-    <span
-      className={cn(
-        "grid shrink-0 place-items-center rounded-full bg-linear-to-b from-[#a5abb8] to-[#858994] font-semibold text-white",
-        className,
-      )}
-    >
-      {initials}
-    </span>
+  const avatarClassName = cn(
+    "grid shrink-0 place-items-center rounded-full bg-linear-to-b from-[#a5abb8] to-[#858994] font-semibold text-white",
+    className,
   );
+
+  return <span className={avatarClassName}>{initials}</span>;
 }
 
 function DisclosureChevronIcon() {
@@ -228,11 +202,12 @@ function DisclosureChevronIcon() {
       height="10"
       viewBox="0 0 6 10"
       fill="none"
-      stroke="#8e8e93"
+      stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      className="text-ios-secondary"
     >
       <path d="m1 1 4 4-4 4" />
     </svg>

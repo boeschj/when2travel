@@ -3,6 +3,7 @@ import { eachDayOfInterval } from "date-fns";
 import type { ISODateString } from "@/lib/date/types";
 import { parseAPIDate, toISODateString } from "@/lib/date/types";
 import type { PlanWithResponses } from "@/lib/types";
+import { buildColorMap } from "@/lib/utils";
 
 export const DEMO_CURRENT_USER_ID = "demo-resp-you";
 
@@ -10,7 +11,7 @@ const DEMO_PLAN_ID = "demo-hawaii-2026";
 const DEMO_TIMESTAMP = "2026-05-01T12:00:00.000Z";
 const DEMO_START_RANGE = "2026-06-01";
 const DEMO_END_RANGE = "2026-07-31";
-const DEMO_NUM_DAYS = 7;
+const DEMO_NUMBER_OF_DAYS = 7;
 
 type DateSpan = readonly [start: string, end: string];
 
@@ -30,7 +31,7 @@ const DEMO_RESPONDENT_SEEDS: readonly DemoRespondentSeed[] = [
     spans: [
       ["2026-06-05", "2026-06-08"],
       ["2026-06-20", "2026-06-22"],
-      ["2026-07-04", "2026-07-31"],
+      ["2026-07-04", DEMO_END_RANGE],
     ],
   },
   {
@@ -55,7 +56,7 @@ const DEMO_RESPONDENT_SEEDS: readonly DemoRespondentSeed[] = [
     name: "Allison",
     spans: [
       ["2026-06-10", "2026-06-12"],
-      ["2026-07-10", "2026-07-31"],
+      ["2026-07-10", DEMO_END_RANGE],
     ],
   },
   {
@@ -92,29 +93,39 @@ function expandSpansToDates(spans: readonly DateSpan[]): ISODateString[] {
       start: parseAPIDate(start),
       end: parseAPIDate(end),
     });
-    return daysInSpan.map(day => toISODateString(day));
+    const isoDatesInSpan = daysInSpan.map(day => toISODateString(day));
+    return isoDatesInSpan;
   });
   return dates;
 }
 
-function buildDemoResponse(seed: DemoRespondentSeed) {
-  return {
+type DemoResponse = PlanWithResponses["responses"][number];
+
+function buildDemoResponse(seed: DemoRespondentSeed): DemoResponse {
+  const availableDates = expandSpansToDates(seed.spans);
+  const demoResponse = {
     id: seed.id,
     planId: DEMO_PLAN_ID,
     name: seed.name,
-    availableDates: expandSpansToDates(seed.spans),
+    availableDates,
     createdAt: DEMO_TIMESTAMP,
     updatedAt: DEMO_TIMESTAMP,
   };
+  return demoResponse;
 }
+
+const DEMO_RESPONSES = DEMO_RESPONDENT_SEEDS.map(seed => buildDemoResponse(seed));
+const DEMO_RESPONDENT_IDS = DEMO_RESPONSES.map(response => response.id);
 
 export const DEMO_PLAN: PlanWithResponses = {
   id: DEMO_PLAN_ID,
   name: "Hawaii Trip 2026",
-  numDays: DEMO_NUM_DAYS,
+  numDays: DEMO_NUMBER_OF_DAYS,
   startRange: DEMO_START_RANGE,
   endRange: DEMO_END_RANGE,
   createdAt: DEMO_TIMESTAMP,
   updatedAt: DEMO_TIMESTAMP,
-  responses: DEMO_RESPONDENT_SEEDS.map(seed => buildDemoResponse(seed)),
+  responses: DEMO_RESPONSES,
 };
+
+export const DEMO_RESPONDENT_COLOR_MAP = buildColorMap(DEMO_RESPONDENT_IDS);

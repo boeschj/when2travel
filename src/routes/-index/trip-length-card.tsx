@@ -17,6 +17,7 @@ const TRIP_LENGTH_COPY = {
 } as const;
 
 const INITIAL_TRIP_LENGTH_DAYS = 7;
+const TRIP_LENGTH_STEP_DAYS = 1;
 
 interface TripLengthCardProps {
   className?: string;
@@ -27,21 +28,27 @@ export function TripLengthCard({ className }: TripLengthCardProps) {
 
   const daysLabel = pluralize(tripLengthDays, TRIP_LENGTH_COPY.unit);
 
+  const cardClassName = cn(
+    "shadow-object border-border bg-surface-dark hover-lift w-[260px] rounded-[24px] border p-[18px] text-center",
+    className,
+  );
+
   const handleDecrement = () => {
-    setTripLengthDays(current => Math.max(MIN_TRIP_LENGTH_DAYS, current - 1));
+    setTripLengthDays(current => {
+      const shorterTrip = current - TRIP_LENGTH_STEP_DAYS;
+      return Math.max(MIN_TRIP_LENGTH_DAYS, shorterTrip);
+    });
   };
 
   const handleIncrement = () => {
-    setTripLengthDays(current => Math.min(MAX_TRIP_LENGTH_DAYS, current + 1));
+    setTripLengthDays(current => {
+      const longerTrip = current + TRIP_LENGTH_STEP_DAYS;
+      return Math.min(MAX_TRIP_LENGTH_DAYS, longerTrip);
+    });
   };
 
   return (
-    <div
-      className={cn(
-        "shadow-object border-border bg-surface-dark hover-lift w-[260px] rounded-[24px] border p-[18px] text-center",
-        className,
-      )}
-    >
+    <div className={cardClassName}>
       <div className="text-text-secondary flex items-center justify-center gap-1.5 text-xs font-bold">
         <Clock className="text-primary size-3.5" />
         {TRIP_LENGTH_COPY.kicker}

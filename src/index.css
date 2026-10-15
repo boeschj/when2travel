@@ -7,6 +7,16 @@
 /* Define custom colors for Tailwind v4 */
 @theme {
   --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --color-felt-edge: #2f4a27;
+  --color-ios-screen: #0d0d0e;
+  --color-ios-header: #161618;
+  --color-ios-hairline: #2c2c2e;
+  --color-ios-incoming: #262628;
+  --color-ios-blue: #0a84ff;
+  --color-ios-secondary: #8e8e93;
+  --color-pass-paper: #f1ede2;
+  --color-pass-ink: #1b1d17;
+  --color-pass-rule: #cfc8b6;
 
   /* planthetrip Brand Colors - Light Mode (Future) */
   --color-primary: #22c55e;
@@ -168,7 +178,9 @@
 }
 
 @utility hover-lift {
-  transition: scale 300ms var(--ease-out-quart);
+  transition:
+    scale 300ms var(--ease-out-quart),
+    opacity 300ms var(--ease-out-quart);
 
   @media (hover: hover) {
     &:hover {
@@ -181,7 +193,6 @@
   }
 }
 
-/* iOS Messages bubble tails: a bubble-colored curve masked by a screen-colored curve. */
 @utility ios-tail-incoming {
   &::before,
   &::after {

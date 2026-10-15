@@ -2,9 +2,8 @@ import { useState } from "react";
 import { CircleCheck, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-const EASE = [0.25, 0.1, 0.25, 1] as const;
-const ICON_SWAP_TRANSITION = { duration: 0.2, ease: EASE } as const;
-const PRESSED = { scale: 0.95 } as const;
+import { PRESS_TRANSITION, PRESSED } from "./landing-motion";
+
 const ICON_HIDDEN = { opacity: 0, filter: "blur(4px)" } as const;
 const ICON_VISIBLE = { opacity: 1, filter: "blur(0px)" } as const;
 const COPIED_RESET_MILLISECONDS = 2000;
@@ -30,9 +29,14 @@ export function CopyLinkButton() {
 
   const { Icon, className } = COPY_STATE_ICON[copyState];
 
+  const isCopied = copyState === COPY_STATE.COPIED;
+
+  const resetCopyState = () => setCopyState(COPY_STATE.IDLE);
+
   const handleClick = () => {
+    if (isCopied) return;
     setCopyState(COPY_STATE.COPIED);
-    setTimeout(() => setCopyState(COPY_STATE.IDLE), COPIED_RESET_MILLISECONDS);
+    setTimeout(resetCopyState, COPIED_RESET_MILLISECONDS);
   };
 
   return (
@@ -41,7 +45,7 @@ export function CopyLinkButton() {
       aria-label={COPY_LABEL}
       className="relative grid size-6 shrink-0 cursor-pointer place-items-center"
       whileTap={PRESSED}
-      transition={ICON_SWAP_TRANSITION}
+      transition={PRESS_TRANSITION}
       onClick={handleClick}
     >
       <AnimatePresence initial={false}>
@@ -51,7 +55,7 @@ export function CopyLinkButton() {
           initial={ICON_HIDDEN}
           animate={ICON_VISIBLE}
           exit={ICON_HIDDEN}
-          transition={ICON_SWAP_TRANSITION}
+          transition={PRESS_TRANSITION}
         >
           <Icon className={className} />
         </motion.span>

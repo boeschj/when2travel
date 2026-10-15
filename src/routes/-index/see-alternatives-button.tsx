@@ -4,16 +4,17 @@ import { motion } from "motion/react";
 import { AlternativeSuggestionsModal } from "../plan/-results/alternative-suggestions-modal";
 import { useAvailabilityAnalysis } from "../plan/-results/use-availability-analysis";
 import { DEMO_PLAN } from "./demo-plan-data";
+import { PRESS_TRANSITION, PRESSED } from "./landing-motion";
 
-const SEE_ALTERNATIVES_LABEL = "See Alternatives →";
-const PRESSED = { scale: 0.95 } as const;
-const PRESS_TRANSITION = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] } as const;
+const SEE_ALTERNATIVES_COPY = {
+  buttonLabel: "See Alternatives →",
+} as const;
 
 export function SeeAlternativesButton() {
   const [isAlternativesOpen, setIsAlternativesOpen] = useState(false);
-  const availability = useAvailabilityAnalysis(DEMO_PLAN);
+  const availabilityAnalysis = useAvailabilityAnalysis(DEMO_PLAN);
 
-  const alternativeWindows = availability?.recommendation.alternativeWindows ?? [];
+  const alternativeWindows = availabilityAnalysis?.recommendation.alternativeWindows ?? [];
 
   const handleOpenAlternatives = () => setIsAlternativesOpen(true);
 
@@ -26,7 +27,7 @@ export function SeeAlternativesButton() {
         transition={PRESS_TRANSITION}
         onClick={handleOpenAlternatives}
       >
-        {SEE_ALTERNATIVES_LABEL}
+        {SEE_ALTERNATIVES_COPY.buttonLabel}
       </motion.button>
       <AlternativeSuggestionsModal
         open={isAlternativesOpen}

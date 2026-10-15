@@ -1,81 +1,32 @@
+import { ArrowRight } from "lucide-react";
+
 import { AppLink } from "@/components/shared/app-link";
-import { Button } from "@/components/ui/button";
+
+const CTA_COPY = {
+  heading: "Don't let the trip die in the group chat.",
+  subheading:
+    "25% of group trips never happen because no one can agree on dates. Be the one who makes it happen.",
+  buttonLabel: "Start Planning Now",
+} as const;
 
 export function CtaSection() {
   return (
-    <section
-      aria-labelledby="cta-heading"
-      className="relative z-10 w-full bg-black px-5 py-20"
-    >
-      <div className="mx-auto max-w-[1120px]">
-        <CtaCard>
-          <GlowEffect position="top-left" />
-          <GlowEffect position="bottom-right" />
-          <CtaContent />
-        </CtaCard>
+    <section className="px-4 pt-24 sm:pt-28 lg:px-5">
+      <div className="bg-felt-texture border-surface-dark grid justify-items-center gap-6 rounded-[40px] border px-6 py-20 text-center sm:py-28">
+        <h2 className="max-w-[16ch] text-[clamp(2rem,4.4vw,3.3rem)] leading-[1.04] font-extrabold tracking-[-0.04em] text-balance">
+          {CTA_COPY.heading}
+        </h2>
+        <p className="text-text-secondary max-w-[52ch] text-lg leading-relaxed text-pretty">
+          {CTA_COPY.subheading}
+        </p>
+        <AppLink
+          to="/create"
+          className="bg-primary text-primary-foreground ease-out-quart mt-2 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[17px] font-bold shadow-[0_0_24px_rgba(70,236,19,0.25)] transition-[scale] duration-300 hover:scale-105"
+        >
+          {CTA_COPY.buttonLabel}
+          <ArrowRight className="size-5" />
+        </AppLink>
       </div>
     </section>
-  );
-}
-
-function CtaCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="from-background group relative overflow-hidden rounded-xl border border-white/5 bg-linear-to-b to-black p-10 text-center md:p-24">
-      {children}
-    </div>
-  );
-}
-
-function GlowEffect({ position }: { position: "top-left" | "bottom-right" }) {
-  const isTopLeft = position === "top-left";
-
-  const positionClasses = isTopLeft
-    ? "top-0 left-1/4 bg-primary/10 group-hover:bg-primary/20 transition-colors duration-700"
-    : "bottom-0 right-1/4 bg-blue-500/5";
-
-  return (
-    <div
-      className={`pointer-events-none absolute h-96 w-96 rounded-full blur-[100px] ${positionClasses}`}
-      aria-hidden="true"
-    />
-  );
-}
-
-function CtaContent() {
-  return (
-    <div className="relative z-10 flex flex-col items-center gap-10">
-      <CtaHeading />
-      <CtaButton />
-    </div>
-  );
-}
-
-function CtaHeading() {
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <h2
-        id="cta-heading"
-        className="text-4xl font-black tracking-tight text-white md:text-6xl"
-      >
-        Don't let the trip die in the group chat.
-      </h2>
-      <p className="max-w-[600px] text-center text-xl font-medium text-white/80">
-        25% of group trips never happen because no one can agree on dates. Be the one who makes it
-        happen.
-      </p>
-    </div>
-  );
-}
-
-function CtaButton() {
-  return (
-    <AppLink to="/create">
-      <Button
-        size="xl"
-        className="shadow-glow-lg hover:shadow-glow-xl min-w-[220px] hover:-translate-y-1"
-      >
-        Start Planning Now
-      </Button>
-    </AppLink>
   );
 }

@@ -10,7 +10,7 @@ const FOOTER_COPY = {
 
 export function LandingFooter() {
   return (
-    <footer className="mt-24 border-t border-[#1f3319]">
+    <footer className="border-surface-dark mt-24 border-t">
       <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-5 py-9">
         <AppLink
           to="/"

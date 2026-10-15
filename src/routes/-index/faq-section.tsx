@@ -8,6 +8,13 @@ interface Faq {
   answer: string;
 }
 
+const FAQ_SECTION_COPY = {
+  eyebrow: "FAQ",
+  heading: "Questions, answered",
+} as const;
+
+const NO_OPEN_INDEX = -1;
+
 const FAQS: Faq[] = [
   {
     question: "Do my friends need to download an app?",
@@ -47,30 +54,35 @@ const FAQS: Faq[] = [
 ];
 
 export function FaqSection() {
-  const [openIndex, setOpenIndex] = useState<number>(0);
+  const [openIndex, setOpenIndex] = useState(0);
 
-  const handleToggle = (index: number) => {
-    setOpenIndex(current => (current === index ? -1 : index));
-  };
+  const faqItems = FAQS.map((faq, index) => {
+    const isOpen = openIndex === index;
+    const onToggle = () => {
+      setOpenIndex(current => (current === index ? NO_OPEN_INDEX : index));
+    };
+    const faqItem = { faq, isOpen, onToggle };
+    return faqItem;
+  });
 
   return (
     <section className="mx-auto max-w-[820px] px-4 pt-24 pb-10 sm:pt-28">
       <div className="mb-9 text-center">
         <span className="border-border bg-card text-text-secondary inline-block rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold">
-          FAQ
+          {FAQ_SECTION_COPY.eyebrow}
         </span>
         <h2 className="mt-3.5 text-[clamp(2rem,4.4vw,3.3rem)] font-extrabold tracking-[-0.04em]">
-          Questions, answered
+          {FAQ_SECTION_COPY.heading}
         </h2>
       </div>
 
       <div className="flex flex-col gap-3">
-        {FAQS.map((faq, index) => (
+        {faqItems.map(faqItem => (
           <FaqItem
-            key={faq.question}
-            faq={faq}
-            isOpen={openIndex === index}
-            onToggle={() => handleToggle(index)}
+            key={faqItem.faq.question}
+            faq={faqItem.faq}
+            isOpen={faqItem.isOpen}
+            onToggle={faqItem.onToggle}
           />
         ))}
       </div>
@@ -85,14 +97,19 @@ interface FaqItemProps {
 }
 
 function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
+  const itemClassName = cn(
+    "bg-card overflow-hidden rounded-[20px] border transition-colors",
+    isOpen && "border-primary/40",
+    !isOpen && "border-border",
+  );
+  const toggleIconClassName = cn(
+    "flex size-7 shrink-0 items-center justify-center rounded-full transition-transform",
+    isOpen && "bg-primary text-primary-foreground rotate-45",
+    !isOpen && "bg-surface-darker text-primary",
+  );
+
   return (
-    <div
-      className={cn(
-        "bg-card overflow-hidden rounded-[20px] border transition-colors",
-        isOpen && "border-primary/40",
-        !isOpen && "border-border",
-      )}
-    >
+    <div className={itemClassName}>
       <button
         type="button"
         onClick={onToggle}
@@ -100,13 +117,7 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
         className="flex w-full items-center justify-between gap-4 px-[22px] py-5 text-left"
       >
         <span className="text-[17px] font-bold">{faq.question}</span>
-        <span
-          className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-full transition-transform",
-            isOpen && "bg-primary text-primary-foreground rotate-45",
-            !isOpen && "bg-surface-darker text-primary",
-          )}
-        >
+        <span className={toggleIconClassName}>
           <Plus className="size-4" />
         </span>
       </button>
